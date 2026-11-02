@@ -62,6 +62,15 @@ summary small{color:var(--muted);font-size:14.5px;display:block}
 .actions{display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-top:2px}
 .actions a,.actions button{background:none;border:0;padding:0;color:var(--link);font-size:15px;font-weight:700;cursor:pointer;text-decoration:none}
 .mapwrap{background:var(--tint);border:1px solid var(--line);border-radius:20px;overflow:hidden}
+.mapslot{height:min(52vh,390px);border:1px solid var(--line);border-radius:20px;overflow:hidden;background:var(--tint)}
+#realmap{width:100%;height:100%}
+.mk{border:0;background:none;padding:0;display:block;width:25px;height:33px;cursor:pointer;filter:drop-shadow(0 2px 3px rgba(15,42,68,.35))}
+.mk svg{display:block;width:100%;height:100%}
+.mk path{fill:var(--accent);stroke:#fff;stroke-width:3;paint-order:stroke}
+.mk.on{z-index:2}
+.mk.on path{fill:var(--fg)}
+.hint{color:var(--muted);text-align:center;margin:14px 0 0}
+.picked{margin-top:8px}
 .mapbox{position:relative;aspect-ratio:400/410;max-width:100%}
 .mapbox img{position:absolute;inset:0;width:100%;height:100%;display:block}
 .north{position:absolute;right:10px;bottom:8px;font-size:12px;font-weight:700;color:var(--muted);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:0 6px}

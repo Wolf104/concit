@@ -140,3 +140,7 @@ const EVENTS = [
  ["fallaci","Oriana Fallaci","art","2026-11-15","2027-02-21","Palazzo Reale","duomo","",null,"","mostre"],
  ["leonardo","Nel segno di Leonardo","art","2026-11-27","2027-04-04","Gallerie d'Italia","duomo","",null,"","mostre"]
 ].map(a=>({id:"e:"+a[0],name:a[1],cat:a[2],start:a[3],end:a[4],venue:a[5],zone:a[6]||null,time:a[7],priceNum:a[8],priceText:a[9],src:a[10],sold:a[11]==="sold"}));
+
+/* Coordinates from OpenStreetMap, used if the database cannot be reached. */
+const COORDS={"testina":[45.48983,9.195899],"treno":[45.481204,9.201219],"trippa":[45.452202,9.205517],"vela":[45.461534,9.194945],"alless":[45.483039,9.223803],"aperol":[45.463472,9.191462],"bartolini":[45.452046,9.161319],"basso":[45.476775,9.217579],"brunello":[45.479486,9.185567],"calabiana":[45.443876,9.208894],"camparino":[45.464857,9.189427],"ceresio":[45.483517,9.180311],"dry":[45.479,9.188426],"forest":[45.468721,9.206707],"hangar":[45.520986,9.21927],"isola":[45.481491,9.176233],"lambrate":[45.485705,9.231515],"luini":[45.465847,9.19142],"mag":[45.451297,9.173367],"moebius":[45.48186,9.201775],"nombra":[45.475181,9.187795],"prada":[45.444374,9.205331],"r142":[45.454439,9.17127],"ravioleria":[45.481329,9.175974],"reale":[45.463207,9.191488],"sincera":[45.486019,9.231797],"spontini":[45.481988,9.21313],"backdoor":[45.451297,9.173367],"mudec":[45.452046,9.161319]};
+for(const p of PLACES){ const c=COORDS[p.id.slice(2)]; if(c){ p.lat=c[0]; p.lng=c[1]; } }

@@ -108,3 +108,26 @@ grant execute on function get_plan(text) to anon, authenticated;
 grant execute on function add_person(text, text) to anon, authenticated;
 grant execute on function cast_vote(text, text, text, smallint) to anon, authenticated;
 grant execute on function update_plan(text, jsonb, boolean) to anon, authenticated;
+
+-- Hotspots. Everyone can read these. Edit them in the Supabase Table Editor.
+create table if not exists places (
+  id text primary key,
+  name text not null,
+  kind text not null,
+  zone text not null,
+  addr text not null,
+  metro jsonb not null default '[]',
+  price smallint not null check (price between 1 and 4),
+  hot smallint not null check (hot between 0 and 3),
+  why text not null,
+  detail text not null,
+  src text not null,
+  closed jsonb not null default '[]',
+  occ jsonb not null default '[]',
+  lat double precision,
+  lng double precision
+);
+
+alter table places enable row level security;
+drop policy if exists "Anyone can read places" on places;
+create policy "Anyone can read places" on places for select to anon, authenticated using (true);

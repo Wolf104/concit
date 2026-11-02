@@ -68,7 +68,7 @@ async function rpc(fn,args){
 const load=()=>{try{return JSON.parse(localStorage.getItem(KEY))||{}}catch{return{}}};
 const init=load();
 const S={tab:"decide",plan:init.plan||null,saved:new Set(init.saved||[]),me:null,code:null,names:init.names||{},ver:0,pending:0,
-  form:{what:"drinks",day:today,area:"",budget:2,people:["You"]},hot:"all",hotView:"list",zone:null,ev:"all"};
+  form:{what:"drinks",day:today,area:"",budget:2,people:["You"]},hot:"all",hotView:"list",zone:null,sel:null,mapFail:false,mapOk:false,ev:"all"};
 if(S.plan&&S.plan.day<today) S.plan=null;
 const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify({plan:S.code?null:S.plan,saved:[...S.saved],names:S.names}))}catch{}};
 const planFromUrl=()=>new URLSearchParams(location.search).get("plan");
@@ -185,6 +185,56 @@ function viewDecide(){
 }
 const HOT_TYPES=[["all","All"],["eat","Eat"],["drink","Drinks"],["culture","Culture"]];
 const HOT_GROUPS=[["Restaurants",p=>p.kind==="eat"],["Cheap eats",p=>p.kind==="cheap"],["Bars",p=>["drink","wine","beer"].includes(p.kind)],["Culture",p=>p.kind==="culture"]];
+const MAPLIBRE="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/";
+const MAP_STYLE="https://tiles.openfreemap.org/styles/liberty";
+const PIN='<svg viewBox="18 10 64 84" aria-hidden="true"><path fill-rule="evenodd" d="M50 90 C50 90 22 62 22 42 A28 28 0 1 1 78 42 C78 62 50 90 50 90 Z M61.584 30.416 A16.380 16.380 0 1 0 61.584 53.584 A3.780 3.780 0 0 0 56.237 48.237 A8.820 8.820 0 1 1 56.237 35.763 A3.780 3.780 0 0 0 61.584 30.416 Z"/></svg>';
+let MAP=null, MAP_HOST=null, MAP_LIB=null, PINS={}, FIT="";
+function loadMapLib(){
+  if(window.maplibregl) return Promise.resolve();
+  if(MAP_LIB) return MAP_LIB;
+  MAP_LIB=new Promise((ok,no)=>{
+    const css=document.createElement("link"); css.rel="stylesheet"; css.href=MAPLIBRE+"maplibre-gl.css"; document.head.appendChild(css);
+    const js=document.createElement("script"); js.src=MAPLIBRE+"maplibre-gl.js"; js.onload=ok; js.onerror=no; document.head.appendChild(js);
+  });
+  return MAP_LIB;
+}
+function mapFailed(){ S.mapFail=true; render(); }
+function syncPins(){
+  const list=PLACES.filter(p=>hotMatch(p)&&p.lat), ids=new Set(list.map(p=>p.id));
+  for(const id of Object.keys(PINS)) if(!ids.has(id)){ PINS[id].remove(); delete PINS[id]; }
+  for(const p of list){
+    if(!PINS[p.id]){
+      const el=document.createElement("button");
+      el.className="mk"; el.type="button"; el.innerHTML=PIN; el.setAttribute("aria-label",p.name); el.dataset.act="pin"; el.dataset.id=p.id;
+      PINS[p.id]=new maplibregl.Marker({element:el,anchor:"bottom"}).setLngLat([p.lng,p.lat]).addTo(MAP);
+      el.setAttribute("aria-label",p.name);
+    }
+    PINS[p.id].getElement().classList.toggle("on",p.id===S.sel);
+  }
+  if(FIT!==S.hot&&list.length){
+    FIT=S.hot;
+    const b=new maplibregl.LngLatBounds(); list.forEach(p=>b.extend([p.lng,p.lat]));
+    MAP.fitBounds(b,{padding:{top:56,bottom:30,left:34,right:34},maxZoom:15,duration:FIT==="all"?0:500});
+  }
+}
+async function mountMap(){
+  const slot=document.getElementById("mapSlot"); if(!slot) return;
+  if(!MAP_HOST){ MAP_HOST=document.createElement("div"); MAP_HOST.id="realmap"; }
+  slot.appendChild(MAP_HOST);
+  try{
+    await loadMapLib();
+    if(!document.getElementById("mapSlot")) return;
+    if(!MAP){
+      MAP=new maplibregl.Map({container:MAP_HOST,style:MAP_STYLE,center:[9.19,45.4642],zoom:12,dragRotate:false,touchPitch:false,attributionControl:{compact:true}});
+      MAP.addControl(new maplibregl.NavigationControl({showCompass:false}),"top-right");
+      MAP.touchZoomRotate.disableRotation();
+      MAP.on("error",e=>{ if(!MAP.isStyleLoaded()&&!S.mapOk) mapFailed(); });
+      MAP.on("load",()=>{ S.mapOk=true; });
+      setTimeout(()=>{ if(!S.mapOk&&!S.mapFail) mapFailed(); },12000);
+    }
+    MAP.resize(); syncPins();
+  }catch{ mapFailed(); }
+}
 const hotMatch=p=>({all:true,eat:["eat","cheap"].includes(p.kind),drink:["drink","wine","beer"].includes(p.kind),culture:p.kind==="culture"})[S.hot];
 const byHot=(a,b)=>b.hot-a.hot||a.price-b.price;
 function placeRow(p){
@@ -242,7 +292,9 @@ function viewHot(){
     const zones=[...new Set(list.map(p=>p.zone))];
     if(!zones.includes(S.zone)) S.zone=zones.includes("duomo")?"duomo":zones[0];
     const here=list.filter(p=>p.zone===S.zone);
-    body=`<p class="head" style="margin-top:0">Tap an area to see what's there</p><div class="mapwrap">${hotMap(list)}</div><p class="head">${esc(zname(S.zone))}</p><div class="list">${here.map(placeRow).join("")}</div>`;
+    if(S.mapFail) body=`<p class="head" style="margin-top:0">Tap an area to see what's there</p><div class="mapwrap">${hotMap(list)}</div><p class="head">${esc(zname(S.zone))}</p><div class="list">${here.map(placeRow).join("")}</div>`;
+    else { const sel=list.find(p=>p.id===S.sel);
+      body=`<div id="mapSlot" class="mapslot"></div>${sel?`<div class="list picked">${placeRow(sel).replace("<details>","<details open>")}</div>`:`<p class="hint">Tap a pin to see the place.</p>`}`; }
   } else {
     body=HOT_GROUPS.map(([t,f])=>{const g=list.filter(f);return g.length?`<p class="head">${t}</p>${g.map(placeRow).join("")}`:""}).join("");
   }
@@ -250,7 +302,7 @@ function viewHot(){
   <div class="group">${seg("hotView",S.hotView,[["list","List"],["map","Map"]],"View")}</div>
   <div class="chips">${HOT_TYPES.map(([k,l])=>`<button class="chip" data-act="hot" data-v="${k}" aria-pressed="${S.hot===k}">${l}</button>`).join("")}</div>
   ${body}
-  <p class="foot">Checked ${CHECKED}. Confirm hours before you go.${S.hotView==="map"?" The map shows areas, so use Directions for the exact spot.":""}</p>`;
+  <p class="foot">Checked ${CHECKED}. Confirm hours before you go.${S.hotView==="map"?" Map data © OpenStreetMap contributors.":""}</p>`;
 }
 function evRow(e){
   const on=S.saved.has(e.id), info=[e.venue,e.sold?"Sold out":e.priceText].filter(Boolean).join(" · ");
@@ -278,6 +330,7 @@ function render(){
   const h=document.querySelector("#view [data-hero]"), ht=document.getElementById("heroText");
   ht.innerHTML=h?h.innerHTML:""; h?.remove();
   document.querySelectorAll("details").forEach(d=>{ if(open.includes(d.querySelector("b").textContent)) d.open=true; });
+  if(S.tab==="hotspots"&&S.hotView==="map"&&!S.mapFail) mountMap();
   document.querySelectorAll("nav button").forEach(b=>b.dataset.tab===S.tab?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current"));
 }
 function addName(){
@@ -309,6 +362,7 @@ const H={
   hot(el){ S.hot=el.dataset.v; render(); },
   hotView(el){ S.hotView=el.dataset.v; render(); },
   zoneMap(el){ S.zone=el.dataset.z; render(); },
+  pin(el){ S.sel=el.dataset.id; render(); },
   ev(el){ S.ev=el.dataset.v; render(); },
   save(el){ const id=el.dataset.id; S.saved.has(id)?S.saved.delete(id):S.saved.add(id); persist(); render();
   }
@@ -321,6 +375,18 @@ addEventListener("hashchange",()=>{const t=location.hash.slice(1);if(["decide","
 {const t=location.hash.slice(1);if(["decide","hotspots","events"].includes(t))S.tab=t}
 render();
 
+async function loadPlaces(){
+  if(!online) return;
+  try{
+    const r=await fetch(`${SB.url}/rest/v1/places?select=*`,{headers:{apikey:SB.anonKey,Authorization:`Bearer ${SB.anonKey}`}});
+    if(!r.ok) return;
+    const rows=await r.json();
+    if(!Array.isArray(rows)||!rows.length) return;
+    PLACES.length=0; rows.forEach(p=>PLACES.push(p));
+    render();
+  }catch{}
+}
+loadPlaces();
 const code=planFromUrl();
 if(code) openPlan(code);
 setInterval(refresh,2500);
