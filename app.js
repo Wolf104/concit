@@ -1,6 +1,6 @@
 "use strict";
-const KIND={eat:"Restaurant",drink:"Bar",wine:"Wine bar",beer:"Craft beer",cheap:"Cheap eats",culture:"Culture"};
-const AREAS=["brera","duomo","garibaldi","isola","lambrate","navigli","romana","venezia","sarpi","tortona"];
+const KIND={eat:"Restaurant",drink:"Bar",wine:"Wine bar",beer:"Craft beer",cheap:"Cheap eats",culture:"Culture",club:"Nightclub"};
+const AREAS=["brera","duomo","garibaldi","isola","lambrate","navigli","nolo","romana","venezia","sarpi","tortona"];
 
 /* ---------- Logic ---------- */
 const byId=id=>PLACES.find(p=>p.id===id)||EVENTS.find(e=>e.id===id)||null;
@@ -31,7 +31,9 @@ function shortlist(s,seen=[]){
     pool.sort((a,b)=>(a.start>s.day?a.start:s.day).localeCompare(b.start>s.day?b.start:s.day)||near(a.zone)-near(b.zone));
     return pool.slice(0,5).map(e=>e.id);
   }
-  if(s.what==="culture"){
+  if(s.what==="clubs"){
+    pool=places(p=>p.occ.includes("night"));
+  } else if(s.what==="culture"){
     const shows=EVENTS.filter(e=>e.cat==="art"&&e.start<=s.day&&e.end>=s.day&&!seen.includes(e.id));
     pool=[...places(p=>p.kind==="culture"),...shows];
   } else {
@@ -68,7 +70,7 @@ async function rpc(fn,args){
 const load=()=>{try{return JSON.parse(localStorage.getItem(KEY))||{}}catch{return{}}};
 const init=load();
 const S={tab:"decide",plan:init.plan||null,saved:new Set(init.saved||[]),me:null,code:null,names:init.names||{},ver:0,pending:0,
-  form:{what:"drinks",day:today,area:"",budget:2,people:["You"]},hot:"all",hotView:"list",zone:null,sel:null,mapFail:false,mapOk:false,ev:"all"};
+  form:{what:"drinks",day:today,area:"",budget:2,people:["You"]},hot:"all",hotView:"list",zone:null,sel:null,open:new Set(),mapFail:false,mapOk:false,ev:"all"};
 if(S.plan&&S.plan.day<today) S.plan=null;
 const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify({plan:S.code?null:S.plan,saved:[...S.saved],names:S.names}))}catch{}};
 const planFromUrl=()=>new URLSearchParams(location.search).get("plan");
@@ -89,6 +91,7 @@ async function openPlan(code){
   try{
     const p=await rpc("get_plan",{p_code:code});
     if(!p){ toast("That link has expired. Start a new plan."); setUrl(null); return; }
+    p.options=p.options.filter(byId);
     S.code=code; S.plan=p; S.me=S.names[code]&&!votedAll(p,S.names[code])?S.names[code]:null;
     render();
   }catch{ toast("Couldn't open that plan. Check your connection."); }
@@ -135,9 +138,9 @@ const eventWhen=e=>e.start===e.end?`${wday(e.start)} ${short(e.start)}`:(e.start
 const mapsUrl=q=>"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(q+", Milano");
 
 function viewSetup(){
-  const f=S.form, noBudget=f.what==="event"||f.what==="culture";
+  const f=S.form, noBudget=f.what==="event"||f.what==="culture"||f.what==="clubs";
   return `<div data-hero><h1>Where to?</h1></div>
-  <div class="group">${seg("what",f.what,[["eat","Eat"],["drinks","Drinks"],["culture","Culture"],["event","Event"]],"What")}</div>
+  <div class="group">${seg("what",f.what,[["eat","Eat"],["drinks","Drinks"],["clubs","Clubs"],["culture","Culture"],["event","Event"]],"What")}</div>
   <div class="group">${seg("day",f.day,whenOptions(),"When")}</div>
   ${noBudget?"":`<div class="group">${seg("budget",f.budget,[[1,"€"],[2,"€€"],[3,"€€€"]],"Budget")}</div>`}
   <div class="group"><select id="area" data-change="area" aria-label="Area"><option value="">Anywhere in Milan</option>${AREAS.map(z=>`<option value="${z}" ${f.area===z?"selected":""}>${esc(zname(z))}</option>`).join("")}</select></div>
@@ -183,8 +186,8 @@ function viewDecide(){
   if(S.me&&nextCard(p,S.me)) return viewCard(p);
   return viewPeople(p);
 }
-const HOT_TYPES=[["all","All"],["eat","Eat"],["drink","Drinks"],["culture","Culture"]];
-const HOT_GROUPS=[["Restaurants",p=>p.kind==="eat"],["Cheap eats",p=>p.kind==="cheap"],["Bars",p=>["drink","wine","beer"].includes(p.kind)],["Culture",p=>p.kind==="culture"]];
+const HOT_TYPES=[["all","All"],["eat","Eat"],["drink","Drinks"],["club","Clubs"],["culture","Culture"]];
+const HOT_GROUPS=[["Restaurants",p=>p.kind==="eat"],["Cheap eats",p=>p.kind==="cheap"],["Bars",p=>["drink","wine","beer"].includes(p.kind)],["Nightclubs",p=>p.kind==="club"],["Culture",p=>p.kind==="culture"]];
 const MAPLIBRE="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/";
 const MAP_STYLE="https://tiles.openfreemap.org/styles/liberty";
 const PIN='<svg viewBox="18 10 64 84" aria-hidden="true"><path fill-rule="evenodd" d="M50 90 C50 90 22 62 22 42 A28 28 0 1 1 78 42 C78 62 50 90 50 90 Z M61.584 30.416 A16.380 16.380 0 1 0 61.584 53.584 A3.780 3.780 0 0 0 56.237 48.237 A8.820 8.820 0 1 1 56.237 35.763 A3.780 3.780 0 0 0 61.584 30.416 Z"/></svg>';
@@ -235,7 +238,7 @@ async function mountMap(){
     MAP.resize(); syncPins();
   }catch{ mapFailed(); }
 }
-const hotMatch=p=>({all:true,eat:["eat","cheap"].includes(p.kind),drink:["drink","wine","beer"].includes(p.kind),culture:p.kind==="culture"})[S.hot];
+const hotMatch=p=>({all:true,eat:["eat","cheap"].includes(p.kind),drink:["drink","wine","beer"].includes(p.kind),club:p.kind==="club",culture:p.kind==="culture"})[S.hot];
 const byHot=(a,b)=>b.hot-a.hot||a.price-b.price;
 function placeRow(p){
   return `<details><summary><div><b>${esc(p.name)}</b><small>${esc(zname(p.zone))} · ${eur(p.price)}</small></div></summary>
@@ -280,7 +283,7 @@ function cityBg(){
   return CITY_BG;
 }
 function hotMap(list){
-  const zones=[...new Set(list.map(p=>p.zone))];
+  const zones=[...new Set(list.map(p=>p.zone))].filter(z=>MAP_SPOTS[z]);
   const pill=z=>{const [x,y]=MAP_SPOTS[z], c=list.filter(p=>p.zone===z).length, on=S.zone===z;
     return `<button class="area" style="left:${x/4}%;top:${y/4.1}%" data-act="zoneMap" data-z="${z}" aria-pressed="${on}">${esc(zname(z))}<i>${c}</i></button>`};
   return `<div class="mapbox"><img src="${cityBg()}" alt=""><span class="north">N ↑</span>${zones.map(pill).join("")}</div>`;
@@ -289,14 +292,15 @@ function viewHot(){
   const list=PLACES.filter(hotMatch).sort(byHot);
   let body;
   if(S.hotView==="map"){
-    const zones=[...new Set(list.map(p=>p.zone))];
+    const zones=[...new Set(list.map(p=>p.zone))].filter(z=>MAP_SPOTS[z]);
     if(!zones.includes(S.zone)) S.zone=zones.includes("duomo")?"duomo":zones[0];
     const here=list.filter(p=>p.zone===S.zone);
     if(S.mapFail) body=`<p class="head" style="margin-top:0">Tap an area to see what's there</p><div class="mapwrap">${hotMap(list)}</div><p class="head">${esc(zname(S.zone))}</p><div class="list">${here.map(placeRow).join("")}</div>`;
     else { const sel=list.find(p=>p.id===S.sel);
       body=`<div id="mapSlot" class="mapslot"></div>${sel?`<div class="list picked">${placeRow(sel).replace("<details>","<details open>")}</div>`:`<p class="hint">Tap a pin to see the place.</p>`}`; }
   } else {
-    body=HOT_GROUPS.map(([t,f])=>{const g=list.filter(f);return g.length?`<p class="head">${t}</p>${g.map(placeRow).join("")}`:""}).join("");
+    body=HOT_GROUPS.map(([t,f])=>{const g=list.filter(f), full=S.hot!=="all"||S.open.has(t), rows=full?g:g.slice(0,6);
+      return g.length?`<p class="head">${t}</p>${rows.map(placeRow).join("")}${rows.length<g.length?`<button class="text" data-act="showGroup" data-v="${t}">Show all ${g.length}</button>`:""}`:""}).join("");
   }
   return `<div data-hero><h1>Hotspots</h1></div>
   <div class="group">${seg("hotView",S.hotView,[["list","List"],["map","Map"]],"View")}</div>
@@ -363,6 +367,7 @@ const H={
   hotView(el){ S.hotView=el.dataset.v; render(); },
   zoneMap(el){ S.zone=el.dataset.z; render(); },
   pin(el){ S.sel=el.dataset.id; render(); },
+  showGroup(el){ S.open.add(el.dataset.v); render(); },
   ev(el){ S.ev=el.dataset.v; render(); },
   save(el){ const id=el.dataset.id; S.saved.has(id)?S.saved.delete(id):S.saved.add(id); persist(); render();
   }
@@ -386,9 +391,8 @@ async function loadPlaces(){
     render();
   }catch{}
 }
-loadPlaces();
 const code=planFromUrl();
-if(code) openPlan(code);
+loadPlaces().finally(()=>{ if(code) openPlan(code); });
 setInterval(refresh,2500);
 document.addEventListener("visibilitychange",refresh);
 addEventListener("popstate",()=>{const c=planFromUrl(); if(c) openPlan(c); else {S.code=null;S.plan=null;S.me=null;render()}});

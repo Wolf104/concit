@@ -28,7 +28,17 @@ const SRC = {
   moeb:["Il Giorno","https://www.ilgiorno.it/cultura/il-miglior-bar-deuropa-e-7f2dbce1"],
   mich:["Mentelocale","https://www.mentelocale.it/milano/100271-guida-michelin-2026-i-ristoranti-stellati-a-milano-e-lombardia-l-elenco-completo-tra-novit-e-conferme.htm"],
   street:["Dissapore","https://www.dissapore.com/cibo-di-strada/milano-20-posti-da-non-perdere"],
-  rav:["Scatti di Gusto","https://www.scattidigusto.it/ristoranti-milano-ravioleria-street-food"]
+  rav:["Scatti di Gusto","https://www.scattidigusto.it/ristoranti-milano-ravioleria-street-food"],
+  xceed:["Xceed","https://xceed.me/blog/en/top-clubs-in-milano"],
+  clubs:["Europe Nightlife","https://europenightlife.com/italy/milan/best-clubs-in-milan"],
+  timeout:["Time Out","https://timeout.com/milan/restaurants/best-restaurants-in-milan"],
+  carrots:["Carrots and Tigers","https://carrotsandtigers.com/2026/01/12/where-and-what-to-eat-in-milan/"],
+  aperitivo:["Carrots and Tigers","https://carrotsandtigers.com/2026/01/09/where-to-go-for-aperitivo-in-milan/"],
+  tbv:["The Better Vacation","https://thebettervacation.com/milan/best-restaurants-in-milan/amp/"],
+  pizza:["Flawless","https://flawless.life/it/italia/milano/le-migliori-pizzerie-di-milano"],
+  cocktails:["Europe Nightlife","https://europenightlife.com/italy/milan/best-cocktail-bars-in-milan"],
+  wine:["Europe Nightlife","https://europenightlife.com/italy/milan/best-wine-bars-in-milan"],
+  live:["Europe Nightlife","https://europenightlife.com/italy/milan/live-music-venues-milan"]
 };
 const ZONES = {
   duomo:["Duomo",45.4642,9.1900], brera:["Brera",45.4719,9.1880], sempione:["Sempione",45.4770,9.1720],
@@ -37,7 +47,7 @@ const ZONES = {
   lambrate:["Lambrate",45.4840,9.2360], romana:["Porta Romana",45.4520,9.2030], lodi:["Lodi",45.4440,9.2050],
   navigli:["Navigli",45.4510,9.1750], tortona:["Tortona",45.4520,9.1610], bovisa:["Bovisa",45.5030,9.1590],
   bicocca:["Bicocca",45.5200,9.2130], sansiro:["San Siro",45.4780,9.1240], santagiulia:["Santa Giulia",45.4350,9.2410],
-  forlanini:["Forlanini",45.4570,9.2520], assago:["Assago",45.4090,9.1500], rho:["Rho Fiera",45.5210,9.0850]
+  forlanini:["Forlanini",45.4570,9.2520], nolo:["NoLo",45.4925,9.2195], assago:["Assago",45.4090,9.1500], rho:["Rho Fiera",45.5210,9.0850]
 };
 /* [id,name,kind,zone,address,metro,price 1-4,hot 0-3,why,detail,source,closed weekdays,occasions] */
 const PLACES = [
