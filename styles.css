@@ -20,6 +20,9 @@ a{color:inherit}
 .seg button{flex:1;min-width:0;border:1px solid var(--line);background:var(--card);border-radius:14px;padding:10px 2px;font-size:15px;font-weight:600;color:var(--muted);cursor:pointer}
 .seg button[aria-pressed="true"]{background:var(--tint);color:var(--link);font-weight:700}
 select,input[type=text]{width:100%;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:16px;color:var(--fg)}
+.sliderhead{display:flex;justify-content:space-between;align-items:baseline}
+.sliderhead b{color:var(--link);font-size:17px;font-weight:700}
+input[type=range]{width:100%;height:28px;margin:0;accent-color:var(--accent);cursor:pointer}
 .names{display:flex;flex-wrap:wrap;gap:6px}
 .name{display:inline-flex;align-items:center;gap:6px;background:var(--tint);border:1px solid var(--line);border-radius:99px;padding:6px 12px;font-size:15px;font-weight:600;color:var(--link);cursor:pointer}
 .name span{opacity:.7}

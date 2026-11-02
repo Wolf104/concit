@@ -131,3 +131,6 @@ create table if not exists places (
 alter table places enable row level security;
 drop policy if exists "Anyone can read places" on places;
 create policy "Anyone can read places" on places for select to anon, authenticated using (true);
+
+-- Typical price per unit, for example {"meal":30} or {"drink":14,"meal":30}.
+alter table places add column if not exists costs jsonb not null default '{}';

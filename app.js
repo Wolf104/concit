@@ -1,5 +1,17 @@
 "use strict";
 const KIND={eat:"Restaurant",drink:"Bar",wine:"Wine bar",beer:"Craft beer",cheap:"Cheap eats",culture:"Culture",club:"Nightclub"};
+/* Budgets are per unit: a meal, a drink, club entry or a ticket. */
+const STEPS={meal:[10,15,20,25,30,40,50,60,80,100,150,200],drink:[5,6,7,8,10,12,15,18,20,25],entry:[10,15,20,25,30,40,50],ticket:[0,5,10,15,20,30,50,75,100]};
+const LABEL={meal:"Max per meal",drink:"Max per drink",entry:"Max entry price",ticket:"Max per ticket"};
+const UNIT_TEXT={meal:"a meal",drink:"a drink",entry:"entry",ticket:"a ticket"};
+const WHAT_UNIT={eat:"meal",drinks:"drink",clubs:"entry",culture:"ticket",event:"ticket"};
+const KIND_UNIT={eat:"meal",cheap:"meal",drink:"drink",wine:"drink",beer:"drink",club:"entry",culture:"ticket"};
+const HOT_UNIT={eat:"meal",drink:"drink",club:"entry",culture:"ticket"};
+const BAND={meal:[15,30,55,130],drink:[7,11,15,20],entry:[15,20,30,40],ticket:[5,15,25,40]};
+const costOf=(p,unit)=>p.costs&&p.costs[unit]!=null?p.costs[unit]:BAND[unit][p.price-1];
+const maxFor=(unit,i)=>i>=STEPS[unit].length?null:STEPS[unit][i];
+const stepText=(unit,i)=>{const m=maxFor(unit,i);return m===null?"No limit":m===0?"Free only":`€${m}`};
+function costText(p){const u=KIND_UNIT[p.kind],c=costOf(p,u);return c===0?"Free":`about €${c} ${UNIT_TEXT[u]}`}
 const AREAS=["brera","duomo","garibaldi","isola","lambrate","navigli","nolo","romana","venezia","sarpi","tortona"];
 
 /* ---------- Logic ---------- */
@@ -23,23 +35,22 @@ const open=(p,day)=>!(p.closed||[]).includes(parse(day).getDay());
 /* The best places for the choices made, skipping anything the group has already seen. */
 function shortlist(s,seen=[]){
   const near=z=>s.area&&z&&ZONES[z]?km(ZONES[s.area],ZONES[z]):(s.area?6:0);
-  const max={1:1,2:2,3:4}[s.budget];
+  const unit=WHAT_UNIT[s.what], fits=x=>s.max==null||(x.cat?x.priceNum==null||x.priceNum<=s.max:costOf(x,unit)<=s.max);
   const places=want=>PLACES.filter(p=>want(p)&&open(p,s.day)&&!seen.includes(p.id));
   let pool=[];
   if(s.what==="event"){
-    pool=EVENTS.filter(e=>!e.sold&&e.cat!=="art"&&!isRun(e)&&e.end>=s.day&&e.start<=addDays(s.day,6)&&!seen.includes(e.id));
+    pool=EVENTS.filter(e=>!e.sold&&e.cat!=="art"&&!isRun(e)&&e.end>=s.day&&e.start<=addDays(s.day,6)&&!seen.includes(e.id)&&fits(e));
     pool.sort((a,b)=>(a.start>s.day?a.start:s.day).localeCompare(b.start>s.day?b.start:s.day)||near(a.zone)-near(b.zone));
     return pool.slice(0,5).map(e=>e.id);
   }
   if(s.what==="clubs"){
-    pool=places(p=>p.occ.includes("night"));
+    pool=places(p=>p.occ.includes("night")&&fits(p));
   } else if(s.what==="culture"){
-    const shows=EVENTS.filter(e=>e.cat==="art"&&e.start<=s.day&&e.end>=s.day&&!seen.includes(e.id));
-    pool=[...places(p=>p.kind==="culture"),...shows];
+    const shows=EVENTS.filter(e=>e.cat==="art"&&e.start<=s.day&&e.end>=s.day&&!seen.includes(e.id)&&fits(e));
+    pool=[...places(p=>p.kind==="culture"&&fits(p)),...shows];
   } else {
     const occ=s.what==="eat"?["dinner","cheap"]:["drinks"];
-    pool=places(p=>p.occ.some(o=>occ.includes(o))&&p.price<=max);
-    if(!pool.length) pool=places(p=>p.occ.some(o=>occ.includes(o)));
+    pool=places(p=>p.occ.some(o=>occ.includes(o))&&fits(p));
   }
   const score=x=>near(x.zone)-(x.hot||1)*.9;
   pool.sort((a,b)=>score(a)-score(b));
@@ -70,7 +81,7 @@ async function rpc(fn,args){
 const load=()=>{try{return JSON.parse(localStorage.getItem(KEY))||{}}catch{return{}}};
 const init=load();
 const S={tab:"decide",plan:init.plan||null,saved:new Set(init.saved||[]),me:null,code:null,names:init.names||{},ver:0,pending:0,
-  form:{what:"drinks",day:today,area:"",budget:2,people:["You"]},hot:"all",hotView:"list",zone:null,sel:null,open:new Set(),mapFail:false,mapOk:false,ev:"all"};
+  form:{what:"drinks",day:today,area:"",idx:{meal:5,drink:5,entry:2,ticket:6},people:["You"]},hotIdx:{meal:12,drink:10,entry:7,ticket:9},hot:"all",hotView:"list",zone:null,sel:null,open:new Set(),mapFail:false,mapOk:false,ev:"all"};
 if(S.plan&&S.plan.day<today) S.plan=null;
 const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify({plan:S.code?null:S.plan,saved:[...S.saved],names:S.names}))}catch{}};
 const planFromUrl=()=>new URLSearchParams(location.search).get("plan");
@@ -131,18 +142,20 @@ function toast(t){const el=document.getElementById("toast");el.textContent=t;el.
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const seg=(act,val,opts,label)=>`<div class="seg" role="group" aria-label="${label}">${opts.map(([v,l])=>`<button data-act="${act}" data-v="${v}" aria-pressed="${String(v)===String(val)}">${l}</button>`).join("")}</div>`;
 const zname=z=>ZONES[z]?ZONES[z][0]:"";
-const eur=n=>"€".repeat(n);
+function slider(id,unit,i){
+  return `<div class="group"><div class="sliderhead"><span class="label">${LABEL[unit]}</span><b id="${id}Val">${stepText(unit,i)}</b></div><input type="range" id="${id}" data-slider="${unit}" min="0" max="${STEPS[unit].length}" step="1" value="${i}" aria-label="${LABEL[unit]}"></div>`;
+}
 const metroText=m=>m[0]?`M${m[0][0]} ${m[0][1]}`:"";
-const placeLine=p=>[zname(p.zone),eur(p.price),metroText(p.metro)].filter(Boolean).join(" · ");
+const placeLine=p=>[zname(p.zone),costText(p),metroText(p.metro)].filter(Boolean).join(" · ");
 const eventWhen=e=>e.start===e.end?`${wday(e.start)} ${short(e.start)}`:(e.start<=today?`Until ${short(e.end)}`:`${short(e.start)} to ${short(e.end)}`);
 const mapsUrl=q=>"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(q+", Milano");
 
 function viewSetup(){
-  const f=S.form, noBudget=f.what==="event"||f.what==="culture"||f.what==="clubs";
+  const f=S.form, unit=WHAT_UNIT[f.what];
   return `<div data-hero><h1>Where to?</h1></div>
   <div class="group">${seg("what",f.what,[["eat","Eat"],["drinks","Drinks"],["clubs","Clubs"],["culture","Culture"],["event","Event"]],"What")}</div>
   <div class="group">${seg("day",f.day,whenOptions(),"When")}</div>
-  ${noBudget?"":`<div class="group">${seg("budget",f.budget,[[1,"€"],[2,"€€"],[3,"€€€"]],"Budget")}</div>`}
+  ${slider("budget",unit,f.idx[unit])}
   <div class="group"><select id="area" data-change="area" aria-label="Area"><option value="">Anywhere in Milan</option>${AREAS.map(z=>`<option value="${z}" ${f.area===z?"selected":""}>${esc(zname(z))}</option>`).join("")}</select></div>
   <div class="group"><span class="label">Who's coming</span>
     <div class="names">${f.people.map((n,i)=>`<button class="name" data-act="rm" data-i="${i}" aria-label="Remove ${esc(n)}">${esc(n)} <span>×</span></button>`).join("")}</div>
@@ -214,10 +227,11 @@ function syncPins(){
     }
     PINS[p.id].getElement().classList.toggle("on",p.id===S.sel);
   }
-  if(FIT!==S.hot&&list.length){
-    FIT=S.hot;
+  const fk=S.hot+(hotUnit()?S.hotIdx[hotUnit()]:"");
+  if(FIT!==fk&&list.length){
+    FIT=fk;
     const b=new maplibregl.LngLatBounds(); list.forEach(p=>b.extend([p.lng,p.lat]));
-    MAP.fitBounds(b,{padding:{top:56,bottom:30,left:34,right:34},maxZoom:15,duration:FIT==="all"?0:500});
+    MAP.fitBounds(b,{padding:{top:56,bottom:30,left:34,right:34},maxZoom:15,duration:S.hot==="all"?0:500});
   }
 }
 async function mountMap(){
@@ -238,10 +252,12 @@ async function mountMap(){
     MAP.resize(); syncPins();
   }catch{ mapFailed(); }
 }
-const hotMatch=p=>({all:true,eat:["eat","cheap"].includes(p.kind),drink:["drink","wine","beer"].includes(p.kind),club:p.kind==="club",culture:p.kind==="culture"})[S.hot];
+const hotType=p=>({all:true,eat:["eat","cheap"].includes(p.kind),drink:["drink","wine","beer"].includes(p.kind),club:p.kind==="club",culture:p.kind==="culture"})[S.hot];
+const hotUnit=()=>HOT_UNIT[S.hot];
+function hotMatch(p){ if(!hotType(p)) return false; const u=hotUnit(); if(!u) return true; const m=maxFor(u,S.hotIdx[u]); return m===null||costOf(p,u)<=m; }
 const byHot=(a,b)=>b.hot-a.hot||a.price-b.price;
 function placeRow(p){
-  return `<details><summary><div><b>${esc(p.name)}</b><small>${esc(zname(p.zone))} · ${eur(p.price)}</small></div></summary>
+  return `<details><summary><div><b>${esc(p.name)}</b><small>${esc(zname(p.zone))} · ${esc(costText(p))}</small></div></summary>
   <div class="more"><p>${esc(p.why)}. ${esc(p.detail)}</p><p class="dim">${esc(p.addr)}${p.metro[0]?" · "+esc(metroText(p.metro)):""}</p>
   <div class="actions"><a href="${mapsUrl(p.name+" "+p.addr)}" target="_blank" rel="noopener">Directions</a><a href="${esc(SRC[p.src][1])}" target="_blank" rel="noopener">Source</a></div></div></details>`;
 }
@@ -305,8 +321,9 @@ function viewHot(){
   return `<div data-hero><h1>Hotspots</h1></div>
   <div class="group">${seg("hotView",S.hotView,[["list","List"],["map","Map"]],"View")}</div>
   <div class="chips">${HOT_TYPES.map(([k,l])=>`<button class="chip" data-act="hot" data-v="${k}" aria-pressed="${S.hot===k}">${l}</button>`).join("")}</div>
-  ${body}
-  <p class="foot">Checked ${CHECKED}. Confirm hours before you go.${S.hotView==="map"?" Map data © OpenStreetMap contributors.":""}</p>`;
+  ${hotUnit()?slider("hotBudget",hotUnit(),S.hotIdx[hotUnit()]):""}
+  ${body||`<p class="empty">Nothing at that price. Try raising it.</p>`}
+  <p class="foot">Prices are typical estimates. Checked ${CHECKED}, so confirm before you go.${S.hotView==="map"?" Map data © OpenStreetMap contributors.":""}</p>`;
 }
 function evRow(e){
   const on=S.saved.has(e.id), info=[e.venue,e.sold?"Sold out":e.priceText].filter(Boolean).join(" · ");
@@ -348,11 +365,10 @@ const H={
   tab(el){ S.tab=el.dataset.tab; try{location.hash=S.tab}catch{} render(); scrollTo(0,0); },
   what(el){ S.form.what=el.dataset.v; render(); },
   day(el){ S.form.day=el.dataset.v; render(); },
-  budget(el){ S.form.budget=Number(el.dataset.v); render(); },
   rm(el){ S.form.people.splice(Number(el.dataset.i),1); render(); },
   start(){ addName(); const f=S.form; if(!f.people.length){ toast("Add at least one name"); return; }
-    const options=shortlist(f); if(!options.length){ toast("Nothing matches. Try another day."); return; }
-    newPlan({...f,people:[...f.people],options,seen:options,votes:{},finished:false}); },
+    const unit=WHAT_UNIT[f.what], max=maxFor(unit,f.idx[unit]), q={...f,max}, options=shortlist(q); if(!options.length){ toast("Nothing fits that budget. Try raising it or choosing another day."); return; }
+    newPlan({...q,people:[...f.people],options,seen:options,votes:{},finished:false}); },
   me(el){ S.me=el.dataset.n; if(S.code){S.names[S.code]=S.me;persist()} render(); scrollTo(0,0); },
   share(){ const t=shareUrl(); (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast("Link copied. Paste it in the group chat."),()=>toast(t)); },
   vote(el){ vote(el.dataset.id,Number(el.dataset.v)); },
@@ -373,7 +389,10 @@ const H={
   }
 };
 document.addEventListener("click",e=>{const el=e.target.closest("[data-act]");if(el) H[el.dataset.act]?.(el)});
-document.addEventListener("change",e=>{const c=e.target.dataset.change; if(c==="area"){S.form.area=e.target.value}});
+document.addEventListener("input",e=>{const u=e.target.dataset.slider; if(!u) return; const i=Number(e.target.value);
+  if(e.target.id==="budget") S.form.idx[u]=i; else S.hotIdx[u]=i;
+  document.getElementById(e.target.id+"Val").textContent=stepText(u,i);});
+document.addEventListener("change",e=>{ if(e.target.id==="hotBudget") render(); const c=e.target.dataset.change; if(c==="area"){S.form.area=e.target.value}});
 document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="addName"){e.preventDefault();addName()} if(e.key==="Enter"&&e.target.id==="joinName"){e.preventDefault();joinByName()} if((e.key==="Enter"||e.key===" ")&&e.target.matches?.("g[data-act]")){e.preventDefault();H.zoneMap(e.target)}});
 document.addEventListener("focusout",()=>setTimeout(()=>{if(render.later)render()},0));
 addEventListener("hashchange",()=>{const t=location.hash.slice(1);if(["decide","hotspots","events"].includes(t)&&t!==S.tab){S.tab=t;render()}});
