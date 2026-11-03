@@ -69,74 +69,141 @@ const nextCard=(p,n)=>p.options.find(id=>(p.votes?.[n]||{})[id]===undefined);
 function merge(a,b){const o={...a};for(const k in b)o[k]=b[k]&&typeof b[k]==="object"&&!Array.isArray(b[k])&&a[k]&&typeof a[k]==="object"?merge(a[k],b[k]):b[k];return o}
 
 /* ---------- State ---------- */
-const KEY="concit.v3";
+const KEY="concit.v4", SKEY="concit.session";
 const SB=window.CONCIT_CONFIG||{};
-const online=Boolean(SB.url&&SB.anonKey);
-async function rpc(fn,args){
-  const r=await fetch(`${SB.url}/rest/v1/rpc/${fn}`,{method:"POST",headers:{apikey:SB.anonKey,Authorization:`Bearer ${SB.anonKey}`,"Content-Type":"application/json"},body:JSON.stringify(args)});
+const load=k=>{try{return JSON.parse(localStorage.getItem(k))}catch{return null}};
+const init=load(KEY)||{};
+const S={tab:"decide",plan:null,code:null,saved:new Set(init.saved||[]),session:load(SKEY),authView:"login",authBusy:false,authNote:"",email:"",pending:init.pending||null,
+  groups:[],gid:null,leaving:false,ver:0,inflight:0,
+  form:{what:"drinks",day:today,area:"",group:init.group||"",idx:{meal:5,drink:5,entry:2,ticket:6}},hotIdx:{meal:12,drink:10,entry:7,ticket:9},hot:"all",hotView:"list",zone:null,sel:null,open:new Set(),mapFail:false,mapOk:false,ev:"all"};
+const uid=()=>S.session?.user?.id;
+const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify({saved:[...S.saved],pending:S.pending,group:S.form.group}))}catch{}};
+const saveSession=()=>{try{S.session?localStorage.setItem(SKEY,JSON.stringify(S.session)):localStorage.removeItem(SKEY)}catch{}};
+
+/* ---------- Accounts ---------- */
+const AUTH_ERRORS=[["invalid login","That email or password isn't right."],["already registered","That email already has an account. Log in instead."],["not confirmed","Confirm your email first, using the link we sent you."],["rate limit","Too many emails sent just now. Try again in a while."],["password","Choose a stronger password of at least 8 characters."],["email","Check that email address."]];
+function authMessage(m){ const t=String(m||"").toLowerCase(), f=AUTH_ERRORS.find(([k])=>t.includes(k)); return f?f[1]:"That didn't work. Check your connection and try again."; }
+async function authCall(path,body,method="POST",token){
+  const r=await fetch(`${SB.url}/auth/v1/${path}`,{method,headers:{apikey:SB.anonKey,"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},body:body?JSON.stringify(body):undefined});
+  const t=await r.text(); let j={}; try{j=t?JSON.parse(t):{}}catch{}
+  if(!r.ok) throw new Error(j.msg||j.error_description||j.message||`auth ${r.status}`);
+  return j;
+}
+function setSession(j){
+  S.session={access_token:j.access_token,refresh_token:j.refresh_token,expires_at:j.expires_at||Math.floor(Date.now()/1000)+(j.expires_in||3600),user:j.user||S.session?.user};
+  saveSession();
+}
+async function refreshSession(){
+  if(refreshSession.p) return refreshSession.p;
+  refreshSession.p=(async()=>{
+    try{ setSession(await authCall("token?grant_type=refresh_token",{refresh_token:S.session.refresh_token})); }
+    catch(e){ if(/token|refresh|invalid/i.test(e.message)) logout(true); throw e; }
+    finally{ refreshSession.p=null; }
+  })();
+  return refreshSession.p;
+}
+function logout(expired){
+  const t=S.session?.access_token;
+  if(t&&!expired) authCall("logout",{}, "POST",t).catch(()=>{});
+  S.session=null; S.plan=null; S.code=null; S.groups=[]; S.gid=null; S.authView="login"; S.authNote=expired?"Please log in again.":""; S.tab="decide";
+  saveSession(); history.replaceState(null,"",location.pathname); render();
+}
+const redirectTo=()=>encodeURIComponent(location.origin+location.pathname);
+async function authSubmit(){
+  if(S.authBusy) return;
+  const v=id=>(document.getElementById(id)?.value||"").trim(), view=S.authView, email=v("email"), pass=document.getElementById("password")?.value||"", name=v("name");
+  S.email=email; S.authNote="";
+  if(view==="signup"&&!name){ toast("Add your name"); return; }
+  if(view!=="newpass"&&!email){ toast("Add your email"); return; }
+  if(view!=="reset"&&pass.length<8){ toast("Passwords need at least 8 characters"); return; }
+  const btn=document.querySelector("#authForm button[type=submit]"), label=btn.textContent;
+  S.authBusy=true; btn.disabled=true; btn.textContent="One moment"; document.activeElement?.blur();
+  try{
+    if(view==="login") setSession(await authCall("token?grant_type=password",{email,password:pass}));
+    if(view==="signup"){
+      const j=await authCall(`signup?redirect_to=${redirectTo()}`,{email,password:pass,data:{name}});
+      if(j.access_token) setSession(j); else { S.authView="login"; S.authNote=`We sent a link to ${email}. Open it to finish, then log in.`; }
+    }
+    if(view==="reset"){ await authCall(`recover?redirect_to=${redirectTo()}`,{email}); S.authView="login"; S.authNote=`If ${email} has an account, a reset link is on its way.`; }
+    if(view==="newpass"){ await authCall("user",{password:pass},"PUT",S.session.access_token); S.authView="login"; S.fromEmail=null; toast("Password updated"); }
+    S.authBusy=false;
+    if(S.session){ await afterLogin(); return; }
+    render();
+  }catch(e){ S.authBusy=false; btn.disabled=false; btn.textContent=label; toast(authMessage(e.message)); }
+}
+
+/* ---------- Data ---------- */
+async function rpc(fn,args,retry=true){
+  if(S.session&&S.session.expires_at-60<Date.now()/1000) await refreshSession();
+  const r=await fetch(`${SB.url}/rest/v1/rpc/${fn}`,{method:"POST",headers:{apikey:SB.anonKey,Authorization:`Bearer ${S.session?.access_token||SB.anonKey}`,"Content-Type":"application/json"},body:JSON.stringify(args||{})});
+  if(r.status===401&&retry&&S.session){ await refreshSession(); return rpc(fn,args,false); }
   if(!r.ok) throw new Error(`${fn} failed (${r.status})`);
   const t=await r.text();
   return t?JSON.parse(t):null;
 }
-const load=()=>{try{return JSON.parse(localStorage.getItem(KEY))||{}}catch{return{}}};
-const init=load();
-const S={tab:"decide",plan:init.plan||null,saved:new Set(init.saved||[]),me:null,code:null,names:init.names||{},ver:0,pending:0,
-  form:{what:"drinks",day:today,area:"",idx:{meal:5,drink:5,entry:2,ticket:6},people:["You"]},hotIdx:{meal:12,drink:10,entry:7,ticket:9},hot:"all",hotView:"list",zone:null,sel:null,open:new Set(),mapFail:false,mapOk:false,ev:"all"};
-if(S.plan&&S.plan.day<today) S.plan=null;
-const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify({plan:S.code?null:S.plan,saved:[...S.saved],names:S.names}))}catch{}};
-const planFromUrl=()=>new URLSearchParams(location.search).get("plan");
-function setUrl(code){ history.pushState(null,"",code?`?plan=${code}`:location.pathname); }
+function setUrl(q){ history.pushState(null,"",q?`?${q}`:location.pathname); }
 const shareUrl=()=>`${location.origin}${location.pathname}?plan=${S.code}`;
-const withoutVotes=({votes,...rest})=>rest;
+const inviteUrl=g=>`${location.origin}${location.pathname}?join=${g.invite_code}`;
+const planBody=({votes,names,group_id,group_name,...rest})=>rest;
+async function shareOut(text,done){
+  if(navigator.share){ try{ await navigator.share({text}); return; }catch(e){ if(e.name==="AbortError") return; } }
+  (navigator.clipboard?navigator.clipboard.writeText(text):Promise.reject()).then(()=>toast(done),()=>toast(text));
+}
 async function refresh(){
   if(!S.code||refresh.busy||document.hidden) return;
   refresh.busy=true;
   try{
     const ver=S.ver, p=await rpc("get_plan",{p_code:S.code});
-    if(ver!==S.ver||S.pending) return;
+    if(ver!==S.ver||S.inflight) return;
     if(p&&JSON.stringify(p)!==JSON.stringify(S.plan)){ S.plan=p; render(); }
-    if(!p){ S.code=null; S.plan=null; setUrl(null); render(); toast("That plan no longer exists."); }
+    if(!p){ S.code=null; S.plan=null; setUrl(null); render(); toast("That plan is no longer available."); }
   }catch{} finally{ refresh.busy=false; }
+}
+async function loadGroups(){
+  if(!S.session||document.hidden) return;
+  try{
+    const g=await rpc("my_groups");
+    if(JSON.stringify(g)!==JSON.stringify(S.groups)){ S.groups=g||[]; render(); }
+  }catch{}
 }
 async function openPlan(code){
   try{
+    await rpc("join_plan",{p_code:code});
     const p=await rpc("get_plan",{p_code:code});
-    if(!p){ toast("That link has expired. Start a new plan."); setUrl(null); return; }
+    if(!p){ toast("That plan has expired. Start a new one."); setUrl(null); return; }
     p.options=p.options.filter(byId);
-    S.code=code; S.plan=p; S.me=S.names[code]&&!votedAll(p,S.names[code])?S.names[code]:null;
-    render();
+    S.code=code; S.plan=p; S.tab="decide";
+    if(new URLSearchParams(location.search).get("plan")!==code) setUrl(`plan=${code}`);
+    render(); scrollTo(0,0);
   }catch{ toast("Couldn't open that plan. Check your connection."); }
 }
-async function newPlan(p){
-  if(!online){ S.plan=p; S.me=p.people.length===1?p.people[0]:null; persist(); render(); return; }
+async function newPlan(p,group){
   try{
-    const code=await rpc("create_plan",{p_data:withoutVotes(p)});
-    S.code=code; S.plan=p; S.me=null; setUrl(code); persist(); render(); }catch{ toast("Couldn't create the plan. Check your connection and try again."); }
+    const code=await rpc("create_plan",{p_data:planBody(p),p_group:group||null});
+    await openPlan(code); loadGroups();
+  }catch{ toast("Couldn't create the plan. Check your connection and try again."); }
 }
 async function changePlan(p,reset=false){
-  S.ver++; S.plan=p; S.me=null; persist(); render();
-  if(S.code){ try{ await rpc("update_plan",{p_code:S.code,p_data:withoutVotes(p),p_reset_votes:reset}); }catch{ toast("That change didn't save. Try again."); } }
+  S.ver++; S.plan=p; render();
+  try{ await rpc("update_plan",{p_code:S.code,p_data:planBody(p),p_reset_votes:reset}); }catch{ toast("That change didn't save. Try again."); }
 }
-function clearPlan(){ S.plan=null; S.me=null; S.code=null; setUrl(null); persist(); render(); }
+function clearPlan(){ S.plan=null; S.code=null; setUrl(null); render(); }
 async function vote(id,v){
-  const n=S.me;
   S.ver++;
-  S.plan=merge(S.plan,{votes:{[n]:{[id]:v}}});
-  if(!nextCard(S.plan,n)) S.me=null;
-  persist(); render();
-  if(S.code){ S.pending++; try{ await rpc("cast_vote",{p_code:S.code,p_person:n,p_place:id,p_value:v}); }catch{ toast("That vote didn't save. Try again."); } S.pending--; S.ver++; }
+  S.plan=merge(S.plan,{votes:{[uid()]:{[id]:v}}});
+  render(); scrollTo(0,0);
+  S.inflight++;
+  try{ await rpc("cast_vote",{p_code:S.code,p_place:id,p_value:v}); }catch{ toast("That vote didn't save. Try again."); }
+  S.inflight--; S.ver++; loadGroups();
 }
-async function joinByName(){
-  const el=document.getElementById("joinName"), n=el&&el.value.trim().slice(0,20);
-  if(!n) return;
-  if(S.plan.people.includes(n)){ el.value=""; S.me=n; S.names[S.code]=n; persist(); render(); return; }
-  el.value="";
-  if(S.code){ try{ await rpc("add_person",{p_code:S.code,p_name:n}); }catch{ toast("Couldn't add your name. Try again."); return; } }
-  S.ver++;
-  S.plan={...S.plan,people:[...S.plan.people,n]};
-  S.me=n; S.names[S.code]=n; persist(); render();
+async function joinByCode(code){
+  try{
+    const g=await rpc("join_group",{p_code:code});
+    if(!g){ toast("That invite isn't valid. Ask for a new one."); return; }
+    await loadGroups(); S.gid=g.id; S.tab="groups"; toast(`You're in ${g.name}`); render();
+  }catch{ toast("Couldn't join that group. Check your connection."); }
 }
-function toast(t){const el=document.getElementById("toast");el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,3000)}
+function toast(t){const el=document.getElementById("toast");el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,3500)}
 
 /* ---------- Views ---------- */
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -150,54 +217,102 @@ const placeLine=p=>[zname(p.zone),costText(p),metroText(p.metro)].filter(Boolean
 const eventWhen=e=>e.start===e.end?`${wday(e.start)} ${short(e.start)}`:(e.start<=today?`Until ${short(e.end)}`:`${short(e.start)} to ${short(e.end)}`);
 const mapsUrl=q=>"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(q+", Milano");
 
+const WHAT_TEXT={eat:"Food",drinks:"Drinks",clubs:"Clubs",culture:"Culture",event:"An event"};
+const dayText=d=>d===today?"tonight":d===addDays(today,1)?"tomorrow":`${long(d)} ${short(d)}`;
+const planTitle=p=>`${WHAT_TEXT[p.what]||"Plan"} ${dayText(p.day)}`;
+const toVote=()=>S.groups.flatMap(g=>g.plans.filter(p=>!p.finished&&p.mine<p.options).map(p=>({...p,group:g.name})));
 function viewSetup(){
-  const f=S.form, unit=WHAT_UNIT[f.what];
+  const f=S.form, unit=WHAT_UNIT[f.what], todo=toVote();
+  if(f.group&&!S.groups.some(g=>g.id===f.group)) f.group="";
+  if(!f.group&&S.groups.length&&!f.linkOnly) f.group=S.groups[0].id;
   return `<div data-hero><h1>Where to?</h1></div>
+  ${todo.length?`<div class="group"><span class="label">Waiting for your vote</span><div class="stack">${todo.map(p=>`<button class="person" data-act="openPlan" data-code="${esc(p.code)}"><span>${esc(planTitle(p))}<small class="sub">${esc(p.by||"Someone")} in ${esc(p.group)}</small></span><small>Vote</small></button>`).join("")}</div></div>`:""}
   <div class="group">${seg("what",f.what,[["eat","Eat"],["drinks","Drinks"],["clubs","Clubs"],["culture","Culture"],["event","Event"]],"What")}</div>
   <div class="group">${seg("day",f.day,whenOptions(),"When")}</div>
   ${slider("budget",unit,f.idx[unit])}
   <div class="group"><select id="area" data-change="area" aria-label="Area"><option value="">Anywhere in Milan</option>${AREAS.map(z=>`<option value="${z}" ${f.area===z?"selected":""}>${esc(zname(z))}</option>`).join("")}</select></div>
-  <div class="group"><span class="label">Who's coming</span>
-    <div class="names">${f.people.map((n,i)=>`<button class="name" data-act="rm" data-i="${i}" aria-label="Remove ${esc(n)}">${esc(n)} <span>×</span></button>`).join("")}</div>
-    <input type="text" id="addName" placeholder="Add a name" maxlength="20" enterkeyhint="done" autocomplete="off">
-  </div>
-  <button class="btn" data-act="start">Find places</button>`;
+  <div class="group"><span class="label">Send to</span><select id="sendTo" data-change="sendTo" aria-label="Send to">${S.groups.map(g=>`<option value="${esc(g.id)}" ${f.group===g.id?"selected":""}>${esc(g.name)}</option>`).join("")}<option value="" ${f.group?"":"selected"}>Share by link</option></select></div>
+  <button class="btn" data-act="start">${f.group?"Send to the group":"Find places"}</button>`;
 }
-function viewPeople(p){
-  const left=p.people.filter(n=>!votedAll(p,n)).length, anyVotes=Object.keys(p.votes||{}).length>0;
-  const share=S.code?`<div class="group"><button class="btn" data-act="share">Share link with the group</button></div>`:"";
-  const join=S.code?`<div class="group" style="margin-top:14px"><input type="text" id="joinName" placeholder="Not listed? Add your name" maxlength="20" enterkeyhint="done" autocomplete="off"></div>`:"";
-  return `<div data-hero><h1>Who's voting?</h1></div>${share}<div class="stack">
-    ${p.people.map(n=>{const d=votedAll(p,n);return `<button class="person" data-act="me" data-n="${esc(n)}" ${d?"disabled":""}>${esc(n)}<small>${d?"Done":"Vote"}</small></button>`}).join("")}
-  </div>${join}
-  ${anyVotes&&left?`<button class="text" data-act="finish">See the result now</button>`:""}
-  <button class="text" data-act="reset">Start over</button>`;
+function viewWaiting(p){
+  const done=p.people.filter(n=>votedAll(p,n)).length, solo=p.people.length===1;
+  const nameOf=n=>n===uid()?"You":(p.names?.[n]||"Someone");
+  return `<div data-hero><span>${esc(p.group_name||planTitle(p))}</span><h1>${solo?"Invite your friends":`${done} of ${p.people.length} voted`}</h1></div>
+  ${p.group_id?"":`<div class="group"><button class="btn" data-act="share">Share link</button></div>`}
+  <div class="stack">${p.people.map(n=>`<div class="person"><span>${esc(nameOf(n))}</span><small>${votedAll(p,n)?"Done":"Voting"}</small></div>`).join("")}</div>
+  ${Object.keys(p.votes||{}).length?`<button class="text" data-act="finish">See the result now</button>`:""}
+  <button class="text" data-act="reset">Back</button>`;
 }
 function viewCard(p){
-  const id=nextCard(p,S.me), it=byId(id), i=p.options.indexOf(id);
+  const id=nextCard(p,uid()), it=byId(id), i=p.options.indexOf(id);
   const line=it.cat?`${eventWhen(it)} · ${it.venue}`:placeLine(it);
-  return `<div data-hero><span>${S.me==="You"?"Your vote":esc(S.me)+"'s vote"}</span><h1>${i+1} of ${p.options.length}</h1></div>
+  return `<div data-hero><span>${esc(p.group_name||"Your vote")}</span><h1>${i+1} of ${p.options.length}</h1></div>
   <div class="place"><span class="dim">${it.cat?"Event":esc(KIND[it.kind])}</span><h2>${esc(it.name)}</h2>
     ${it.cat?(it.priceText?`<p>${esc(it.priceText)}</p>`:""):`<p>${esc(it.why)}</p>`}
     <p class="dim">${esc(line)}</p></div>
   <div class="yesno"><button class="btn plain" data-act="vote" data-id="${esc(id)}" data-v="0">No</button><button class="btn" data-act="vote" data-id="${esc(id)}" data-v="1">Yes</button></div>`;
 }
 function viewResult(p){
-  const r=results(p), w=r[0], total=Object.keys(p.votes||{}).length||p.people.length;
+  const r=results(p), w=r[0], total=Object.keys(p.votes||{}).length||p.people.length, back=p.group_id?"Back":"New plan";
   if(!w||w.yes===0) return `<div data-hero><span>Nobody said yes to any of these</span><h1>No match this round</h1></div>
-    <div class="stack"><button class="btn" data-act="again">Try 5 more</button></div><button class="text" data-act="reset">Start over</button>`;
+    <div class="stack"><button class="btn" data-act="again">Try 5 more</button></div><button class="text" data-act="reset">${back}</button>`;
   const it=w.item, where=it.cat?it.venue:`${it.addr}`, sub=it.cat?eventWhen(it):[metroText(it.metro),zname(it.zone)].filter(Boolean).join(" · ");
   return `<div data-hero><span>${w.yes} of ${total} said yes</span><h1 class="placename">${esc(it.name)}</h1></div><div class="win"><p>${esc(where)}</p><p class="dim">${esc(sub)}</p></div>
-  <div class="stack"><button class="btn" data-act="copy">Copy for the group chat</button><a class="btn plain" href="${mapsUrl(it.name+" "+where)}" target="_blank" rel="noopener">Directions</a></div>
+  <div class="stack"><button class="btn" data-act="copy">Copy the details</button><a class="btn plain" href="${mapsUrl(it.name+" "+where)}" target="_blank" rel="noopener">Directions</a></div>
   <div class="group" style="margin-top:24px"><span class="label">Other options</span><div class="rows">${r.slice(1).map(x=>`<div class="rowstat"><span>${esc(x.item.name)}</span><span>${x.yes} yes</span></div>`).join("")}</div></div>
-  <button class="text" data-act="reset">New plan</button>`;
+  <button class="text" data-act="reset">${back}</button>`;
 }
 function viewDecide(){
   const p=S.plan;
   if(!p) return viewSetup();
-  if(p.finished||allDone(p)) return viewResult(p);
-  if(S.me&&nextCard(p,S.me)) return viewCard(p);
-  return viewPeople(p);
+  if(p.finished||(allDone(p)&&p.people.length>1)) return viewResult(p);
+  if(p.people.includes(uid())&&nextCard(p,uid())) return viewCard(p);
+  return viewWaiting(p);
+}
+
+/* ---------- Login ---------- */
+function viewAuth(){
+  const v=S.authView, b=S.authBusy, invited=S.pending?.join, f=(id,type,label,auto,val="")=>`<label class="field"><span class="label">${label}</span><input type="${type}" id="${id}" autocomplete="${auto}" value="${esc(val)}" ${b?"disabled":""}></label>`;
+  const titles={login:invited?"Log in to join the group":"Welcome back",signup:invited?"Create an account to join":"Create your account",reset:"Reset your password",newpass:"Choose a new password"};
+  const main={login:"Log in",signup:"Create account",reset:"Send reset link",newpass:"Save password"}[v];
+  return `<div data-hero><h1>${titles[v]}</h1></div>
+  ${v==="login"||v==="signup"?`<div class="group">${seg("authView",v,[["login","Log in"],["signup","Create account"]],"Account")}</div>`:""}
+  ${S.authNote?`<p class="note">${esc(S.authNote)}</p>`:""}
+  <form id="authForm" novalidate>
+    ${v==="signup"?f("name","text","Your name","name")+`<p class="hint left">Your friends will see this in your groups.</p>`:""}
+    ${v==="newpass"?"":f("email","email","Email","email",S.email)}
+    ${v==="reset"?"":f("password","password",v==="newpass"?"New password":"Password",v==="login"?"current-password":"new-password")}
+    <button class="btn" type="submit" ${b?"disabled":""}>${b?"One moment":main}</button>
+  </form>
+  ${v==="login"?`<button class="text" data-act="authView" data-v="reset">Forgot your password?</button>`:""}
+  ${v==="reset"?`<button class="text" data-act="authView" data-v="login">Back to log in</button>`:""}`;
+}
+
+/* ---------- Groups ---------- */
+function planRow(p){
+  const status=p.finished||p.done>=p.people?"See result":p.mine<p.options?"Vote":`${p.done} of ${p.people} voted`;
+  return `<button class="person" data-act="openPlan" data-code="${esc(p.code)}"><span>${esc(planTitle(p))}<small class="sub">Started by ${esc(p.by||"someone")}</small></span><small>${status}</small></button>`;
+}
+function viewGroup(g){
+  const n=g.members.length;
+  return `<div data-hero><span>${n} ${n===1?"member":"members"}</span><h1>${esc(g.name)}</h1></div>
+  <div class="stack"><button class="btn" data-act="newGroupPlan" data-id="${esc(g.id)}">Start a plan</button>
+  <button class="btn plain" data-act="invite" data-id="${esc(g.id)}">Invite people</button></div>
+  <p class="hint">Or share the code <b class="code">${esc(g.invite_code)}</b></p>
+  <div class="group" style="margin-top:20px"><span class="label">Plans</span>${g.plans.length?`<div class="stack">${g.plans.map(planRow).join("")}</div>`:`<p class="hint left">No plans yet. Start one and everyone here can vote.</p>`}</div>
+  <div class="group"><span class="label">Members</span><div class="rows">${g.members.map(m=>`<div class="rowstat"><span>${esc(m.name)}${m.id===uid()?" (you)":""}</span></div>`).join("")}</div></div>
+  <button class="text" data-act="leave" data-id="${esc(g.id)}">${S.leaving?"Tap again to leave this group":"Leave group"}</button>
+  <button class="text" data-act="allGroups">All groups</button>`;
+}
+function viewGroups(){
+  const g=S.groups.find(x=>x.id===S.gid);
+  if(g) return viewGroup(g);
+  const name=S.session?.user?.user_metadata?.name||"You";
+  return `<div data-hero><h1>My groups</h1></div>
+  ${S.groups.length?`<div class="stack">${S.groups.map(x=>{const v=x.plans.filter(p=>!p.finished&&p.mine<p.options).length;return `<button class="person" data-act="openGroup" data-id="${esc(x.id)}"><span>${esc(x.name)}<small class="sub">${x.members.length} ${x.members.length===1?"member":"members"}</small></span><small>${v?`${v} to vote on`:"Open"}</small></button>`}).join("")}</div>`:`<p class="hint left">Create a group for your friends or family, then invite them. Plans you send there appear for everyone.</p>`}
+  <form id="groupForm" class="group" style="margin-top:20px" novalidate><span class="label">New group</span><div class="inline"><input type="text" id="groupName" placeholder="Group name" maxlength="40" autocomplete="off"><button class="btn small" type="submit">Create</button></div></form>
+  <form id="codeForm" class="group" novalidate><span class="label">Got an invite code?</span><div class="inline"><input type="text" id="joinCode" placeholder="Invite code" maxlength="14" autocomplete="off" autocapitalize="off"><button class="btn small plain" type="submit">Join</button></div></form>
+  <p class="foot">Logged in as ${esc(name)}.</p><button class="text" data-act="logout">Log out</button>`;
 }
 const HOT_TYPES=[["all","All"],["eat","Eat"],["drink","Drinks"],["club","Clubs"],["culture","Culture"]];
 const HOT_GROUPS=[["Restaurants",p=>p.kind==="eat"],["Cheap eats",p=>p.kind==="cheap"],["Bars",p=>["drink","wine","beer"].includes(p.kind)],["Nightclubs",p=>p.kind==="club"],["Culture",p=>p.kind==="culture"]];
@@ -344,38 +459,40 @@ function viewEvents(){
 }
 function render(){
   const a=document.activeElement;
-  if(render.ok&&a&&(a.id==="addName"||a.id==="joinName")&&a.value){ render.later=true; return; }
+  if(render.ok&&a&&a.matches?.('input[type=text],input[type=email],input[type=password]')&&a.value&&S.session){ render.later=true; return; }
   render.ok=true; render.later=false;
   const open=[...document.querySelectorAll("details[open] b")].map(b=>b.textContent);
-  document.getElementById("view").innerHTML=S.tab==="decide"?viewDecide():S.tab==="hotspots"?viewHot():viewEvents();
+  const authed=S.session&&S.authView!=="newpass";
+  document.body.classList.toggle("noauth",!authed);
+  document.getElementById("view").innerHTML=!authed?viewAuth():S.tab==="decide"?viewDecide():S.tab==="hotspots"?viewHot():S.tab==="groups"?viewGroups():viewEvents();
   const h=document.querySelector("#view [data-hero]"), ht=document.getElementById("heroText");
   ht.innerHTML=h?h.innerHTML:""; h?.remove();
   document.querySelectorAll("details").forEach(d=>{ if(open.includes(d.querySelector("b").textContent)) d.open=true; });
-  if(S.tab==="hotspots"&&S.hotView==="map"&&!S.mapFail) mountMap();
+  if(authed&&S.tab==="hotspots"&&S.hotView==="map"&&!S.mapFail) mountMap();
+  const badge=document.getElementById("badge"), c=toVote().length; if(badge){ badge.textContent=c; badge.hidden=!c; }
   document.querySelectorAll("nav button").forEach(b=>b.dataset.tab===S.tab?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current"));
-}
-function addName(){
-  const el=document.getElementById("addName"), n=el&&el.value.trim();
-  if(!n) return;
-  el.value="";
-  if(!S.form.people.includes(n)) S.form.people.push(n);
-  render(); document.getElementById("addName")?.focus();
 }
 const H={
   tab(el){ S.tab=el.dataset.tab; try{location.hash=S.tab}catch{} render(); scrollTo(0,0); },
   what(el){ S.form.what=el.dataset.v; render(); },
   day(el){ S.form.day=el.dataset.v; render(); },
-  rm(el){ S.form.people.splice(Number(el.dataset.i),1); render(); },
-  start(){ addName(); const f=S.form; if(!f.people.length){ toast("Add at least one name"); return; }
-    const unit=WHAT_UNIT[f.what], max=maxFor(unit,f.idx[unit]), q={...f,max}, options=shortlist(q); if(!options.length){ toast("Nothing fits that budget. Try raising it or choosing another day."); return; }
-    newPlan({...q,people:[...f.people],options,seen:options,votes:{},finished:false}); },
-  me(el){ S.me=el.dataset.n; if(S.code){S.names[S.code]=S.me;persist()} render(); scrollTo(0,0); },
-  share(){ const t=shareUrl(); (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast("Link copied. Paste it in the group chat."),()=>toast(t)); },
+  start(){ const f=S.form, unit=WHAT_UNIT[f.what], max=maxFor(unit,f.idx[unit]), {group,idx,linkOnly,...rest}=f, q={...rest,max}, options=shortlist(q);
+    if(!options.length){ toast("Nothing fits that budget. Try raising it or choosing another day."); return; }
+    newPlan({...q,options,seen:options,finished:false},group); },
+  share(){ shareOut(`Help choose where we go: ${shareUrl()}`,"Link copied"); },
+  authView(el){ S.email=document.getElementById("email")?.value||S.email; S.authView=el.dataset.v; S.authNote=""; render(); },
+  logout(){ logout(); },
+  openPlan(el){ openPlan(el.dataset.code); },
+  openGroup(el){ S.gid=el.dataset.id; S.leaving=false; render(); scrollTo(0,0); },
+  allGroups(){ S.gid=null; S.leaving=false; render(); scrollTo(0,0); },
+  newGroupPlan(el){ S.form.group=el.dataset.id; S.form.linkOnly=false; S.plan=null; S.code=null; setUrl(null); S.tab="decide"; render(); scrollTo(0,0); },
+  invite(el){ const g=S.groups.find(x=>x.id===el.dataset.id); if(g) shareOut(`Join ${g.name} on Concit: ${inviteUrl(g)}`,"Invite link copied"); },
+  async leave(el){ if(!S.leaving){ S.leaving=true; render(); return; } S.leaving=false; try{ await rpc("leave_group",{p_group:el.dataset.id}); S.gid=null; await loadGroups(); render(); }catch{ toast("Couldn't leave the group. Try again."); } },
   vote(el){ vote(el.dataset.id,Number(el.dataset.v)); },
   finish(){ changePlan({...S.plan,finished:true}); },
-  reset(){ clearPlan(); },
+  reset(){ const g=S.plan?.group_id; clearPlan(); if(g){ S.gid=g; S.tab="groups"; render(); } },
   again(){ const p=S.plan, options=shortlist(p,p.seen||p.options); if(!options.length){ toast("That's everything for these choices."); return; }
-    changePlan({...p,options,seen:[...(p.seen||[]),...options],votes:{},finished:false},true); },
+    S.ver++; changePlan({...p,options,seen:[...(p.seen||[]),...options],votes:{},finished:false},true); },
   copy(){ const it=results(S.plan)[0].item, where=it.cat?it.venue:it.addr, when=parse(S.plan.day).toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"});
     const t=`${it.name}, ${where}. ${when}.`;
     (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast("Copied"),()=>toast(t)); },
@@ -392,15 +509,18 @@ document.addEventListener("click",e=>{const el=e.target.closest("[data-act]");if
 document.addEventListener("input",e=>{const u=e.target.dataset.slider; if(!u) return; const i=Number(e.target.value);
   if(e.target.id==="budget") S.form.idx[u]=i; else S.hotIdx[u]=i;
   document.getElementById(e.target.id+"Val").textContent=stepText(u,i);});
-document.addEventListener("change",e=>{ if(e.target.id==="hotBudget") render(); const c=e.target.dataset.change; if(c==="area"){S.form.area=e.target.value}});
-document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="addName"){e.preventDefault();addName()} if(e.key==="Enter"&&e.target.id==="joinName"){e.preventDefault();joinByName()} if((e.key==="Enter"||e.key===" ")&&e.target.matches?.("g[data-act]")){e.preventDefault();H.zoneMap(e.target)}});
+document.addEventListener("change",e=>{ if(e.target.id==="hotBudget") render(); const c=e.target.dataset.change; if(c==="area"){S.form.area=e.target.value} if(c==="sendTo"){S.form.group=e.target.value;S.form.linkOnly=!e.target.value;persist();render()}});
+document.addEventListener("submit",async e=>{ e.preventDefault();
+  if(e.target.id==="authForm") authSubmit();
+  if(e.target.id==="groupForm"){ const i=document.getElementById("groupName"), n=i.value.trim(); if(!n) return; i.value=""; i.blur(); try{ S.gid=await rpc("create_group",{p_name:n}); await loadGroups(); render(); }catch{ toast("Couldn't create the group. Try again."); } }
+  if(e.target.id==="codeForm"){ const i=document.getElementById("joinCode"), c=i.value.trim(); if(!c) return; i.value=""; i.blur(); joinByCode(c); }
+});
+document.addEventListener("keydown",e=>{ if((e.key==="Enter"||e.key===" ")&&e.target.matches?.("g[data-act]")){e.preventDefault();H.zoneMap(e.target)} });
 document.addEventListener("focusout",()=>setTimeout(()=>{if(render.later)render()},0));
-addEventListener("hashchange",()=>{const t=location.hash.slice(1);if(["decide","hotspots","events"].includes(t)&&t!==S.tab){S.tab=t;render()}});
-{const t=location.hash.slice(1);if(["decide","hotspots","events"].includes(t))S.tab=t}
-render();
+addEventListener("hashchange",()=>{const t=location.hash.slice(1);if(["decide","hotspots","events","groups"].includes(t)&&t!==S.tab){S.tab=t;render()}});
+{const t=location.hash.slice(1);if(["decide","hotspots","events","groups"].includes(t))S.tab=t}
 
 async function loadPlaces(){
-  if(!online) return;
   try{
     const r=await fetch(`${SB.url}/rest/v1/places?select=*`,{headers:{apikey:SB.anonKey,Authorization:`Bearer ${SB.anonKey}`}});
     if(!r.ok) return;
@@ -410,8 +530,36 @@ async function loadPlaces(){
     render();
   }catch{}
 }
-const code=planFromUrl();
-loadPlaces().finally(()=>{ if(code) openPlan(code); });
+function linkFromUrl(){
+  const q=new URLSearchParams(location.search), plan=q.get("plan"), join=q.get("join");
+  if(plan||join){ S.pending={plan,join}; persist(); }
+}
+async function afterLogin(){
+  render();
+  await Promise.all([loadPlaces(),loadGroups()]);
+  const p=S.pending; S.pending=null; persist();
+  if(p?.join){ setUrl(null); await joinByCode(p.join); }
+  else if(p?.plan) await openPlan(p.plan);
+  render();
+}
+/* Links from confirmation and password-reset emails arrive in the address hash. */
+function sessionFromHash(){
+  const h=new URLSearchParams(location.hash.slice(1));
+  if(h.get("error_description")){ toast(h.get("error_description").replace(/\+/g," ")); history.replaceState(null,"",location.pathname+location.search); return; }
+  const t=h.get("access_token"); if(!t) return;
+  S.session={access_token:t,refresh_token:h.get("refresh_token"),expires_at:Number(h.get("expires_at"))||Math.floor(Date.now()/1000)+3600,user:null};
+  S.fromEmail=h.get("type");
+  history.replaceState(null,"",location.pathname+location.search);
+}
+(async()=>{
+  linkFromUrl(); sessionFromHash();
+  if(S.session&&!S.session.user){
+    try{ S.session.user=await authCall("user",null,"GET",S.session.access_token); saveSession(); }catch{ S.session=null; saveSession(); }
+  }
+  if(S.fromEmail==="recovery"&&S.session){ S.authView="newpass"; render(); return; }
+  if(S.session){ try{ await afterLogin(); }catch{ render(); } } else render();
+})();
 setInterval(refresh,2500);
-document.addEventListener("visibilitychange",refresh);
-addEventListener("popstate",()=>{const c=planFromUrl(); if(c) openPlan(c); else {S.code=null;S.plan=null;S.me=null;render()}});
+setInterval(loadGroups,8000);
+document.addEventListener("visibilitychange",()=>{refresh();loadGroups()});
+addEventListener("popstate",()=>{ if(!S.session) return; const c=new URLSearchParams(location.search).get("plan"); if(c===S.code||(!c&&!S.code)) return; if(c) openPlan(c); else {S.code=null;S.plan=null;render()} });
