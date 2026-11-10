@@ -171,3 +171,9 @@ body.noauth #me{display:none}
 .cl{width:34px;height:34px;border-radius:50%;border:3px solid #fff;background:var(--accent);color:#fff;font:700 14px/1 var(--font);cursor:pointer;padding:0;box-shadow:0 2px 6px rgba(15,42,68,.35);z-index:1}
 .cl.mid{width:40px;height:40px;font-size:15px}
 .cl.big{width:48px;height:48px;font-size:16px;background:var(--fg)}
+/* Category grid, cuisine chips, weekday filter */
+.seg.grid{display:grid;grid-template-columns:repeat(3,1fr)}
+.chips.sub{margin:6px -4px 0}
+.chips.sub .chip{font-size:14px;padding:6px 12px}
+.seg.days{margin:-4px 0 14px}
+.seg.days button{font-size:13px;padding:7px 0}

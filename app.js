@@ -12,6 +12,10 @@ const costOf=(p,unit)=>{const c=p.costs||{}; if(c[unit]!=null) return c[unit]; i
 const maxFor=(unit,i)=>i>=STEPS[unit].length?null:STEPS[unit][i];
 const stepText=(unit,i)=>{const m=maxFor(unit,i);return m===null?"No limit":m===0?"Free only":`€${m}`};
 function costText(p){const u=KIND_UNIT[p.kind],c=costOf(p,u);return c===0?"Free":`about €${c} ${UNIT_TEXT[u]}`}
+const CUISINES=[["","Any"],["pizza","Pizza"],["pasta","Pasta"],["milanese","Milanese"],["seafood","Seafood"],["sushi","Sushi"],["asian","Asian"],["meat","Meat"],["street","Street food"],["world","World"],["veggie","Veggie"],["fine","Fine dining"]];
+const CUISINE_TEXT=Object.fromEntries(CUISINES);
+const hasCuisine=(p,c)=>!c||(p.cuisine||[]).includes(c);
+const cuisineChips=(act,val)=>`<div class="chips sub" role="group" aria-label="Cuisine">${CUISINES.map(([k,l])=>`<button class="chip" data-act="${act}" data-v="${k}" aria-pressed="${(val||"")===k}">${l}</button>`).join("")}</div>`;
 const AREAS=["brera","duomo","garibaldi","isola","lambrate","navigli","nolo","romana","venezia","sarpi","tortona"];
 
 /* ---------- Logic ---------- */
@@ -47,7 +51,7 @@ function shortlist(s,seen=[]){
     pool=[...places(p=>p.kind==="culture"&&fits(p)),...shows];
   } else {
     const occ=s.what==="eat"?["dinner","cheap"]:s.what==="coffee"?["coffee"]:["drinks"];
-    pool=places(p=>p.occ.some(o=>occ.includes(o))&&fits(p));
+    pool=places(p=>p.occ.some(o=>occ.includes(o))&&fits(p)&&(s.what!=="eat"||hasCuisine(p,s.cuisine)));
   }
   const score=x=>pin?near(x.zone,x)*1.8-(x.hot||1)*.5:near(x.zone,x)-(x.hot||1)*.9;
   pool.sort((a,b)=>score(a)-score(b));
@@ -217,7 +221,7 @@ const mapsUrl=q=>"https://www.google.com/maps/search/?api=1&query="+encodeURICom
 
 const WHAT_TEXT={coffee:"Coffee",eat:"Food",drinks:"Drinks",clubs:"Clubs",culture:"Culture",event:"An event"};
 const dayText=d=>d===today?"tonight":d===addDays(today,1)?"tomorrow":`${long(d)} ${short(d)}`;
-const planTitle=p=>`${WHAT_TEXT[p.what]||"Plan"} ${dayText(p.day)}`;
+const planTitle=p=>`${p.what==="eat"&&p.cuisine?CUISINE_TEXT[p.cuisine]:WHAT_TEXT[p.what]||"Plan"} ${dayText(p.day)}`;
 const toVote=()=>S.groups.flatMap(g=>g.plans.filter(p=>!p.finished&&p.mine<p.options).map(p=>({...p,group:g.name})));
 /* When: two quick picks, or any date up to six months ahead from a calendar. */
 const MAX_AHEAD=180;
@@ -291,7 +295,8 @@ function viewSetup(){
   if(!f.group&&S.groups.length&&!f.linkOnly) f.group=S.groups[0].id;
   return `<div data-hero><h1>Where to?</h1></div>
   ${todo.length?`<div class="group"><span class="label">Waiting for your vote</span><div class="stack">${todo.map(p=>`<button class="person" data-act="openPlan" data-code="${esc(p.code)}"><span>${esc(planTitle(p))}<small class="sub">${esc(p.by||"Someone")} in ${esc(p.group)}</small></span><small>Vote</small></button>`).join("")}</div></div>`:""}
-  <div class="group">${seg("what",f.what,[["coffee","Coffee"],["eat","Eat"],["drinks","Drinks"],["clubs","Clubs"],["culture","Culture"],["event","Event"]],"What")}</div>
+  <div class="group">${seg("what",f.what,[["coffee","Coffee"],["eat","Restaurants"],["drinks","Bars"],["clubs","Clubs"],["culture","Culture"],["event","Event"]],"What").replace('class="seg"','class="seg grid"')}
+  ${f.what==="eat"?cuisineChips("cuisine",f.cuisine):""}</div>
   ${viewWhen(f)}
   ${slider("budget",unit,f.idx[unit])}
   ${viewWhere(f)}
@@ -387,7 +392,7 @@ function viewAccount(){
   <button class="link quiet center danger" data-act="deleteAccount">${S.deleting?"Tap again to delete for good":"Delete my account"}</button>
   ${S.deleting?`<p class="fine center">This removes your account, your votes and your place in every group. It can't be undone.</p>`:""}`;
 }
-const HOT_TYPES=[["all","All"],["cafe","Coffee"],["eat","Eat"],["drink","Drinks"],["club","Clubs"],["culture","Culture"]];
+const HOT_TYPES=[["all","All"],["cafe","Coffee"],["eat","Restaurants"],["drink","Bars"],["club","Clubs"],["culture","Culture"]];
 const HOT_GROUPS=[["Coffee",p=>p.kind==="cafe"],["Restaurants",p=>p.kind==="eat"],["Cheap eats",p=>p.kind==="cheap"],["Bars",p=>["drink","wine","beer"].includes(p.kind)],["Nightclubs",p=>p.kind==="club"],["Culture",p=>p.kind==="culture"]];
 const MAPLIBRE="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/";
 const MAP_STYLE="https://tiles.openfreemap.org/styles/liberty";
@@ -469,7 +474,7 @@ async function mountMap(){
     MAP.resize(); syncPins();
   }catch{ mapFailed(); }
 }
-const hotType=p=>({all:true,cafe:p.kind==="cafe",eat:["eat","cheap"].includes(p.kind),drink:["drink","wine","beer"].includes(p.kind),club:p.kind==="club",culture:p.kind==="culture"})[S.hot];
+const hotType=p=>({all:true,cafe:p.kind==="cafe",eat:["eat","cheap"].includes(p.kind)&&hasCuisine(p,S.hotCuisine),drink:["drink","wine","beer"].includes(p.kind),club:p.kind==="club",culture:p.kind==="culture"})[S.hot];
 const hotUnit=()=>HOT_UNIT[S.hot];
 function hotMatch(p){ if(!hotType(p)) return false; const u=hotUnit(); if(!u) return true; const m=maxFor(u,S.hotIdx[u]); return m===null||costOf(p,u)<=m; }
 const byHot=(a,b)=>b.hot-a.hot||a.price-b.price;
@@ -538,6 +543,7 @@ function viewHot(){
   return `<div data-hero><h1>Hotspots</h1></div>
   <div class="group">${seg("hotView",S.hotView,[["list","List"],["map","Map"]],"View")}</div>
   <div class="chips">${HOT_TYPES.map(([k,l])=>`<button class="chip" data-act="hot" data-v="${k}" aria-pressed="${S.hot===k}">${l}</button>`).join("")}</div>
+  ${S.hot==="eat"?cuisineChips("hotCuisine",S.hotCuisine):""}
   ${hotUnit()?slider("hotBudget",hotUnit(),S.hotIdx[hotUnit()]):""}
   ${body||`<p class="empty">Nothing at that price. Try raising it.</p>`}
   <p class="foot">Prices are typical estimates. Checked ${CHECKED}, so confirm before you go.${S.hotView==="map"?" Map data © OpenStreetMap contributors.":""}</p>`;
@@ -549,13 +555,15 @@ function evRow(e){
 }
 function viewEvents(){
   const test={all:()=>true,music:e=>e.cat==="music",sport:e=>e.cat==="sport",art:e=>e.cat==="art",theatre:e=>e.cat==="theatre",festival:e=>e.cat==="festival",free:e=>e.priceNum===0,saved:e=>S.saved.has(e.id)}[S.ev]||(()=>true);
-  const list=EVENTS.filter(e=>e.end>=today&&test(e));
+  const onDay=e=>{ if(S.evDay==null) return true; const from=e.start<today?today:e.start; if((parse(e.end)-parse(from))/864e5>=6) return true; for(let d=from;d<=e.end;d=addDays(d,1)) if(parse(d).getDay()===S.evDay) return true; return false; };
+  const list=EVENTS.filter(e=>e.end>=today&&test(e)&&onDay(e));
   const dated=list.filter(e=>!isRun(e)).sort((a,b)=>a.start.localeCompare(b.start));
   const runs=list.filter(isRun).sort((a,b)=>a.end.localeCompare(b.end));
   const wk=addDays(today,7), groups=[["Today",e=>e.start<=today],["This week",e=>e.start>today&&e.start<=wk],["Later",e=>e.start>wk]];
   const body=groups.map(([t,f])=>{const g=dated.filter(f);return g.length?`<p class="head">${t}</p>${g.map(evRow).join("")}`:""}).join("")+(runs.length?`<p class="head">Running for a while</p>${runs.map(evRow).join("")}`:"");
   return `<div data-hero><h1>Events</h1></div>
   <div class="chips">${[["all","All"],["music","Music"],["sport","Sport"],["art","Art"],["theatre","Theatre"],["festival","Festivals"],["free","Free"],["saved","Saved"]].map(([k,l])=>`<button class="chip" data-act="ev" data-v="${k}" aria-pressed="${S.ev===k}">${l}</button>`).join("")}</div>
+  <div class="seg days" role="group" aria-label="Day of the week">${[["","Any"],["1","Mon"],["2","Tue"],["3","Wed"],["4","Thu"],["5","Fri"],["6","Sat"],["0","Sun"]].map(([k,l])=>`<button data-act="evDay" data-v="${k}" aria-pressed="${k===""?S.evDay==null:S.evDay===Number(k)}">${l}</button>`).join("")}</div>
   <div class="list">${body||`<p class="empty">${S.ev==="saved"?"Open an event and tap Save to keep it here.":"Nothing here right now."}</p>`}</div>
   <p class="foot">Checked ${S.evChecked||CHECKED}. Confirm dates before you go.</p>`;
 }
@@ -579,6 +587,9 @@ function render(){
 const H={
   tab(el){ S.acct=false; S.deleting=false; S.tab=el.dataset.tab; try{location.hash=S.tab}catch{} render(); scrollTo(0,0); },
   what(el){ S.form.what=el.dataset.v; render(); },
+  cuisine(el){ S.form.cuisine=el.dataset.v; render(); },
+  hotCuisine(el){ S.hotCuisine=el.dataset.v; render(); },
+  evDay(el){ S.evDay=el.dataset.v===""?null:Number(el.dataset.v); render(); },
   day(el){ S.form.day=el.dataset.v; S.calOpen=false; render(); },
   pickOpen(){ S.pickOpen=true; S.pickFresh=true; S.calOpen=false; render(); document.querySelector("[data-act=pickSet]")?.scrollIntoView({block:"center",behavior:"smooth"}); },
   pickCancel(){ S.pickOpen=false; render(); },
