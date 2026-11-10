@@ -257,6 +257,24 @@ function viewWhere(f){
     ${f.pin?`<button class="wclear" data-act="pinClear" aria-label="Remove pin">×</button>`:""}</div></div>`;
 }
 let PICK=null, PICK_HOST=null;
+/* Metro and train stations from the map's own street data, drawn as clear dots with names. */
+function addStations(map){
+  const go=()=>{
+    try{
+      if(map.getLayer("concit-stations")||!map.getSource("openmaptiles")) return;
+      const ref=map.getLayer("poi_transit"), font=(ref&&map.getLayoutProperty("poi_transit","text-font"))||["Noto Sans Bold"];
+      if(ref) map.setLayoutProperty("poi_transit","visibility","none");
+      const isStation=["all",["match",["get","class"],["railway","rail"],true,false],["!",["match",["get","subclass"],["tram_stop","subway_entrance","train_station_entrance","platform"],true,false]]];
+      const metro=["==",["get","subclass"],"subway"];
+      map.addLayer({id:"concit-stations",type:"circle",source:"openmaptiles","source-layer":"poi",minzoom:12,filter:isStation,
+        paint:{"circle-radius":["interpolate",["linear"],["zoom"],12,3.5,16,6],"circle-color":["case",metro,"#2f9bff","#0f2a44"],"circle-stroke-color":"#ffffff","circle-stroke-width":2}});
+      map.addLayer({id:"concit-station-names",type:"symbol",source:"openmaptiles","source-layer":"poi",minzoom:13.2,filter:isStation,
+        layout:{"text-field":["get","name"],"text-font":font,"text-size":11,"text-anchor":"left","text-offset":[0.8,0],"text-optional":true},
+        paint:{"text-color":"#0f2a44","text-halo-color":"#ffffff","text-halo-width":1.6}});
+    }catch(e){}
+  };
+  if(map.isStyleLoaded()) go(); else map.on("load",go);
+}
 /* Area names on the maps, so people can find their way around (Duomo, Brera...). Tapping one on the pin map moves the pin there. */
 function zoneLabels(map,tap){
   const els=[];
@@ -282,7 +300,7 @@ async function mountPick(){
       PICK.addControl(new maplibregl.NavigationControl({showCompass:false}),"top-right");
       PICK.touchZoomRotate.disableRotation();
       PICK.on("click",e=>PICK.easeTo({center:e.lngLat}));
-      zoneLabels(PICK,true);
+      zoneLabels(PICK,true); addStations(PICK);
       let ok=false; PICK.on("load",()=>{ok=true}); setTimeout(()=>{ if(!ok&&S.pickOpen){ S.pickOpen=false; mapFailed(); } },12000);
     } else if(S.pickFresh){ PICK.jumpTo({center:[c[1],c[0]],zoom:Math.max(PICK.getZoom(),13)}); }
     S.pickFresh=false; PICK.resize();
@@ -467,7 +485,7 @@ async function mountMap(){
       MAP.touchZoomRotate.disableRotation();
       MAP.on("error",e=>{ if(!MAP.isStyleLoaded()&&!S.mapOk) mapFailed(); });
       MAP.on("load",()=>{ S.mapOk=true; });
-      zoneLabels(MAP,false);
+      zoneLabels(MAP,false); addStations(MAP);
       MAP.on("moveend",syncPins);
       setTimeout(()=>{ if(!S.mapOk&&!S.mapFail) mapFailed(); },12000);
     }
