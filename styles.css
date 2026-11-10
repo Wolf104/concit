@@ -177,3 +177,7 @@ body.noauth #me{display:none}
 .chips.sub .chip{font-size:14px;padding:6px 12px}
 .seg.days{margin:-4px 0 14px}
 .seg.days button{font-size:13px;padding:7px 0}
+.evcal{margin:2px 0 14px}
+.calday{position:relative}
+.calday.has::after{content:"";position:absolute;left:50%;bottom:4px;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:var(--accent)}
+.calday.has[aria-pressed="true"]::after{background:#fff}

@@ -553,18 +553,32 @@ function evRow(e){
   return `<details><summary><div><b>${esc(e.name)}</b><small>${esc(info)}</small></div><span class="when">${esc(eventWhen(e))}</span></summary>
   <div class="more"><div class="actions"><button data-act="save" data-id="${e.id}">${on?"Saved":"Save"}</button><a href="${esc(srcUrl(e.src))}" target="_blank" rel="noopener">Source</a></div>${e.time?`<p class="dim">${esc(e.time)}</p>`:""}</div></details>`;
 }
+/* Events calendar: days with events get a dot; tapping a day shows what's on. */
+function evCalendar(list){
+  const base=S.evMonth||today.slice(0,7), [y,m]=base.split("-").map(Number);
+  const first=new Date(y,m-1,1), days=new Date(y,m,0).getDate(), lead=(first.getDay()+6)%7;
+  const last=list.reduce((a,e)=>e.end>a?e.end:a,addDays(today,30)), title=first.toLocaleDateString("en-GB",{month:"long",year:"numeric"});
+  const busy=new Set(); list.filter(e=>!isRun(e)).forEach(e=>{ for(let d=e.start<today?today:e.start;d<=e.end;d=addDays(d,1)) busy.add(d); });
+  let cells="";
+  for(let i=0;i<lead;i++) cells+="<span></span>";
+  for(let d=1;d<=days;d++){ const v=`${base}-${String(d).padStart(2,"0")}`, off=v<today||v>last;
+    cells+=`<button class="calday${busy.has(v)&&!off?" has":""}" data-act="evPick" data-v="${v}" aria-pressed="${v===S.evDate}" ${v===today?'aria-current="date"':""} ${off?"disabled":""} aria-label="${parse(v).toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"})}${busy.has(v)?", has events":""}">${d}</button>`; }
+  return `<div class="cal evcal"><div class="calhead"><button class="calnav" data-act="evMove" data-v="-1" ${base<=today.slice(0,7)?"disabled":""} aria-label="Previous month">‹</button><b>${title}</b><button class="calnav" data-act="evMove" data-v="1" ${base>=last.slice(0,7)?"disabled":""} aria-label="Next month">›</button></div>
+  <div class="calgrid">${["M","T","W","T","F","S","S"].map(x=>`<span class="dow">${x}</span>`).join("")}${cells}</div></div>`;
+}
 function viewEvents(){
   const test={all:()=>true,music:e=>e.cat==="music",sport:e=>e.cat==="sport",art:e=>e.cat==="art",theatre:e=>e.cat==="theatre",festival:e=>e.cat==="festival",free:e=>e.priceNum===0,saved:e=>S.saved.has(e.id)}[S.ev]||(()=>true);
-  const onDay=e=>{ if(S.evDay==null) return true; const from=e.start<today?today:e.start; if((parse(e.end)-parse(from))/864e5>=6) return true; for(let d=from;d<=e.end;d=addDays(d,1)) if(parse(d).getDay()===S.evDay) return true; return false; };
-  const list=EVENTS.filter(e=>e.end>=today&&test(e)&&onDay(e));
+  const all=EVENTS.filter(e=>e.end>=today&&test(e)), d=S.evDate;
+  const list=d?all.filter(e=>e.start<=d&&e.end>=d):all;
   const dated=list.filter(e=>!isRun(e)).sort((a,b)=>a.start.localeCompare(b.start));
   const runs=list.filter(isRun).sort((a,b)=>a.end.localeCompare(b.end));
-  const wk=addDays(today,7), groups=[["Today",e=>e.start<=today],["This week",e=>e.start>today&&e.start<=wk],["Later",e=>e.start>wk]];
-  const body=groups.map(([t,f])=>{const g=dated.filter(f);return g.length?`<p class="head">${t}</p>${g.map(evRow).join("")}`:""}).join("")+(runs.length?`<p class="head">Running for a while</p>${runs.map(evRow).join("")}`:"");
+  const wk=addDays(today,7), groups=d?[[parse(d).toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"}),()=>true]]:[["Today",e=>e.start<=today],["This week",e=>e.start>today&&e.start<=wk],["Later",e=>e.start>wk]];
+  const body=groups.map(([t,f])=>{const g=dated.filter(f);return g.length?`<p class="head">${t}</p>${g.map(evRow).join("")}`:""}).join("")+(runs.length?`<p class="head">${d?"Also on that day":"Running for a while"}</p>${runs.map(evRow).join("")}`:"");
   return `<div data-hero><h1>Events</h1></div>
   <div class="chips">${[["all","All"],["music","Music"],["sport","Sport"],["art","Art"],["theatre","Theatre"],["festival","Festivals"],["free","Free"],["saved","Saved"]].map(([k,l])=>`<button class="chip" data-act="ev" data-v="${k}" aria-pressed="${S.ev===k}">${l}</button>`).join("")}</div>
-  <div class="seg days" role="group" aria-label="Day of the week">${[["","Any"],["1","Mon"],["2","Tue"],["3","Wed"],["4","Thu"],["5","Fri"],["6","Sat"],["0","Sun"]].map(([k,l])=>`<button data-act="evDay" data-v="${k}" aria-pressed="${k===""?S.evDay==null:S.evDay===Number(k)}">${l}</button>`).join("")}</div>
-  <div class="list">${body||`<p class="empty">${S.ev==="saved"?"Open an event and tap Save to keep it here.":"Nothing here right now."}</p>`}</div>
+  ${evCalendar(all)}
+  ${d?`<button class="link center" data-act="evPick" data-v="" style="margin:0 auto 4px">Show all dates</button>`:""}
+  <div class="list">${body||`<p class="empty">${S.ev==="saved"?"Open an event and tap Save to keep it here.":d?"Nothing on that day. Try another date.":"Nothing here right now."}</p>`}</div>
   <p class="foot">Checked ${S.evChecked||CHECKED}. Confirm dates before you go.</p>`;
 }
 function render(){
@@ -589,7 +603,8 @@ const H={
   what(el){ S.form.what=el.dataset.v; render(); },
   cuisine(el){ S.form.cuisine=el.dataset.v; render(); },
   hotCuisine(el){ S.hotCuisine=el.dataset.v; render(); },
-  evDay(el){ S.evDay=el.dataset.v===""?null:Number(el.dataset.v); render(); },
+  evPick(el){ const v=el.dataset.v||null; S.evDate=S.evDate===v?null:v; render(); },
+  evMove(el){ const [y,m]=(S.evMonth||today.slice(0,7)).split("-").map(Number); S.evMonth=iso(new Date(y,m-1+Number(el.dataset.v),1)).slice(0,7); render(); },
   day(el){ S.form.day=el.dataset.v; S.calOpen=false; render(); },
   pickOpen(){ S.pickOpen=true; S.pickFresh=true; S.calOpen=false; render(); document.querySelector("[data-act=pickSet]")?.scrollIntoView({block:"center",behavior:"smooth"}); },
   pickCancel(){ S.pickOpen=false; render(); },
