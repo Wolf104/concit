@@ -29,13 +29,15 @@ const open=(p,day)=>!(p.closed||[]).includes(parse(day).getDay());
 
 /* The best places for the choices made, skipping anything the group has already seen. */
 function shortlist(s,seen=[]){
-  const near=z=>s.area&&z&&ZONES[z]?km(ZONES[s.area],ZONES[z]):(s.area?6:0);
+  const pin=s.pin?[null,s.pin[0],s.pin[1]]:null;
+  const near=(z,x)=>pin?(x&&x.lat?km(pin,[null,x.lat,x.lng]):ZONES[z]?km(pin,ZONES[z]):6):s.area&&z&&ZONES[z]?km(ZONES[s.area],ZONES[z]):(s.area?6:0);
+  const local=pin||s.area;
   const unit=WHAT_UNIT[s.what], fits=x=>s.max==null||(x.cat?x.priceNum==null||x.priceNum<=s.max:costOf(x,unit)<=s.max);
   const places=want=>PLACES.filter(p=>want(p)&&open(p,s.day)&&!seen.includes(p.id));
   let pool=[];
   if(s.what==="event"){
     pool=EVENTS.filter(e=>!e.sold&&e.cat!=="art"&&!isRun(e)&&e.end>=s.day&&e.start<=addDays(s.day,6)&&!seen.includes(e.id)&&fits(e));
-    pool.sort((a,b)=>(a.start>s.day?a.start:s.day).localeCompare(b.start>s.day?b.start:s.day)||near(a.zone)-near(b.zone));
+    pool.sort((a,b)=>(a.start>s.day?a.start:s.day).localeCompare(b.start>s.day?b.start:s.day)||near(a.zone,a)-near(b.zone,b));
     return pool.slice(0,5).map(e=>e.id);
   }
   if(s.what==="clubs"){
@@ -47,10 +49,10 @@ function shortlist(s,seen=[]){
     const occ=s.what==="eat"?["dinner","cheap"]:["drinks"];
     pool=places(p=>p.occ.some(o=>occ.includes(o))&&fits(p));
   }
-  const score=x=>near(x.zone)-(x.hot||1)*.9;
+  const score=x=>pin?near(x.zone,x)*1.8-(x.hot||1)*.5:near(x.zone,x)-(x.hot||1)*.9;
   pool.sort((a,b)=>score(a)-score(b));
   const out=[],zones={};
-  for(const x of pool){ if(!s.area&&(zones[x.zone]||0)>=2) continue; zones[x.zone]=(zones[x.zone]||0)+1; out.push(x.id); if(out.length===5) break; }
+  for(const x of pool){ if(!local&&(zones[x.zone]||0)>=2) continue; zones[x.zone]=(zones[x.zone]||0)+1; out.push(x.id); if(out.length===5) break; }
   return out;
 }
 /* Most yeses wins. Ties go to the place that appeared first, which is the stronger match. */
@@ -237,6 +239,37 @@ function calendar(sel){
   return `<div class="cal"><div class="calhead"><button class="calnav" data-act="calMove" data-v="-1" ${base<=today.slice(0,7)?"disabled":""} aria-label="Previous month">‹</button><b>${title}</b><button class="calnav" data-act="calMove" data-v="1" ${base>=last.slice(0,7)?"disabled":""} aria-label="Next month">›</button></div>
   <div class="calgrid">${["M","T","W","T","F","S","S"].map(x=>`<span class="dow">${x}</span>`).join("")}${cells}</div></div>`;
 }
+/* Where: drop a pin by moving the map under a fixed centre pin. Falls back to an area list if the map can't load. */
+const MILAN=[45.4642,9.19];
+const nearestZone=([lat,lng])=>Object.entries(ZONES).reduce((b,[k,z])=>{const d=km([null,lat,lng],z);return d<b[1]?[k,d]:b},[null,1e9])[0];
+const pinText=pin=>`Near ${zname(nearestZone(pin))}`;
+function viewWhere(f){
+  if(S.mapFail) return `<div class="group"><select id="area" data-change="area" aria-label="Area"><option value="">Anywhere in Milan</option>${AREAS.map(z=>`<option value="${z}" ${f.area===z?"selected":""}>${esc(zname(z))}</option>`).join("")}</select></div>`;
+  if(S.pickOpen) return `<div class="group"><div id="pickSlot" class="pickslot"><div class="centerpin" aria-hidden="true">${PIN}</div></div>
+    <p class="fine center" style="margin-top:8px">Move the map so the pin sits where you want to meet.</p>
+    <div class="inline" style="margin-top:10px"><button class="btn small plain" data-act="pickCancel">Cancel</button><button class="btn" data-act="pickSet" style="flex:1">Drop pin here</button></div></div>`;
+  return `<div class="group"><div class="where"><button class="wherebtn" data-act="pickOpen"><span class="wpin">${PIN}</span><span>${f.pin?esc(pinText(f.pin)):"Anywhere in Milan"}</span><small>${f.pin?"Move":"Drop a pin"}</small></button>
+    ${f.pin?`<button class="wclear" data-act="pinClear" aria-label="Remove pin">×</button>`:""}</div></div>`;
+}
+let PICK=null, PICK_HOST=null;
+async function mountPick(){
+  const slot=document.getElementById("pickSlot"); if(!slot) return;
+  if(!PICK_HOST){ PICK_HOST=document.createElement("div"); PICK_HOST.id="pickmap"; }
+  slot.prepend(PICK_HOST);
+  try{
+    await loadMapLib();
+    if(!document.getElementById("pickSlot")) return;
+    const c=S.form.pin||MILAN;
+    if(!PICK){
+      PICK=new maplibregl.Map({container:PICK_HOST,style:MAP_STYLE,center:[c[1],c[0]],zoom:13,dragRotate:false,touchPitch:false,attributionControl:{compact:true}});
+      PICK.addControl(new maplibregl.NavigationControl({showCompass:false}),"top-right");
+      PICK.touchZoomRotate.disableRotation();
+      PICK.on("click",e=>PICK.easeTo({center:e.lngLat}));
+      let ok=false; PICK.on("load",()=>{ok=true}); setTimeout(()=>{ if(!ok&&S.pickOpen){ S.pickOpen=false; mapFailed(); } },12000);
+    } else if(S.pickFresh){ PICK.jumpTo({center:[c[1],c[0]],zoom:Math.max(PICK.getZoom(),13)}); }
+    S.pickFresh=false; PICK.resize();
+  }catch{ S.pickOpen=false; mapFailed(); }
+}
 function viewSetup(){
   const f=S.form, unit=WHAT_UNIT[f.what], todo=toVote();
   if(f.day<today) f.day=today;
@@ -247,7 +280,7 @@ function viewSetup(){
   <div class="group">${seg("what",f.what,[["eat","Eat"],["drinks","Drinks"],["clubs","Clubs"],["culture","Culture"],["event","Event"]],"What")}</div>
   ${viewWhen(f)}
   ${slider("budget",unit,f.idx[unit])}
-  <div class="group"><select id="area" data-change="area" aria-label="Area"><option value="">Anywhere in Milan</option>${AREAS.map(z=>`<option value="${z}" ${f.area===z?"selected":""}>${esc(zname(z))}</option>`).join("")}</select></div>
+  ${viewWhere(f)}
   <div class="group"><span class="label">Send to</span><select id="sendTo" data-change="sendTo" aria-label="Send to">${S.groups.map(g=>`<option value="${esc(g.id)}" ${f.group===g.id?"selected":""}>${esc(g.name)}</option>`).join("")}<option value="" ${f.group?"":"selected"}>Share by link</option></select></div>
   <button class="btn" data-act="start">${f.group?"Send to the group":"Find places"}</button>`;
 }
@@ -261,7 +294,8 @@ function viewWaiting(p){
 }
 function viewCard(p){
   const id=nextCard(p,uid()), it=byId(id), i=p.options.indexOf(id);
-  const line=it.cat?`${eventWhen(it)} · ${it.venue}`:placeLine(it);
+  const far=p.pin&&it.lat?km([null,p.pin[0],p.pin[1]],[null,it.lat,it.lng]):null;
+  const line=(it.cat?`${eventWhen(it)} · ${it.venue}`:placeLine(it))+(far!=null?` · ${far<1?Math.round(far*1000/50)*50+" m":far.toFixed(1)+" km"} from the pin`:"");
   return `<div data-hero><button class="back" data-act="reset">‹ ${esc(p.group_name||"New plan")}</button><h1>${i+1} of ${p.options.length}</h1></div>
   <div class="place"><span class="dim">${it.cat?"Event":esc(KIND[it.kind])}</span><h2>${esc(it.name)}</h2>
     ${it.cat?(it.priceText?`<p>${esc(it.priceText)}</p>`:""):`<p>${esc(it.why)}</p>`}
@@ -494,6 +528,7 @@ function render(){
   ht.innerHTML=h?h.innerHTML:""; h?.remove();
   document.querySelectorAll("details").forEach(d=>{ if(open.includes(d.querySelector("b").textContent)) d.open=true; });
   if(authed&&S.tab==="hotspots"&&S.hotView==="map"&&!S.mapFail) mountMap();
+  if(authed&&S.pickOpen&&!S.acct&&S.tab==="decide") mountPick();
   const badge=document.getElementById("badge"), c=toVote().length; if(badge){ badge.textContent=c; badge.hidden=!c; }
   const me=document.getElementById("me"); if(me){ me.textContent=(S.session?.user?.user_metadata?.name||"?").trim().charAt(0).toUpperCase(); me.toggleAttribute("aria-current",!!S.acct); }
   document.querySelectorAll("nav button").forEach(b=>b.dataset.tab===S.tab&&!S.acct?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current"));
@@ -502,6 +537,10 @@ const H={
   tab(el){ S.acct=false; S.deleting=false; S.tab=el.dataset.tab; try{location.hash=S.tab}catch{} render(); scrollTo(0,0); },
   what(el){ S.form.what=el.dataset.v; render(); },
   day(el){ S.form.day=el.dataset.v; S.calOpen=false; render(); },
+  pickOpen(){ S.pickOpen=true; S.pickFresh=true; S.calOpen=false; render(); document.querySelector("[data-act=pickSet]")?.scrollIntoView({block:"center",behavior:"smooth"}); },
+  pickCancel(){ S.pickOpen=false; render(); },
+  pickSet(){ if(!PICK) return; const c=PICK.getCenter(); S.form.pin=[+c.lat.toFixed(5),+c.lng.toFixed(5)]; S.form.area=""; S.pickOpen=false; render(); },
+  pinClear(){ S.form.pin=null; render(); },
   cal(){ S.calOpen=!S.calOpen; S.calMonth=S.form.day.slice(0,7); render(); },
   calMove(el){ const [y,m]=S.calMonth.split("-").map(Number); S.calMonth=iso(new Date(y,m-1+Number(el.dataset.v),1)).slice(0,7); render(); },
   pickDay(el){ S.form.day=el.dataset.v; S.calOpen=false; render(); },

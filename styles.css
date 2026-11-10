@@ -144,3 +144,18 @@ body.noauth #me{display:none}
 .calday:disabled{color:#c3cdd6;cursor:default}
 .calday[aria-current="date"]{color:var(--link);box-shadow:inset 0 0 0 1.5px var(--accent)}
 .calday[aria-pressed="true"]{background:var(--accent);color:#fff;box-shadow:none}
+/* Where: pin drop */
+.where{position:relative}
+.wherebtn{display:flex;align-items:center;gap:10px;width:100%;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:11px 14px;font-size:16px;color:var(--fg);cursor:pointer;text-align:left}
+.wherebtn>span:nth-child(2){flex:1;min-width:0}
+.wherebtn small{color:var(--link);font-weight:700;font-size:14px}
+.where:has(.wclear) .wherebtn small{margin-right:30px}
+.wpin{width:18px;height:24px;flex:none;display:block}
+.wpin svg{display:block;width:100%;height:100%}
+.wpin path{fill:var(--accent)}
+.wclear{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:50%;border:0;background:var(--tint);color:var(--muted);font-size:18px;line-height:1;cursor:pointer}
+.pickslot{position:relative;height:min(46vh,340px);border:1px solid var(--line);border-radius:20px;overflow:hidden;background:var(--tint)}
+#pickmap{width:100%;height:100%}
+.centerpin{position:absolute;left:50%;top:50%;width:34px;height:44px;transform:translate(-50%,-100%);pointer-events:none;z-index:2;filter:drop-shadow(0 3px 4px rgba(15,42,68,.35))}
+.centerpin svg{display:block;width:100%;height:100%}
+.centerpin path{fill:var(--fg);stroke:#fff;stroke-width:3;paint-order:stroke}
