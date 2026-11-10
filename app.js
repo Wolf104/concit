@@ -25,11 +25,6 @@ const long=s=>parse(s).toLocaleDateString("en-GB",{weekday:"long"});
 const today=iso(new Date());
 const isRun=e=>(parse(e.end)-parse(e.start))/864e5>7;
 function km(a,b){const p=Math.PI/180,x=(b[2]-a[2])*p*Math.cos((a[1]+b[1])/2*p),y=(b[1]-a[1])*p;return Math.sqrt(x*x+y*y)*6371}
-function whenOptions(){
-  let w=addDays(today,2);
-  while(![0,6].includes(parse(w).getDay())) w=addDays(w,1);
-  return [[today,"Tonight"],[addDays(today,1),"Tomorrow"],[w,long(w)]];
-}
 const open=(p,day)=>!(p.closed||[]).includes(parse(day).getDay());
 
 /* The best places for the choices made, skipping anything the group has already seen. */
@@ -221,14 +216,36 @@ const WHAT_TEXT={eat:"Food",drinks:"Drinks",clubs:"Clubs",culture:"Culture",even
 const dayText=d=>d===today?"tonight":d===addDays(today,1)?"tomorrow":`${long(d)} ${short(d)}`;
 const planTitle=p=>`${WHAT_TEXT[p.what]||"Plan"} ${dayText(p.day)}`;
 const toVote=()=>S.groups.flatMap(g=>g.plans.filter(p=>!p.finished&&p.mine<p.options).map(p=>({...p,group:g.name})));
+/* When: two quick picks, or any date up to six months ahead from a calendar. */
+const MAX_AHEAD=180;
+function viewWhen(f){
+  const tom=addDays(today,1), picked=f.day!==today&&f.day!==tom;
+  return `<div class="group"><div class="seg" role="group" aria-label="When">
+    <button data-act="day" data-v="${today}" aria-pressed="${f.day===today}">Tonight</button>
+    <button data-act="day" data-v="${tom}" aria-pressed="${f.day===tom}">Tomorrow</button>
+    <button data-act="cal" aria-pressed="${picked}" aria-expanded="${!!S.calOpen}">${picked?`${wday(f.day)} ${short(f.day)}`:"Pick a date"}</button></div>
+    ${S.calOpen?calendar(f.day):""}</div>`;
+}
+function calendar(sel){
+  const base=S.calMonth||sel.slice(0,7), [y,m]=base.split("-").map(Number);
+  const first=new Date(y,m-1,1), days=new Date(y,m,0).getDate(), lead=(first.getDay()+6)%7;
+  const last=addDays(today,MAX_AHEAD), title=first.toLocaleDateString("en-GB",{month:"long",year:"numeric"});
+  let cells="";
+  for(let i=0;i<lead;i++) cells+="<span></span>";
+  for(let d=1;d<=days;d++){ const v=`${base}-${String(d).padStart(2,"0")}`, off=v<today||v>last;
+    cells+=`<button class="calday" data-act="pickDay" data-v="${v}" aria-pressed="${v===sel}" ${v===today?'aria-current="date"':""} ${off?"disabled":""} aria-label="${parse(v).toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"})}">${d}</button>`; }
+  return `<div class="cal"><div class="calhead"><button class="calnav" data-act="calMove" data-v="-1" ${base<=today.slice(0,7)?"disabled":""} aria-label="Previous month">‹</button><b>${title}</b><button class="calnav" data-act="calMove" data-v="1" ${base>=last.slice(0,7)?"disabled":""} aria-label="Next month">›</button></div>
+  <div class="calgrid">${["M","T","W","T","F","S","S"].map(x=>`<span class="dow">${x}</span>`).join("")}${cells}</div></div>`;
+}
 function viewSetup(){
   const f=S.form, unit=WHAT_UNIT[f.what], todo=toVote();
+  if(f.day<today) f.day=today;
   if(f.group&&!S.groups.some(g=>g.id===f.group)) f.group="";
   if(!f.group&&S.groups.length&&!f.linkOnly) f.group=S.groups[0].id;
   return `<div data-hero><h1>Where to?</h1></div>
   ${todo.length?`<div class="group"><span class="label">Waiting for your vote</span><div class="stack">${todo.map(p=>`<button class="person" data-act="openPlan" data-code="${esc(p.code)}"><span>${esc(planTitle(p))}<small class="sub">${esc(p.by||"Someone")} in ${esc(p.group)}</small></span><small>Vote</small></button>`).join("")}</div></div>`:""}
   <div class="group">${seg("what",f.what,[["eat","Eat"],["drinks","Drinks"],["clubs","Clubs"],["culture","Culture"],["event","Event"]],"What")}</div>
-  <div class="group">${seg("day",f.day,whenOptions(),"When")}</div>
+  ${viewWhen(f)}
   ${slider("budget",unit,f.idx[unit])}
   <div class="group"><select id="area" data-change="area" aria-label="Area"><option value="">Anywhere in Milan</option>${AREAS.map(z=>`<option value="${z}" ${f.area===z?"selected":""}>${esc(zname(z))}</option>`).join("")}</select></div>
   <div class="group"><span class="label">Send to</span><select id="sendTo" data-change="sendTo" aria-label="Send to">${S.groups.map(g=>`<option value="${esc(g.id)}" ${f.group===g.id?"selected":""}>${esc(g.name)}</option>`).join("")}<option value="" ${f.group?"":"selected"}>Share by link</option></select></div>
@@ -484,9 +501,12 @@ function render(){
 const H={
   tab(el){ S.acct=false; S.deleting=false; S.tab=el.dataset.tab; try{location.hash=S.tab}catch{} render(); scrollTo(0,0); },
   what(el){ S.form.what=el.dataset.v; render(); },
-  day(el){ S.form.day=el.dataset.v; render(); },
+  day(el){ S.form.day=el.dataset.v; S.calOpen=false; render(); },
+  cal(){ S.calOpen=!S.calOpen; S.calMonth=S.form.day.slice(0,7); render(); },
+  calMove(el){ const [y,m]=S.calMonth.split("-").map(Number); S.calMonth=iso(new Date(y,m-1+Number(el.dataset.v),1)).slice(0,7); render(); },
+  pickDay(el){ S.form.day=el.dataset.v; S.calOpen=false; render(); },
   start(){ const f=S.form, unit=WHAT_UNIT[f.what], max=maxFor(unit,f.idx[unit]), {group,idx,linkOnly,...rest}=f, q={...rest,max}, options=shortlist(q);
-    if(!options.length){ toast("Nothing fits that budget. Try raising it or choosing another day."); return; }
+    if(!options.length){ toast(f.what==="event"?"No events listed around that date yet. Try another date or budget.":"Nothing fits that budget. Try raising it or choosing another day."); return; }
     newPlan({...q,options,seen:options,finished:false},group); },
   share(){ shareOut(`Help choose where we go: ${shareUrl()}`,"Link copied"); },
   authView(el){ S.email=document.getElementById("email")?.value||S.email; S.authView=el.dataset.v; S.authNote=""; render(); },

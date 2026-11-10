@@ -132,3 +132,15 @@ a.person{text-decoration:none}
 body.noauth #me{display:none}
 .btn+.link.center{margin-top:14px}
 .win .ok{color:var(--link);font-weight:700;font-size:15px;margin-bottom:4px}
+/* Calendar */
+.cal{margin-top:10px;border:1px solid var(--line);border-radius:16px;padding:12px;background:var(--card)}
+.calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.calhead b{font-size:16px;font-weight:700}
+.calnav{width:36px;height:36px;border-radius:10px;border:0;background:var(--tint);color:var(--link);font-size:20px;font-weight:700;line-height:1;cursor:pointer}
+.calnav:disabled{opacity:.3;cursor:default}
+.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
+.dow{font-size:12px;font-weight:700;color:var(--muted);padding:4px 0}
+.calday{width:100%;max-width:42px;aspect-ratio:1;margin:auto;border:0;background:none;border-radius:50%;font-size:15px;font-weight:600;color:var(--fg);cursor:pointer;padding:0}
+.calday:disabled{color:#c3cdd6;cursor:default}
+.calday[aria-current="date"]{color:var(--link);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.calday[aria-pressed="true"]{background:var(--accent);color:#fff;box-shadow:none}
