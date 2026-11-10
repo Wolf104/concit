@@ -257,6 +257,23 @@ function viewWhere(f){
     ${f.pin?`<button class="wclear" data-act="pinClear" aria-label="Remove pin">×</button>`:""}</div></div>`;
 }
 let PICK=null, PICK_HOST=null;
+/* Milan metro lines by station (M1–M5, including the full M4 opened in 2024). Names are matched to the map's station labels. */
+const METRO_LINES={1:"#e2231a",2:"#009a49",3:"#d9a400",4:"#0071bc",5:"#8f5fa8"};
+const METRO_STATIONS={
+1:"Sesto 1° Maggio FS|Sesto Primo Maggio FS|Sesto 1º Maggio FS|Sesto Rondò|Sesto Marelli|Villa San Giovanni|Precotto|Gorla|Turro|Rovereto|Pasteur|Loreto|Lima|Porta Venezia|Palestro|San Babila|Duomo|Cordusio|Cairoli|Cairoli Castello|Cadorna|Cadorna FN|Conciliazione|Pagano|Buonarroti|Amendola|Lotto|Lotto Fieramilanocity|QT8|Lampugnano|Uruguay|Bonola|San Leonardo|Molino Dorino|Pero|Rho Fiera|Rho Fieramilano|Wagner|De Angeli|Gambara|Bande Nere|Primaticcio|Inganni|Bisceglie",
+2:"Assago Milanofiori Forum|Assago Milanofiori Nord|Abbiategrasso|Famagosta|Romolo|Porta Genova|Porta Genova FS|Sant'Agostino|Sant'Ambrogio|Cadorna|Cadorna FN|Lanza|Moscova|Garibaldi|Garibaldi FS|Gioia|Centrale|Centrale FS|Caiazzo|Loreto|Piola|Lambrate|Lambrate FS|Udine|Cimiano|Crescenzago|Cascina Gobba|Vimodrone|Cologno Sud|Cologno Centro|Cologno Nord|Cascina Burrona|Cernusco sul Naviglio|Villa Pompea|Gorgonzola|Cascina Antonietta|Gessate|Cassina de' Pecchi|Bussero|Villa Fiorita|Villa Fiorita-Cernusco",
+3:"Comasina|Affori FN|Affori Centro|Dergano|Maciachini|Zara|Sondrio|Centrale|Centrale FS|Repubblica|Turati|Montenapoleone|Duomo|Missori|Crocetta|Porta Romana|Lodi T.I.B.B.|Lodi TIBB|Brenta|Corvetto|Porto di Mare|Rogoredo|Rogoredo FS|San Donato",
+4:"Linate Aeroporto|Repetti|Stazione Forlanini|Forlanini FS|Argonne|Susa|Dateo|Tricolore|San Babila|Sforza-Policlinico|Sforza Policlinico|Santa Sofia|Vetra|De Amicis|Sant'Ambrogio|Coni Zugna|California|Bolivar|Tolstoj|Frattini|Gelsomini|Segneri|San Cristoforo|San Cristoforo FS",
+5:"Bignami|Ponale|Bicocca|Ca' Granda|Istria|Marche|Zara|Isola|Garibaldi|Garibaldi FS|Monumentale|Cenisio|Gerusalemme|Domodossola|Domodossola FN|Tre Torri|Portello|Lotto|Lotto Fieramilanocity|Segesta|San Siro Ippodromo|San Siro Stadio"};
+/* Main train stations that connect to the metro. */
+const TRAIN_LINKS={"milano centrale":[2,3],"milano porta garibaldi":[2,5],"milano cadorna":[1,2],"milano lambrate":[2],"milano porta genova":[2],"milano rogoredo":[3],"milano porta venezia":[1],"milano repubblica":[3],"milano dateo":[4],"milano forlanini":[4],"milano san cristoforo":[4],"sesto san giovanni":[1],"milano affori":[3],"milano domodossola":[5],"milano bovisa":[]};
+function metroLookup(){
+  const m={}, add=(n,l)=>{ for(const v of new Set([n.toLowerCase(),n.toLowerCase().replace(/'/g,"’")])){ m[v]=m[v]||[]; if(!m[v].includes(l)) m[v].push(l); } };
+  for(const [l,names] of Object.entries(METRO_STATIONS)) names.split("|").forEach(n=>add(n,+l));
+  for(const [n,ls] of Object.entries(TRAIN_LINKS)) ls.forEach(l=>add(n,l));
+  Object.values(m).forEach(a=>a.sort());
+  return m;
+}
 /* Metro and train stations from the map's own street data, drawn as clear dots with names. */
 function addStations(map){
   const go=()=>{
@@ -265,12 +282,20 @@ function addStations(map){
       const ref=map.getLayer("poi_transit"), font=(ref&&map.getLayoutProperty("poi_transit","text-font"))||["Noto Sans Bold"];
       if(ref) map.setLayoutProperty("poi_transit","visibility","none");
       const isStation=["all",["match",["get","class"],["railway","rail"],true,false],["!",["match",["get","subclass"],["tram_stop","subway_entrance","train_station_entrance","platform"],true,false]]];
-      const metro=["==",["get","subclass"],"subway"];
+      const look=metroLookup(), key=["downcase",["get","name"]], navy="#0f2a44";
+      const colorPairs=[], labelPairs=[];
+      for(const [n,ls] of Object.entries(look)){ if(!ls.length) continue;
+        colorPairs.push(n,METRO_LINES[ls[0]]);
+        const f=["format"]; ls.forEach(l=>f.push("M"+l+" ",{"text-color":METRO_LINES[l]})); f.push(["get","name"],{"text-color":navy});
+        labelPairs.push(n,f); }
       map.addLayer({id:"concit-stations",type:"circle",source:"openmaptiles","source-layer":"poi",minzoom:12,filter:isStation,
-        paint:{"circle-radius":["interpolate",["linear"],["zoom"],12,3.5,16,6],"circle-color":["case",metro,"#2f9bff","#0f2a44"],"circle-stroke-color":"#ffffff","circle-stroke-width":2}});
-      map.addLayer({id:"concit-station-names",type:"symbol",source:"openmaptiles","source-layer":"poi",minzoom:13.2,filter:isStation,
-        layout:{"text-field":["get","name"],"text-font":font,"text-size":11,"text-anchor":"left","text-offset":[0.8,0],"text-optional":true},
-        paint:{"text-color":"#0f2a44","text-halo-color":"#ffffff","text-halo-width":1.6}});
+        paint:{"circle-radius":["interpolate",["linear"],["zoom"],12,3.5,16,6],"circle-color":["match",key,...colorPairs,navy],"circle-stroke-color":"#ffffff","circle-stroke-width":2}});
+      map.addLayer({id:"concit-station-lines",type:"symbol",source:"openmaptiles","source-layer":"poi",minzoom:12.6,maxzoom:13.6,filter:["all",isStation,["match",key,Object.keys(look).filter(k=>look[k].length),true,false]],
+        layout:{"text-field":["match",key,...Object.keys(look).filter(k=>look[k].length).flatMap(k=>[k,look[k].map(l=>"M"+l).join(" ")]),""],"text-font":font,"text-size":10,"text-anchor":"left","text-offset":[0.7,0],"text-optional":true},
+        paint:{"text-color":["match",key,...colorPairs,navy],"text-halo-color":"#ffffff","text-halo-width":1.6}});
+      map.addLayer({id:"concit-station-names",type:"symbol",source:"openmaptiles","source-layer":"poi",minzoom:13.6,filter:isStation,
+        layout:{"text-field":["match",key,...labelPairs,["get","name"]],"text-font":font,"text-size":11,"text-anchor":"left","text-offset":[0.8,0],"text-optional":true},
+        paint:{"text-color":navy,"text-halo-color":"#ffffff","text-halo-width":1.6}});
     }catch(e){}
   };
   if(map.isStyleLoaded()) go(); else map.on("load",go);
