@@ -159,3 +159,10 @@ body.noauth #me{display:none}
 .centerpin{position:absolute;left:50%;top:50%;width:34px;height:44px;transform:translate(-50%,-100%);pointer-events:none;z-index:2;filter:drop-shadow(0 3px 4px rgba(15,42,68,.35))}
 .centerpin svg{display:block;width:100%;height:100%}
 .centerpin path{fill:var(--fg);stroke:#fff;stroke-width:3;paint-order:stroke}
+/* Area labels on maps */
+.zl{font:700 12px/1 var(--font);color:var(--fg);background:rgba(255,255,255,.9);border:1px solid var(--line);border-radius:99px;padding:4px 9px;white-space:nowrap;pointer-events:none;box-shadow:0 1px 3px rgba(15,42,68,.12)}
+.zl.tap{pointer-events:auto;cursor:pointer;color:var(--link)}
+#realmap .zl{background:rgba(255,255,255,.75);color:var(--muted);font-size:11px;padding:3px 7px}
+.far .zl{font-size:10.5px;padding:3px 6px}
+.mk{z-index:1}
+#realmap.far .zl{display:none}

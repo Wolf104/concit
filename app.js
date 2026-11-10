@@ -252,6 +252,18 @@ function viewWhere(f){
     ${f.pin?`<button class="wclear" data-act="pinClear" aria-label="Remove pin">×</button>`:""}</div></div>`;
 }
 let PICK=null, PICK_HOST=null;
+/* Area names on the maps, so people can find their way around (Duomo, Brera...). Tapping one on the pin map moves the pin there. */
+function zoneLabels(map,tap){
+  const els=[];
+  for(const [k,[name,lat,lng]] of Object.entries(ZONES)){
+    const el=document.createElement(tap?"button":"div");
+    el.className="zl"+(tap?" tap":""); el.textContent=name;
+    if(tap){ el.type="button"; el.setAttribute("aria-label",`Move the pin to ${name}`); el.addEventListener("click",e=>{ e.stopPropagation(); map.easeTo({center:[lng,lat],zoom:Math.max(map.getZoom(),14)}); }); }
+    new maplibregl.Marker({element:el,anchor:"center"}).setLngLat([lng,lat]).addTo(map); els.push(el);
+  }
+  const fit=()=>map.getContainer().classList.toggle("far",map.getZoom()<(tap?12.3:12.9));
+  map.on("zoom",fit); fit();
+}
 async function mountPick(){
   const slot=document.getElementById("pickSlot"); if(!slot) return;
   if(!PICK_HOST){ PICK_HOST=document.createElement("div"); PICK_HOST.id="pickmap"; }
@@ -261,10 +273,11 @@ async function mountPick(){
     if(!document.getElementById("pickSlot")) return;
     const c=S.form.pin||MILAN;
     if(!PICK){
-      PICK=new maplibregl.Map({container:PICK_HOST,style:MAP_STYLE,center:[c[1],c[0]],zoom:13,dragRotate:false,touchPitch:false,attributionControl:{compact:true}});
+      PICK=new maplibregl.Map({container:PICK_HOST,style:MAP_STYLE,center:[c[1],c[0]],zoom:S.form.pin?13.3:12.2,dragRotate:false,touchPitch:false,attributionControl:{compact:true}});
       PICK.addControl(new maplibregl.NavigationControl({showCompass:false}),"top-right");
       PICK.touchZoomRotate.disableRotation();
       PICK.on("click",e=>PICK.easeTo({center:e.lngLat}));
+      zoneLabels(PICK,true);
       let ok=false; PICK.on("load",()=>{ok=true}); setTimeout(()=>{ if(!ok&&S.pickOpen){ S.pickOpen=false; mapFailed(); } },12000);
     } else if(S.pickFresh){ PICK.jumpTo({center:[c[1],c[0]],zoom:Math.max(PICK.getZoom(),13)}); }
     S.pickFresh=false; PICK.resize();
@@ -421,6 +434,7 @@ async function mountMap(){
       MAP.touchZoomRotate.disableRotation();
       MAP.on("error",e=>{ if(!MAP.isStyleLoaded()&&!S.mapOk) mapFailed(); });
       MAP.on("load",()=>{ S.mapOk=true; });
+      zoneLabels(MAP,false);
       setTimeout(()=>{ if(!S.mapOk&&!S.mapFail) mapFailed(); },12000);
     }
     MAP.resize(); syncPins();
