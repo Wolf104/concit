@@ -167,3 +167,7 @@ body.noauth #me{display:none}
 .mk{z-index:1}
 #realmap.far .zl{display:none}
 .seg button{font-size:14.5px}
+/* Numbered pin groups */
+.cl{width:34px;height:34px;border-radius:50%;border:3px solid #fff;background:var(--accent);color:#fff;font:700 14px/1 var(--font);cursor:pointer;padding:0;box-shadow:0 2px 6px rgba(15,42,68,.35);z-index:1}
+.cl.mid{width:40px;height:40px;font-size:15px}
+.cl.big{width:48px;height:48px;font-size:16px;background:var(--fg)}

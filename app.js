@@ -403,17 +403,44 @@ function loadMapLib(){
   return MAP_LIB;
 }
 function mapFailed(){ S.mapFail=true; render(); }
+/* Pins close together on screen are grouped into a numbered circle; tapping it zooms in. */
+const CLUSTER_PX=54, CLUSTER_OFF_ZOOM=16;
 function syncPins(){
-  const list=PLACES.filter(p=>hotMatch(p)&&p.lat), ids=new Set(list.map(p=>p.id));
-  for(const id of Object.keys(PINS)) if(!ids.has(id)){ PINS[id].remove(); delete PINS[id]; }
-  for(const p of list){
-    if(!PINS[p.id]){
-      const el=document.createElement("button");
-      el.className="mk"; el.type="button"; el.innerHTML=PIN; el.setAttribute("aria-label",p.name); el.dataset.act="pin"; el.dataset.id=p.id;
-      PINS[p.id]=new maplibregl.Marker({element:el,anchor:"bottom"}).setLngLat([p.lng,p.lat]).addTo(MAP);
-      el.setAttribute("aria-label",p.name);
+  if(!MAP) return;
+  const list=PLACES.filter(p=>hotMatch(p)&&p.lat);
+  const z=MAP.getZoom(), groups=[];
+  if(z>=CLUSTER_OFF_ZOOM) list.forEach(p=>groups.push([p]));
+  else {
+    const pts=list.map(p=>({p,xy:MAP.project([p.lng,p.lat])})).sort((a,b)=>(b.p.id===S.sel)-(a.p.id===S.sel)||b.p.hot-a.p.hot);
+    const used=new Set();
+    for(const a of pts){
+      if(used.has(a)) continue; used.add(a);
+      const g=[a.p];
+      if(a.p.id!==S.sel) for(const b of pts){ if(used.has(b)||b.p.id===S.sel) continue; if(Math.hypot(a.xy.x-b.xy.x,a.xy.y-b.xy.y)<CLUSTER_PX){ used.add(b); g.push(b.p); } }
+      groups.push(g);
     }
-    PINS[p.id].getElement().classList.toggle("on",p.id===S.sel);
+  }
+  const want={}, seenAt={};
+  for(const g of groups){
+    if(g.length===1){ const p=g[0], k=p.lat.toFixed(5)+","+p.lng.toFixed(5); seenAt[k]=(seenAt[k]||0)+1; want[p.id]={p,n:seenAt[k]-1}; }
+    else { const ids=g.map(p=>p.id).sort(); want["c:"+g[0].id+":"+ids.join("|")]={g}; }
+  }
+  for(const k of Object.keys(PINS)) if(!want[k]){ PINS[k].remove(); delete PINS[k]; }
+  for(const [k,w] of Object.entries(want)){
+    if(!PINS[k]){
+      const el=document.createElement("button"); el.type="button";
+      if(w.p){
+        el.className="mk"; el.innerHTML=PIN; el.setAttribute("aria-label",w.p.name); el.dataset.act="pin"; el.dataset.id=w.p.id;
+        PINS[k]=new maplibregl.Marker({element:el,anchor:"bottom",offset:[w.n*14,0]}).setLngLat([w.p.lng,w.p.lat]).addTo(MAP);
+      } else {
+        const g=w.g, lat=g[0].lat, lng=g[0].lng;
+        el.className="cl"+(g.length>=20?" big":g.length>=8?" mid":""); el.textContent=g.length; el.setAttribute("aria-label",`${g.length} places here, zoom in`);
+        el.addEventListener("click",e=>{ e.stopPropagation(); const b=new maplibregl.LngLatBounds(); g.forEach(p=>b.extend([p.lng,p.lat]));
+          MAP.fitBounds(b,{padding:60,maxZoom:Math.max(MAP.getZoom()+2,CLUSTER_OFF_ZOOM),duration:450}); });
+        PINS[k]=new maplibregl.Marker({element:el,anchor:"center"}).setLngLat([lng,lat]).addTo(MAP);
+      }
+    }
+    if(w.p) PINS[k].getElement().classList.toggle("on",w.p.id===S.sel);
   }
   const fk=S.hot+(hotUnit()?S.hotIdx[hotUnit()]:"");
   if(FIT!==fk&&list.length){
@@ -436,6 +463,7 @@ async function mountMap(){
       MAP.on("error",e=>{ if(!MAP.isStyleLoaded()&&!S.mapOk) mapFailed(); });
       MAP.on("load",()=>{ S.mapOk=true; });
       zoneLabels(MAP,false);
+      MAP.on("moveend",syncPins);
       setTimeout(()=>{ if(!S.mapOk&&!S.mapFail) mapFailed(); },12000);
     }
     MAP.resize(); syncPins();
