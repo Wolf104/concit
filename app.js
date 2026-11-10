@@ -554,6 +554,7 @@ function evRow(e){
   <div class="more"><div class="actions"><button data-act="save" data-id="${e.id}">${on?"Saved":"Save"}</button><a href="${esc(srcUrl(e.src))}" target="_blank" rel="noopener">Source</a></div>${e.time?`<p class="dim">${esc(e.time)}</p>`:""}</div></details>`;
 }
 /* Events calendar: days with events get a dot; tapping a day shows what's on. */
+const CAL_ICON='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7zm-2 8h14v10H5V10z"/></svg>';
 function evCalendar(list){
   const base=S.evMonth||today.slice(0,7), [y,m]=base.split("-").map(Number);
   const first=new Date(y,m-1,1), days=new Date(y,m,0).getDate(), lead=(first.getDay()+6)%7;
@@ -576,8 +577,9 @@ function viewEvents(){
   const body=groups.map(([t,f])=>{const g=dated.filter(f);return g.length?`<p class="head">${t}</p>${g.map(evRow).join("")}`:""}).join("")+(runs.length?`<p class="head">${d?"Also on that day":"Running for a while"}</p>${runs.map(evRow).join("")}`:"");
   return `<div data-hero><h1>Events</h1></div>
   <div class="chips">${[["all","All"],["music","Music"],["sport","Sport"],["art","Art"],["theatre","Theatre"],["festival","Festivals"],["free","Free"],["saved","Saved"]].map(([k,l])=>`<button class="chip" data-act="ev" data-v="${k}" aria-pressed="${S.ev===k}">${l}</button>`).join("")}</div>
-  ${evCalendar(all)}
-  ${d?`<button class="link center" data-act="evPick" data-v="" style="margin:0 auto 4px">Show all dates</button>`:""}
+  <div class="where evwhen"><button class="wherebtn" data-act="evCal" aria-expanded="${!!S.evCalOpen}"><span class="wpin">${CAL_ICON}</span><span>${d?esc(parse(d).toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"})):"All dates"}</span><small>${S.evCalOpen?"Hide calendar":"Calendar"}</small></button>
+    ${d?`<button class="wclear" data-act="evPick" data-v="" aria-label="Show all dates">×</button>`:""}</div>
+  ${S.evCalOpen?evCalendar(all):""}
   <div class="list">${body||`<p class="empty">${S.ev==="saved"?"Open an event and tap Save to keep it here.":d?"Nothing on that day. Try another date.":"Nothing here right now."}</p>`}</div>
   <p class="foot">Checked ${S.evChecked||CHECKED}. Confirm dates before you go.</p>`;
 }
@@ -603,7 +605,8 @@ const H={
   what(el){ S.form.what=el.dataset.v; render(); },
   cuisine(el){ S.form.cuisine=el.dataset.v; render(); },
   hotCuisine(el){ S.hotCuisine=el.dataset.v; render(); },
-  evPick(el){ const v=el.dataset.v||null; S.evDate=S.evDate===v?null:v; render(); },
+  evPick(el){ const v=el.dataset.v||null; S.evDate=S.evDate===v?null:v; if(v) S.evCalOpen=false; render(); },
+  evCal(){ S.evCalOpen=!S.evCalOpen; if(S.evCalOpen&&S.evDate) S.evMonth=S.evDate.slice(0,7); render(); },
   evMove(el){ const [y,m]=(S.evMonth||today.slice(0,7)).split("-").map(Number); S.evMonth=iso(new Date(y,m-1+Number(el.dataset.v),1)).slice(0,7); render(); },
   day(el){ S.form.day=el.dataset.v; S.calOpen=false; render(); },
   pickOpen(){ S.pickOpen=true; S.pickFresh=true; S.calOpen=false; render(); document.querySelector("[data-act=pickSet]")?.scrollIntoView({block:"center",behavior:"smooth"}); },

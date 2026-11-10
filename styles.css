@@ -181,3 +181,6 @@ body.noauth #me{display:none}
 .calday{position:relative}
 .calday.has::after{content:"";position:absolute;left:50%;bottom:4px;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:var(--accent)}
 .calday.has[aria-pressed="true"]::after{background:#fff}
+.evwhen{margin:2px 0 12px}
+.evwhen .wpin{width:20px;height:20px}
+.evwhen+.evcal{margin-top:-4px}
