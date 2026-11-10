@@ -1,14 +1,14 @@
 "use strict";
-const KIND={eat:"Restaurant",drink:"Bar",wine:"Wine bar",beer:"Craft beer",cheap:"Cheap eats",culture:"Culture",club:"Nightclub"};
+const KIND={cafe:"Café",eat:"Restaurant",drink:"Bar",wine:"Wine bar",beer:"Craft beer",cheap:"Cheap eats",culture:"Culture",club:"Nightclub"};
 /* Budgets are per unit: a meal, a drink, club entry or a ticket. */
-const STEPS={meal:[10,15,20,25,30,40,50,60,80,100,150,200],drink:[5,6,7,8,10,12,15,18,20,25],entry:[10,15,20,25,30,40,50],ticket:[0,5,10,15,20,30,50,75,100]};
-const LABEL={meal:"Max per meal",drink:"Max per drink",entry:"Max entry price",ticket:"Max per ticket"};
-const UNIT_TEXT={meal:"a meal",drink:"a drink",entry:"entry",ticket:"a ticket"};
-const WHAT_UNIT={eat:"meal",drinks:"drink",clubs:"entry",culture:"ticket",event:"ticket"};
-const KIND_UNIT={eat:"meal",cheap:"meal",drink:"drink",wine:"drink",beer:"drink",club:"entry",culture:"ticket"};
-const HOT_UNIT={eat:"meal",drink:"drink",club:"entry",culture:"ticket"};
-const BAND={meal:[15,30,55,130],drink:[7,11,15,20],entry:[15,20,30,40],ticket:[5,15,25,40]};
-const costOf=(p,unit)=>p.costs&&p.costs[unit]!=null?p.costs[unit]:BAND[unit][p.price-1];
+const STEPS={coffee:[2,3,4,5,6,8,10,12,15],meal:[10,15,20,25,30,40,50,60,80,100,150,200],drink:[5,6,7,8,10,12,15,18,20,25],entry:[10,15,20,25,30,40,50],ticket:[0,5,10,15,20,30,50,75,100]};
+const LABEL={coffee:"Max per coffee",meal:"Max per meal",drink:"Max per drink",entry:"Max entry price",ticket:"Max per ticket"};
+const UNIT_TEXT={coffee:"a coffee",meal:"a meal",drink:"a drink",entry:"entry",ticket:"a ticket"};
+const WHAT_UNIT={coffee:"coffee",eat:"meal",drinks:"drink",clubs:"entry",culture:"ticket",event:"ticket"};
+const KIND_UNIT={cafe:"coffee",eat:"meal",cheap:"meal",drink:"drink",wine:"drink",beer:"drink",club:"entry",culture:"ticket"};
+const HOT_UNIT={cafe:"coffee",eat:"meal",drink:"drink",club:"entry",culture:"ticket"};
+const BAND={coffee:[3,5,8,12],meal:[15,30,55,130],drink:[7,11,15,20],entry:[15,20,30,40],ticket:[5,15,25,40]};
+const costOf=(p,unit)=>{const c=p.costs||{}; if(c[unit]!=null) return c[unit]; if(unit==="coffee"&&c.drink!=null) return c.drink; return BAND[unit][(p.price||2)-1];};
 const maxFor=(unit,i)=>i>=STEPS[unit].length?null:STEPS[unit][i];
 const stepText=(unit,i)=>{const m=maxFor(unit,i);return m===null?"No limit":m===0?"Free only":`€${m}`};
 function costText(p){const u=KIND_UNIT[p.kind],c=costOf(p,u);return c===0?"Free":`about €${c} ${UNIT_TEXT[u]}`}
@@ -46,7 +46,7 @@ function shortlist(s,seen=[]){
     const shows=EVENTS.filter(e=>e.cat==="art"&&e.start<=s.day&&e.end>=s.day&&!seen.includes(e.id)&&fits(e));
     pool=[...places(p=>p.kind==="culture"&&fits(p)),...shows];
   } else {
-    const occ=s.what==="eat"?["dinner","cheap"]:["drinks"];
+    const occ=s.what==="eat"?["dinner","cheap"]:s.what==="coffee"?["coffee"]:["drinks"];
     pool=places(p=>p.occ.some(o=>occ.includes(o))&&fits(p));
   }
   const score=x=>pin?near(x.zone,x)*1.8-(x.hot||1)*.5:near(x.zone,x)-(x.hot||1)*.9;
@@ -72,7 +72,7 @@ const load=k=>{try{return JSON.parse(localStorage.getItem(k))}catch{return null}
 const init=load(KEY)||{};
 const S={tab:"decide",plan:null,code:null,saved:new Set(init.saved||[]),session:load(SKEY),authView:"login",authBusy:false,authNote:"",email:"",pending:init.pending||null,
   groups:[],gid:null,leaving:false,ver:0,inflight:0,
-  form:{what:"drinks",day:today,area:"",group:init.group||"",idx:{meal:5,drink:5,entry:2,ticket:6}},hotIdx:{meal:12,drink:10,entry:7,ticket:9},hot:"all",hotView:"list",zone:null,sel:null,open:new Set(),mapFail:false,mapOk:false,ev:"all"};
+  form:{what:"drinks",day:today,area:"",group:init.group||"",idx:{coffee:4,meal:5,drink:5,entry:2,ticket:6}},hotIdx:{coffee:9,meal:12,drink:10,entry:7,ticket:9},hot:"all",hotView:"list",zone:null,sel:null,open:new Set(),mapFail:false,mapOk:false,ev:"all"};
 const uid=()=>S.session?.user?.id;
 const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify({saved:[...S.saved],pending:S.pending,group:S.form.group}))}catch{}};
 const saveSession=()=>{try{S.session?localStorage.setItem(SKEY,JSON.stringify(S.session)):localStorage.removeItem(SKEY)}catch{}};
@@ -212,9 +212,10 @@ function slider(id,unit,i){
 const metroText=m=>m[0]?`M${m[0][0]} ${m[0][1]}`:"";
 const placeLine=p=>[zname(p.zone),costText(p),metroText(p.metro)].filter(Boolean).join(" · ");
 const eventWhen=e=>e.start===e.end?`${wday(e.start)} ${short(e.start)}`:(e.start<=today?`Until ${short(e.end)}`:`${short(e.start)} to ${short(e.end)}`);
+const srcUrl=k=>SRC[k]?SRC[k][1]:/^https?:\/\//.test(k||"")?k:"#";
 const mapsUrl=q=>"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(q+", Milano");
 
-const WHAT_TEXT={eat:"Food",drinks:"Drinks",clubs:"Clubs",culture:"Culture",event:"An event"};
+const WHAT_TEXT={coffee:"Coffee",eat:"Food",drinks:"Drinks",clubs:"Clubs",culture:"Culture",event:"An event"};
 const dayText=d=>d===today?"tonight":d===addDays(today,1)?"tomorrow":`${long(d)} ${short(d)}`;
 const planTitle=p=>`${WHAT_TEXT[p.what]||"Plan"} ${dayText(p.day)}`;
 const toVote=()=>S.groups.flatMap(g=>g.plans.filter(p=>!p.finished&&p.mine<p.options).map(p=>({...p,group:g.name})));
@@ -290,7 +291,7 @@ function viewSetup(){
   if(!f.group&&S.groups.length&&!f.linkOnly) f.group=S.groups[0].id;
   return `<div data-hero><h1>Where to?</h1></div>
   ${todo.length?`<div class="group"><span class="label">Waiting for your vote</span><div class="stack">${todo.map(p=>`<button class="person" data-act="openPlan" data-code="${esc(p.code)}"><span>${esc(planTitle(p))}<small class="sub">${esc(p.by||"Someone")} in ${esc(p.group)}</small></span><small>Vote</small></button>`).join("")}</div></div>`:""}
-  <div class="group">${seg("what",f.what,[["eat","Eat"],["drinks","Drinks"],["clubs","Clubs"],["culture","Culture"],["event","Event"]],"What")}</div>
+  <div class="group">${seg("what",f.what,[["coffee","Coffee"],["eat","Eat"],["drinks","Drinks"],["clubs","Clubs"],["culture","Culture"],["event","Event"]],"What")}</div>
   ${viewWhen(f)}
   ${slider("budget",unit,f.idx[unit])}
   ${viewWhere(f)}
@@ -386,8 +387,8 @@ function viewAccount(){
   <button class="link quiet center danger" data-act="deleteAccount">${S.deleting?"Tap again to delete for good":"Delete my account"}</button>
   ${S.deleting?`<p class="fine center">This removes your account, your votes and your place in every group. It can't be undone.</p>`:""}`;
 }
-const HOT_TYPES=[["all","All"],["eat","Eat"],["drink","Drinks"],["club","Clubs"],["culture","Culture"]];
-const HOT_GROUPS=[["Restaurants",p=>p.kind==="eat"],["Cheap eats",p=>p.kind==="cheap"],["Bars",p=>["drink","wine","beer"].includes(p.kind)],["Nightclubs",p=>p.kind==="club"],["Culture",p=>p.kind==="culture"]];
+const HOT_TYPES=[["all","All"],["cafe","Coffee"],["eat","Eat"],["drink","Drinks"],["club","Clubs"],["culture","Culture"]];
+const HOT_GROUPS=[["Coffee",p=>p.kind==="cafe"],["Restaurants",p=>p.kind==="eat"],["Cheap eats",p=>p.kind==="cheap"],["Bars",p=>["drink","wine","beer"].includes(p.kind)],["Nightclubs",p=>p.kind==="club"],["Culture",p=>p.kind==="culture"]];
 const MAPLIBRE="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/";
 const MAP_STYLE="https://tiles.openfreemap.org/styles/liberty";
 const PIN='<svg viewBox="18 10 64 84" aria-hidden="true"><path fill-rule="evenodd" d="M50 90 C50 90 22 62 22 42 A28 28 0 1 1 78 42 C78 62 50 90 50 90 Z M61.584 30.416 A16.380 16.380 0 1 0 61.584 53.584 A3.780 3.780 0 0 0 56.237 48.237 A8.820 8.820 0 1 1 56.237 35.763 A3.780 3.780 0 0 0 61.584 30.416 Z"/></svg>';
@@ -440,14 +441,14 @@ async function mountMap(){
     MAP.resize(); syncPins();
   }catch{ mapFailed(); }
 }
-const hotType=p=>({all:true,eat:["eat","cheap"].includes(p.kind),drink:["drink","wine","beer"].includes(p.kind),club:p.kind==="club",culture:p.kind==="culture"})[S.hot];
+const hotType=p=>({all:true,cafe:p.kind==="cafe",eat:["eat","cheap"].includes(p.kind),drink:["drink","wine","beer"].includes(p.kind),club:p.kind==="club",culture:p.kind==="culture"})[S.hot];
 const hotUnit=()=>HOT_UNIT[S.hot];
 function hotMatch(p){ if(!hotType(p)) return false; const u=hotUnit(); if(!u) return true; const m=maxFor(u,S.hotIdx[u]); return m===null||costOf(p,u)<=m; }
 const byHot=(a,b)=>b.hot-a.hot||a.price-b.price;
 function placeRow(p){
   return `<details><summary><div><b>${esc(p.name)}</b><small>${esc(zname(p.zone))} · ${esc(costText(p))}</small></div></summary>
   <div class="more"><p>${esc(p.why)}. ${esc(p.detail)}</p><p class="dim">${esc(p.addr)}${p.metro[0]?" · "+esc(metroText(p.metro)):""}</p>
-  <div class="actions"><a href="${mapsUrl(p.name+" "+p.addr)}" target="_blank" rel="noopener">Directions</a><a href="${esc(SRC[p.src][1])}" target="_blank" rel="noopener">Source</a></div></div></details>`;
+  <div class="actions"><a href="${mapsUrl(p.name+" "+p.addr)}" target="_blank" rel="noopener">Directions</a><a href="${esc(srcUrl(p.src))}" target="_blank" rel="noopener">Source</a></div></div></details>`;
 }
 const MAP_SPOTS={bicocca:[270,30],isola:[175,88],lambrate:[320,80],sarpi:[64,140],garibaldi:[178,140],centrale:[300,130],cittastudi:[318,178],brera:[100,192],venezia:[240,212],duomo:[190,265],tortona:[66,305],navigli:[135,345],romana:[285,320],lodi:[270,375]};
 /* An illustrated rooftop view: Milan's ring-and-spoke street plan, filled with courtyard blocks. */
@@ -516,19 +517,19 @@ function viewHot(){
 function evRow(e){
   const on=S.saved.has(e.id), info=[e.venue,e.sold?"Sold out":e.priceText].filter(Boolean).join(" · ");
   return `<details><summary><div><b>${esc(e.name)}</b><small>${esc(info)}</small></div><span class="when">${esc(eventWhen(e))}</span></summary>
-  <div class="more"><div class="actions"><button data-act="save" data-id="${e.id}">${on?"Saved":"Save"}</button><a href="${esc(SRC[e.src][1])}" target="_blank" rel="noopener">Source</a></div>${e.time?`<p class="dim">${esc(e.time)}</p>`:""}</div></details>`;
+  <div class="more"><div class="actions"><button data-act="save" data-id="${e.id}">${on?"Saved":"Save"}</button><a href="${esc(srcUrl(e.src))}" target="_blank" rel="noopener">Source</a></div>${e.time?`<p class="dim">${esc(e.time)}</p>`:""}</div></details>`;
 }
 function viewEvents(){
-  const test={all:()=>true,music:e=>e.cat==="music",art:e=>e.cat==="art",sport:e=>e.cat==="sport",free:e=>e.priceNum===0,saved:e=>S.saved.has(e.id)}[S.ev];
+  const test={all:()=>true,music:e=>e.cat==="music",sport:e=>e.cat==="sport",art:e=>e.cat==="art",theatre:e=>e.cat==="theatre",festival:e=>e.cat==="festival",free:e=>e.priceNum===0,saved:e=>S.saved.has(e.id)}[S.ev]||(()=>true);
   const list=EVENTS.filter(e=>e.end>=today&&test(e));
   const dated=list.filter(e=>!isRun(e)).sort((a,b)=>a.start.localeCompare(b.start));
   const runs=list.filter(isRun).sort((a,b)=>a.end.localeCompare(b.end));
   const wk=addDays(today,7), groups=[["Today",e=>e.start<=today],["This week",e=>e.start>today&&e.start<=wk],["Later",e=>e.start>wk]];
   const body=groups.map(([t,f])=>{const g=dated.filter(f);return g.length?`<p class="head">${t}</p>${g.map(evRow).join("")}`:""}).join("")+(runs.length?`<p class="head">Running for a while</p>${runs.map(evRow).join("")}`:"");
   return `<div data-hero><h1>Events</h1></div>
-  <div class="chips">${[["all","All"],["music","Music"],["art","Art"],["sport","Sport"],["free","Free"],["saved","Saved"]].map(([k,l])=>`<button class="chip" data-act="ev" data-v="${k}" aria-pressed="${S.ev===k}">${l}</button>`).join("")}</div>
+  <div class="chips">${[["all","All"],["music","Music"],["sport","Sport"],["art","Art"],["theatre","Theatre"],["festival","Festivals"],["free","Free"],["saved","Saved"]].map(([k,l])=>`<button class="chip" data-act="ev" data-v="${k}" aria-pressed="${S.ev===k}">${l}</button>`).join("")}</div>
   <div class="list">${body||`<p class="empty">${S.ev==="saved"?"Open an event and tap Save to keep it here.":"Nothing here right now."}</p>`}</div>
-  <p class="foot">Checked ${CHECKED}. Confirm dates before you go.</p>`;
+  <p class="foot">Checked ${S.evChecked||CHECKED}. Confirm dates before you go.</p>`;
 }
 function render(){
   const a=document.activeElement;
@@ -614,6 +615,18 @@ document.addEventListener("focusout",()=>setTimeout(()=>{if(render.later)render(
 addEventListener("hashchange",()=>{const t=location.hash.slice(1);if(["decide","hotspots","events","groups"].includes(t)&&t!==S.tab){S.tab=t;render()}});
 {const t=location.hash.slice(1);if(["decide","hotspots","events","groups"].includes(t))S.tab=t}
 
+async function loadEvents(){
+  try{
+    const r=await fetch(`${SB.url}/rest/v1/events?select=*&end_date=gte.${today}&order=start_date`,{headers:{apikey:SB.anonKey,Authorization:`Bearer ${SB.anonKey}`}});
+    if(!r.ok) return;
+    const rows=await r.json();
+    if(!Array.isArray(rows)||!rows.length) return;
+    EVENTS.length=0;
+    rows.forEach(e=>EVENTS.push({id:e.id,name:e.name,cat:e.cat,start:e.start_date,end:e.end_date,venue:e.venue,zone:e.zone||null,time:e.time||"",priceNum:e.price_num,priceText:e.price_text||"",src:e.src,sold:!!e.sold}));
+    const c=rows.map(e=>e.checked).filter(Boolean).sort().pop(); if(c) S.evChecked=new Date(c).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});
+    render();
+  }catch{}
+}
 async function loadPlaces(){
   try{
     const r=await fetch(`${SB.url}/rest/v1/places?select=*`,{headers:{apikey:SB.anonKey,Authorization:`Bearer ${SB.anonKey}`}});
@@ -630,7 +643,7 @@ function linkFromUrl(){
 }
 async function afterLogin(){
   render();
-  await Promise.all([loadPlaces(),loadGroups()]);
+  await Promise.all([loadPlaces(),loadEvents(),loadGroups()]);
   const p=S.pending; S.pending=null; persist();
   if(p?.join){ setUrl(null); await joinByCode(p.join); }
   else if(p?.plan) await openPlan(p.plan);
