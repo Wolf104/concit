@@ -1,4 +1,4 @@
--- Concit database. Run this file first, then accounts.sql.
+-- Concit database. Run this file first, then accounts.sql, then account.sql.
 
 create table if not exists plans (
   code text primary key,

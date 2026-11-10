@@ -105,7 +105,7 @@ async function refreshSession(){
 function logout(expired){
   const t=S.session?.access_token;
   if(t&&!expired) authCall("logout",{}, "POST",t).catch(()=>{});
-  S.session=null; S.plan=null; S.code=null; S.groups=[]; S.gid=null; S.authView="login"; S.authNote=expired?"Please log in again.":""; S.tab="decide";
+  S.session=null; S.plan=null; S.code=null; S.groups=[]; S.gid=null; S.acct=false; S.deleting=false; S.authView="login"; S.authNote=expired?"Please log in again.":""; S.tab="decide";
   saveSession(); history.replaceState(null,"",location.pathname); render();
 }
 const redirectTo=()=>encodeURIComponent(location.origin+location.pathname);
@@ -284,6 +284,7 @@ function viewAuth(){
     ${v==="reset"?"":f("password","password",v==="newpass"?"New password":"Password",v==="login"?"current-password":"new-password")}
     <button class="btn" type="submit" ${b?"disabled":""}>${b?"One moment":main}</button>
   </form>
+  ${v==="signup"?`<p class="hint">See how Concit handles your data in the <a href="privacy.html">privacy notice</a>.</p>`:""}
   ${v==="login"?`<button class="text" data-act="authView" data-v="reset">Forgot your password?</button>`:""}
   ${v==="reset"?`<button class="text" data-act="authView" data-v="login">Back to log in</button>`:""}`;
 }
@@ -305,6 +306,7 @@ function viewGroup(g){
   <button class="text" data-act="allGroups">All groups</button>`;
 }
 function viewGroups(){
+  if(S.acct) return viewAccount();
   const g=S.groups.find(x=>x.id===S.gid);
   if(g) return viewGroup(g);
   const name=S.session?.user?.user_metadata?.name||"You";
@@ -312,7 +314,16 @@ function viewGroups(){
   ${S.groups.length?`<div class="stack">${S.groups.map(x=>{const v=x.plans.filter(p=>!p.finished&&p.mine<p.options).length;return `<button class="person" data-act="openGroup" data-id="${esc(x.id)}"><span>${esc(x.name)}<small class="sub">${x.members.length} ${x.members.length===1?"member":"members"}</small></span><small>${v?`${v} to vote on`:"Open"}</small></button>`}).join("")}</div>`:`<p class="hint left">Create a group for your friends or family, then invite them. Plans you send there appear for everyone.</p>`}
   <form id="groupForm" class="group" style="margin-top:20px" novalidate><span class="label">New group</span><div class="inline"><input type="text" id="groupName" placeholder="Group name" maxlength="40" autocomplete="off"><button class="btn small" type="submit">Create</button></div></form>
   <form id="codeForm" class="group" novalidate><span class="label">Got an invite code?</span><div class="inline"><input type="text" id="joinCode" placeholder="Invite code" maxlength="14" autocomplete="off" autocapitalize="off"><button class="btn small plain" type="submit">Join</button></div></form>
-  <p class="foot">Logged in as ${esc(name)}.</p><button class="text" data-act="logout">Log out</button>`;
+  <p class="foot">Logged in as ${esc(name)}.</p><button class="text" data-act="account">Account and privacy</button>`;
+}
+function viewAccount(){
+  const u=S.session?.user||{}, name=u.user_metadata?.name||"";
+  return `<div data-hero><span>${esc(u.email||"")}</span><h1>Your account</h1></div>
+  <form id="nameForm" class="group" novalidate><span class="label">Your name</span><div class="inline"><input type="text" id="myName" value="${esc(name)}" maxlength="30" autocomplete="name"><button class="btn small" type="submit">Save</button></div><p class="hint left">Your friends see this in your groups.</p></form>
+  <div class="group"><span class="label">Your data</span><a class="person" href="privacy.html"><span>Privacy notice<small class="sub">What Concit keeps and why</small></span><small>Read</small></a></div>
+  <button class="btn plain" data-act="logout">Log out</button>
+  <div class="group" style="margin-top:28px"><span class="label">Delete account</span><p class="hint left">This removes your account, your votes and your place in every group. It can't be undone.</p><button class="text danger" data-act="deleteAccount" style="margin:4px 0 0">${S.deleting?"Tap again to delete for good":"Delete my account"}</button></div>
+  <button class="text" data-act="allGroups">Back to groups</button>`;
 }
 const HOT_TYPES=[["all","All"],["eat","Eat"],["drink","Drinks"],["club","Clubs"],["culture","Culture"]];
 const HOT_GROUPS=[["Restaurants",p=>p.kind==="eat"],["Cheap eats",p=>p.kind==="cheap"],["Bars",p=>["drink","wine","beer"].includes(p.kind)],["Nightclubs",p=>p.kind==="club"],["Culture",p=>p.kind==="culture"]];
@@ -483,8 +494,14 @@ const H={
   authView(el){ S.email=document.getElementById("email")?.value||S.email; S.authView=el.dataset.v; S.authNote=""; render(); },
   logout(){ logout(); },
   openPlan(el){ openPlan(el.dataset.code); },
-  openGroup(el){ S.gid=el.dataset.id; S.leaving=false; render(); scrollTo(0,0); },
-  allGroups(){ S.gid=null; S.leaving=false; render(); scrollTo(0,0); },
+  openGroup(el){ S.acct=false; S.gid=el.dataset.id; S.leaving=false; render(); scrollTo(0,0); },
+  allGroups(){ S.gid=null; S.acct=false; S.deleting=false; S.leaving=false; render(); scrollTo(0,0); },
+  account(){ S.acct=true; S.gid=null; S.deleting=false; render(); scrollTo(0,0); },
+  async deleteAccount(el){ if(!S.deleting){ S.deleting=true; render(); return; }
+    el.disabled=true; el.textContent="Deleting";
+    try{ await rpc("delete_account"); }catch{ S.deleting=false; render(); toast("Couldn't delete your account. Try again."); return; }
+    try{localStorage.removeItem(KEY)}catch{} S.saved.clear(); S.acct=false; S.deleting=false;
+    logout(true); S.authNote="Your account and its data have been deleted."; render(); },
   newGroupPlan(el){ S.form.group=el.dataset.id; S.form.linkOnly=false; S.plan=null; S.code=null; setUrl(null); S.tab="decide"; render(); scrollTo(0,0); },
   invite(el){ const g=S.groups.find(x=>x.id===el.dataset.id); if(g) shareOut(`Join ${g.name} on Concit: ${inviteUrl(g)}`,"Invite link copied"); },
   async leave(el){ if(!S.leaving){ S.leaving=true; render(); return; } S.leaving=false; try{ await rpc("leave_group",{p_group:el.dataset.id}); S.gid=null; await loadGroups(); render(); }catch{ toast("Couldn't leave the group. Try again."); } },
@@ -513,6 +530,10 @@ document.addEventListener("change",e=>{ if(e.target.id==="hotBudget") render(); 
 document.addEventListener("submit",async e=>{ e.preventDefault();
   if(e.target.id==="authForm") authSubmit();
   if(e.target.id==="groupForm"){ const i=document.getElementById("groupName"), n=i.value.trim(); if(!n) return; i.value=""; i.blur(); try{ S.gid=await rpc("create_group",{p_name:n}); await loadGroups(); render(); }catch{ toast("Couldn't create the group. Try again."); } }
+  if(e.target.id==="nameForm"){ const i=document.getElementById("myName"), n=i.value.trim(); if(!n){ toast("Add your name"); return; } i.blur();
+    try{ await rpc("set_name",{p_name:n}); }catch{ toast("Couldn't save your name. Try again."); return; }
+    try{ S.session.user=await authCall("user",{data:{name:n}},"PUT",S.session.access_token); }catch{ S.session.user={...S.session.user,user_metadata:{...S.session.user?.user_metadata,name:n}}; }
+    saveSession(); await loadGroups(); render(); toast("Name saved"); }
   if(e.target.id==="codeForm"){ const i=document.getElementById("joinCode"), c=i.value.trim(); if(!c) return; i.value=""; i.blur(); joinByCode(c); }
 });
 document.addEventListener("keydown",e=>{ if((e.key==="Enter"||e.key===" ")&&e.target.matches?.("g[data-act]")){e.preventDefault();H.zoneMap(e.target)} });
