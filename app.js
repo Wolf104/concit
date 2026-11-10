@@ -237,30 +237,28 @@ function viewSetup(){
 function viewWaiting(p){
   const done=p.people.filter(n=>votedAll(p,n)).length, solo=p.people.length===1;
   const nameOf=n=>n===uid()?"You":(p.names?.[n]||"Someone");
-  return `<div data-hero><span>${esc(p.group_name||planTitle(p))}</span><h1>${solo?"Invite your friends":`${done} of ${p.people.length} voted`}</h1></div>
+  return `<div data-hero><button class="back" data-act="reset">‹ ${esc(p.group_name||"New plan")}</button><h1>${solo?"Invite your friends":`${done} of ${p.people.length} voted`}</h1></div>
   ${p.group_id?"":`<div class="group"><button class="btn" data-act="share">Share link</button></div>`}
-  <div class="stack">${p.people.map(n=>`<div class="person"><span>${esc(nameOf(n))}</span><small>${votedAll(p,n)?"Done":"Voting"}</small></div>`).join("")}</div>
-  ${Object.keys(p.votes||{}).length?`<button class="text" data-act="finish">See the result now</button>`:""}
-  <button class="text" data-act="reset">Back</button>`;
+  <div class="rows">${p.people.map(n=>`<div class="rowstat"><span>${esc(nameOf(n))}</span><span class="${votedAll(p,n)?"ok":""}">${votedAll(p,n)?"Done":"Voting"}</span></div>`).join("")}</div>
+  ${Object.keys(p.votes||{}).length?`<button class="link center" data-act="finish">See the result now</button>`:""}`;
 }
 function viewCard(p){
   const id=nextCard(p,uid()), it=byId(id), i=p.options.indexOf(id);
   const line=it.cat?`${eventWhen(it)} · ${it.venue}`:placeLine(it);
-  return `<div data-hero><span>${esc(p.group_name||"Your vote")}</span><h1>${i+1} of ${p.options.length}</h1></div>
+  return `<div data-hero><button class="back" data-act="reset">‹ ${esc(p.group_name||"New plan")}</button><h1>${i+1} of ${p.options.length}</h1></div>
   <div class="place"><span class="dim">${it.cat?"Event":esc(KIND[it.kind])}</span><h2>${esc(it.name)}</h2>
     ${it.cat?(it.priceText?`<p>${esc(it.priceText)}</p>`:""):`<p>${esc(it.why)}</p>`}
     <p class="dim">${esc(line)}</p></div>
   <div class="yesno"><button class="btn plain" data-act="vote" data-id="${esc(id)}" data-v="0">No</button><button class="btn" data-act="vote" data-id="${esc(id)}" data-v="1">Yes</button></div>`;
 }
 function viewResult(p){
-  const r=results(p), w=r[0], total=Object.keys(p.votes||{}).length||p.people.length, back=p.group_id?"Back":"New plan";
-  if(!w||w.yes===0) return `<div data-hero><span>Nobody said yes to any of these</span><h1>No match this round</h1></div>
-    <div class="stack"><button class="btn" data-act="again">Try 5 more</button></div><button class="text" data-act="reset">${back}</button>`;
+  const r=results(p), w=r[0], total=Object.keys(p.votes||{}).length||p.people.length, back=p.group_id?(p.group_name||"Back"):"New plan";
+  if(!w||w.yes===0) return `<div data-hero><button class="back" data-act="reset">‹ ${esc(back)}</button><span>Nobody said yes to any of these</span><h1>No match this round</h1></div>
+    <button class="btn" data-act="again">Try 5 more</button>`;
   const it=w.item, where=it.cat?it.venue:`${it.addr}`, sub=it.cat?eventWhen(it):[metroText(it.metro),zname(it.zone)].filter(Boolean).join(" · ");
-  return `<div data-hero><span>${w.yes} of ${total} said yes</span><h1 class="placename">${esc(it.name)}</h1></div><div class="win"><p>${esc(where)}</p><p class="dim">${esc(sub)}</p></div>
+  return `<div data-hero><button class="back" data-act="reset">‹ ${esc(back)}</button><h1 class="placename">${esc(it.name)}</h1></div><div class="win"><p class="ok">${w.yes} of ${total} said yes</p><p>${esc(where)}</p><p class="dim">${esc(sub)}</p></div>
   <div class="stack"><button class="btn" data-act="copy">Copy the details</button><a class="btn plain" href="${mapsUrl(it.name+" "+where)}" target="_blank" rel="noopener">Directions</a></div>
-  <div class="group" style="margin-top:24px"><span class="label">Other options</span><div class="rows">${r.slice(1).map(x=>`<div class="rowstat"><span>${esc(x.item.name)}</span><span>${x.yes} yes</span></div>`).join("")}</div></div>
-  <button class="text" data-act="reset">${back}</button>`;
+  <div class="group" style="margin-top:24px"><span class="label">Other options</span><div class="rows">${r.slice(1).map(x=>`<div class="rowstat"><span>${esc(x.item.name)}</span><span>${x.yes} yes</span></div>`).join("")}</div></div>`;
 }
 function viewDecide(){
   const p=S.plan;
@@ -276,17 +274,18 @@ function viewAuth(){
   const titles={login:invited?"Log in to join the group":"Welcome back",signup:invited?"Create an account to join":"Create your account",reset:"Reset your password",newpass:"Choose a new password"};
   const main={login:"Log in",signup:"Create account",reset:"Send reset link",newpass:"Save password"}[v];
   return `<div data-hero><h1>${titles[v]}</h1></div>
-  ${v==="login"||v==="signup"?`<div class="group">${seg("authView",v,[["login","Log in"],["signup","Create account"]],"Account")}</div>`:""}
   ${S.authNote?`<p class="note">${esc(S.authNote)}</p>`:""}
   <form id="authForm" novalidate>
-    ${v==="signup"?f("name","text","Your name","name")+`<p class="hint left">Your friends will see this in your groups.</p>`:""}
+    ${v==="signup"?f("name","text","Your name","name"):""}
     ${v==="newpass"?"":f("email","email","Email","email",S.email)}
     ${v==="reset"?"":f("password","password",v==="newpass"?"New password":"Password",v==="login"?"current-password":"new-password")}
     <button class="btn" type="submit" ${b?"disabled":""}>${b?"One moment":main}</button>
   </form>
-  ${v==="signup"?`<p class="hint">See how Concit handles your data in the <a href="privacy.html">privacy notice</a>.</p>`:""}
-  ${v==="login"?`<button class="text" data-act="authView" data-v="reset">Forgot your password?</button>`:""}
-  ${v==="reset"?`<button class="text" data-act="authView" data-v="login">Back to log in</button>`:""}`;
+  <div class="links">
+  ${v==="login"?`<p>New to Concit? <button class="link" data-act="authView" data-v="signup">Create an account</button></p><p><button class="link quiet" data-act="authView" data-v="reset">Forgot your password?</button></p>`:""}
+  ${v==="signup"?`<p>Already have an account? <button class="link" data-act="authView" data-v="login">Log in</button></p><p class="fine">See how Concit handles your data in the <a href="privacy.html">privacy notice</a>.</p>`:""}
+  ${v==="reset"?`<p><button class="link" data-act="authView" data-v="login">Back to log in</button></p>`:""}
+  </div>`;
 }
 
 /* ---------- Groups ---------- */
@@ -296,34 +295,32 @@ function planRow(p){
 }
 function viewGroup(g){
   const n=g.members.length;
-  return `<div data-hero><span>${n} ${n===1?"member":"members"}</span><h1>${esc(g.name)}</h1></div>
-  <div class="stack"><button class="btn" data-act="newGroupPlan" data-id="${esc(g.id)}">Start a plan</button>
-  <button class="btn plain" data-act="invite" data-id="${esc(g.id)}">Invite people</button></div>
-  <p class="hint">Or share the code <b class="code">${esc(g.invite_code)}</b></p>
-  <div class="group" style="margin-top:20px"><span class="label">Plans</span>${g.plans.length?`<div class="stack">${g.plans.map(planRow).join("")}</div>`:`<p class="hint left">No plans yet. Start one and everyone here can vote.</p>`}</div>
-  <div class="group"><span class="label">Members</span><div class="rows">${g.members.map(m=>`<div class="rowstat"><span>${esc(m.name)}${m.id===uid()?" (you)":""}</span></div>`).join("")}</div></div>
-  <button class="text" data-act="leave" data-id="${esc(g.id)}">${S.leaving?"Tap again to leave this group":"Leave group"}</button>
-  <button class="text" data-act="allGroups">All groups</button>`;
+  return `<div data-hero><button class="back" data-act="allGroups">‹ Groups</button><h1>${esc(g.name)}</h1></div>
+  <button class="btn" data-act="newGroupPlan" data-id="${esc(g.id)}">Start a plan</button>
+  ${g.plans.length?`<div class="group" style="margin-top:24px"><span class="label">Plans</span><div class="stack">${g.plans.map(planRow).join("")}</div></div>`:""}
+  <div class="group" style="margin-top:24px"><span class="label">Members · ${n}</span><div class="rows">${g.members.map(m=>`<div class="rowstat"><span>${esc(m.name)}${m.id===uid()?" (you)":""}</span></div>`).join("")}</div>
+  <button class="link" data-act="invite" data-id="${esc(g.id)}">+ Invite people</button><p class="fine">Or share the code <b class="code">${esc(g.invite_code)}</b></p></div>
+  <button class="link quiet center danger" data-act="leave" data-id="${esc(g.id)}">${S.leaving?"Tap again to leave this group":"Leave group"}</button>`;
 }
 function viewGroups(){
-  if(S.acct) return viewAccount();
   const g=S.groups.find(x=>x.id===S.gid);
   if(g) return viewGroup(g);
-  const name=S.session?.user?.user_metadata?.name||"You";
   return `<div data-hero><h1>My groups</h1></div>
   ${S.groups.length?`<div class="stack">${S.groups.map(x=>{const v=x.plans.filter(p=>!p.finished&&p.mine<p.options).length;return `<button class="person" data-act="openGroup" data-id="${esc(x.id)}"><span>${esc(x.name)}<small class="sub">${x.members.length} ${x.members.length===1?"member":"members"}</small></span><small>${v?`${v} to vote on`:"Open"}</small></button>`}).join("")}</div>`:`<p class="hint left">Create a group for your friends or family, then invite them. Plans you send there appear for everyone.</p>`}
-  <form id="groupForm" class="group" style="margin-top:20px" novalidate><span class="label">New group</span><div class="inline"><input type="text" id="groupName" placeholder="Group name" maxlength="40" autocomplete="off"><button class="btn small" type="submit">Create</button></div></form>
-  <form id="codeForm" class="group" novalidate><span class="label">Got an invite code?</span><div class="inline"><input type="text" id="joinCode" placeholder="Invite code" maxlength="14" autocomplete="off" autocapitalize="off"><button class="btn small plain" type="submit">Join</button></div></form>
-  <p class="foot">Logged in as ${esc(name)}.</p><button class="text" data-act="account">Account and privacy</button>`;
+  ${S.joinMode?`<form id="codeForm" class="group" style="margin-top:20px" novalidate><span class="label">Join with an invite code</span><div class="inline"><input type="text" id="joinCode" placeholder="Invite code" maxlength="14" autocomplete="off" autocapitalize="off"><button class="btn small" type="submit">Join</button></div></form>
+  <button class="link center" data-act="joinMode" data-v="0">Create a group instead</button>`
+  :`<form id="groupForm" class="group" style="margin-top:20px" novalidate><span class="label">New group</span><div class="inline"><input type="text" id="groupName" placeholder="Group name" maxlength="40" autocomplete="off"><button class="btn small" type="submit">Create</button></div></form>
+  <button class="link center" data-act="joinMode" data-v="1">Have an invite code?</button>`}`;
 }
 function viewAccount(){
   const u=S.session?.user||{}, name=u.user_metadata?.name||"";
-  return `<div data-hero><span>${esc(u.email||"")}</span><h1>Your account</h1></div>
-  <form id="nameForm" class="group" novalidate><span class="label">Your name</span><div class="inline"><input type="text" id="myName" value="${esc(name)}" maxlength="30" autocomplete="name"><button class="btn small" type="submit">Save</button></div><p class="hint left">Your friends see this in your groups.</p></form>
+  return `<div data-hero><button class="back" data-act="closeAccount">‹ Back</button><h1>Your account</h1></div>
+  <p class="fine" style="margin:0 0 16px">Logged in as ${esc(u.email||"")}</p>
+  <form id="nameForm" class="group" novalidate><span class="label">Your name</span><div class="inline"><input type="text" id="myName" value="${esc(name)}" maxlength="30" autocomplete="name"><button class="btn small" type="submit">Save</button></div></form>
   <div class="group"><span class="label">Your data</span><a class="person" href="privacy.html"><span>Privacy notice<small class="sub">What Concit keeps and why</small></span><small>Read</small></a></div>
   <button class="btn plain" data-act="logout">Log out</button>
-  <div class="group" style="margin-top:28px"><span class="label">Delete account</span><p class="hint left">This removes your account, your votes and your place in every group. It can't be undone.</p><button class="text danger" data-act="deleteAccount" style="margin:4px 0 0">${S.deleting?"Tap again to delete for good":"Delete my account"}</button></div>
-  <button class="text" data-act="allGroups">Back to groups</button>`;
+  <button class="link quiet center danger" data-act="deleteAccount">${S.deleting?"Tap again to delete for good":"Delete my account"}</button>
+  ${S.deleting?`<p class="fine center">This removes your account, your votes and your place in every group. It can't be undone.</p>`:""}`;
 }
 const HOT_TYPES=[["all","All"],["eat","Eat"],["drink","Drinks"],["club","Clubs"],["culture","Culture"]];
 const HOT_GROUPS=[["Restaurants",p=>p.kind==="eat"],["Cheap eats",p=>p.kind==="cheap"],["Bars",p=>["drink","wine","beer"].includes(p.kind)],["Nightclubs",p=>p.kind==="club"],["Culture",p=>p.kind==="culture"]];
@@ -442,7 +439,7 @@ function viewHot(){
       body=`<div id="mapSlot" class="mapslot"></div>${sel?`<div class="list picked">${placeRow(sel).replace("<details>","<details open>")}</div>`:`<p class="hint">Tap a pin to see the place.</p>`}`; }
   } else {
     body=HOT_GROUPS.map(([t,f])=>{const g=list.filter(f), full=S.hot!=="all"||S.open.has(t), rows=full?g:g.slice(0,6);
-      return g.length?`<p class="head">${t}</p>${rows.map(placeRow).join("")}${rows.length<g.length?`<button class="text" data-act="showGroup" data-v="${t}">Show all ${g.length}</button>`:""}`:""}).join("");
+      return g.length?`<p class="head">${t}</p>${rows.map(placeRow).join("")}${rows.length<g.length?`<button class="link" data-act="showGroup" data-v="${t}">Show all ${g.length}</button>`:""}`:""}).join("");
   }
   return `<div data-hero><h1>Hotspots</h1></div>
   <div class="group">${seg("hotView",S.hotView,[["list","List"],["map","Map"]],"View")}</div>
@@ -475,16 +472,17 @@ function render(){
   const open=[...document.querySelectorAll("details[open] b")].map(b=>b.textContent);
   const authed=S.session&&S.authView!=="newpass";
   document.body.classList.toggle("noauth",!authed);
-  document.getElementById("view").innerHTML=!authed?viewAuth():S.tab==="decide"?viewDecide():S.tab==="hotspots"?viewHot():S.tab==="groups"?viewGroups():viewEvents();
+  document.getElementById("view").innerHTML=!authed?viewAuth():S.acct?viewAccount():S.tab==="decide"?viewDecide():S.tab==="hotspots"?viewHot():S.tab==="groups"?viewGroups():viewEvents();
   const h=document.querySelector("#view [data-hero]"), ht=document.getElementById("heroText");
   ht.innerHTML=h?h.innerHTML:""; h?.remove();
   document.querySelectorAll("details").forEach(d=>{ if(open.includes(d.querySelector("b").textContent)) d.open=true; });
   if(authed&&S.tab==="hotspots"&&S.hotView==="map"&&!S.mapFail) mountMap();
   const badge=document.getElementById("badge"), c=toVote().length; if(badge){ badge.textContent=c; badge.hidden=!c; }
-  document.querySelectorAll("nav button").forEach(b=>b.dataset.tab===S.tab?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current"));
+  const me=document.getElementById("me"); if(me){ me.textContent=(S.session?.user?.user_metadata?.name||"?").trim().charAt(0).toUpperCase(); me.toggleAttribute("aria-current",!!S.acct); }
+  document.querySelectorAll("nav button").forEach(b=>b.dataset.tab===S.tab&&!S.acct?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current"));
 }
 const H={
-  tab(el){ S.tab=el.dataset.tab; try{location.hash=S.tab}catch{} render(); scrollTo(0,0); },
+  tab(el){ S.acct=false; S.deleting=false; S.tab=el.dataset.tab; try{location.hash=S.tab}catch{} render(); scrollTo(0,0); },
   what(el){ S.form.what=el.dataset.v; render(); },
   day(el){ S.form.day=el.dataset.v; render(); },
   start(){ const f=S.form, unit=WHAT_UNIT[f.what], max=maxFor(unit,f.idx[unit]), {group,idx,linkOnly,...rest}=f, q={...rest,max}, options=shortlist(q);
@@ -494,9 +492,11 @@ const H={
   authView(el){ S.email=document.getElementById("email")?.value||S.email; S.authView=el.dataset.v; S.authNote=""; render(); },
   logout(){ logout(); },
   openPlan(el){ openPlan(el.dataset.code); },
-  openGroup(el){ S.acct=false; S.gid=el.dataset.id; S.leaving=false; render(); scrollTo(0,0); },
+  openGroup(el){ S.gid=el.dataset.id; S.leaving=false; render(); scrollTo(0,0); },
   allGroups(){ S.gid=null; S.acct=false; S.deleting=false; S.leaving=false; render(); scrollTo(0,0); },
-  account(){ S.acct=true; S.gid=null; S.deleting=false; render(); scrollTo(0,0); },
+  account(){ S.acct=true; S.deleting=false; render(); scrollTo(0,0); },
+  closeAccount(){ S.acct=false; S.deleting=false; render(); scrollTo(0,0); },
+  joinMode(el){ S.joinMode=el.dataset.v==="1"; render(); document.getElementById(S.joinMode?"joinCode":"groupName")?.focus(); },
   async deleteAccount(el){ if(!S.deleting){ S.deleting=true; render(); return; }
     el.disabled=true; el.textContent="Deleting";
     try{ await rpc("delete_account"); }catch{ S.deleting=false; render(); toast("Couldn't delete your account. Try again."); return; }

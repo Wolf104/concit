@@ -10,7 +10,7 @@
 html{background:var(--page)}
 body{margin:0;min-height:100vh;background:var(--page);color:var(--fg);font:400 16px/1.5 var(--font);-webkit-font-smoothing:antialiased}
 .hero{background:var(--accent);color:var(--on);padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px));padding-block:20px 56px}
-.heroin{max-width:472px;margin:0 auto}
+.heroin{max-width:472px;margin:0 auto;position:relative}
 .brand{display:block;height:34px;width:auto;margin:0 0 26px -3px}
 .brand path{fill:#fff}
 #heroText h1{font-size:34px;line-height:1.12;font-weight:700;letter-spacing:-.015em;margin:0;text-wrap:balance}
@@ -22,9 +22,9 @@ button,input,select{font:inherit;color:inherit}
 a{color:inherit}
 .group{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
 .label{font-size:14px;color:var(--muted);font-weight:600}
-.seg{display:flex;gap:8px}
-.seg button{flex:1;min-width:0;border:1px solid var(--line);background:var(--card);border-radius:14px;padding:10px 2px;font-size:15px;font-weight:600;color:var(--muted);cursor:pointer}
-.seg button[aria-pressed="true"]{background:var(--tint);color:var(--link);font-weight:700}
+.seg{display:flex;gap:2px;background:var(--page);border:1px solid var(--line);border-radius:14px;padding:3px}
+.seg button{flex:1;min-width:0;border:0;background:none;border-radius:11px;padding:9px 2px;font-size:15px;font-weight:600;color:var(--muted);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--link);font-weight:700;box-shadow:0 1px 3px rgba(15,42,68,.14),0 0 0 1px var(--line)}
 select,input[type=text]{width:100%;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:16px;color:var(--fg)}
 .sliderhead{display:flex;justify-content:space-between;align-items:baseline}
 .sliderhead b{color:var(--link);font-size:17px;font-weight:700}
@@ -116,3 +116,19 @@ nav button[aria-current="page"]{background:var(--tint);color:var(--link);font-we
 a.person{text-decoration:none}
 .text.danger{color:#c4314b}
 .hint a{color:var(--link);font-weight:700}
+/* Cleanup: secondary actions are quiet text links, and back sits in the header. */
+.link{background:none;border:0;padding:6px 0;color:var(--link);font-size:15px;font-weight:700;cursor:pointer;text-align:left}
+.link.quiet{color:var(--muted);font-weight:600}
+.link.danger{color:#c4314b}
+.link.center,.fine.center{display:block;margin:18px auto 0;text-align:center}
+.links{margin-top:18px;text-align:center}
+.links p{margin:0 0 6px;font-size:15px;color:var(--muted)}
+.fine{font-size:14px;color:var(--muted);margin:2px 0 0}
+.fine a{color:var(--link);font-weight:700}
+.back{display:block;background:none;border:0;padding:0;margin:0 0 8px;color:var(--on);opacity:.9;font-size:15px;font-weight:700;cursor:pointer}
+.rowstat .ok{color:var(--link);font-weight:700}
+#me{position:absolute;right:0;top:0;width:34px;height:34px;border-radius:50%;border:1.5px solid rgba(255,255,255,.75);background:rgba(255,255,255,.18);color:#fff;font-weight:700;font-size:15px;cursor:pointer;padding:0}
+#me[aria-current]{background:#fff;color:var(--accent)}
+body.noauth #me{display:none}
+.btn+.link.center{margin-top:14px}
+.win .ok{color:var(--link);font-weight:700;font-size:15px;margin-bottom:4px}
