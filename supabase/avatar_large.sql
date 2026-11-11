@@ -1,7 +1,10 @@
 -- A larger copy of each profile picture, fetched only when someone opens it full-size. Run after avatars.sql.
 
-alter table profiles add column if not exists avatar_large text
-  check (avatar_large is null or (char_length(avatar_large) <= 400000 and avatar_large ~ '^data:image/(jpeg|webp|png);base64,[A-Za-z0-9+/=]+$'));
+alter table profiles add column if not exists avatar_large text;
+-- Up to ~1080px square, so it stays sharp full-screen on high-density phone screens.
+alter table profiles drop constraint if exists profiles_avatar_large_check;
+alter table profiles add constraint profiles_avatar_large_check
+  check (avatar_large is null or (char_length(avatar_large) <= 900000 and avatar_large ~ '^data:image/(jpeg|webp|png);base64,[A-Za-z0-9+/=]+$'));
 
 drop function if exists set_avatar(text);
 create or replace function set_avatar(p_data text, p_large text default null)

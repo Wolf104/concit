@@ -525,7 +525,7 @@ function openCropper(img){
         const render=(size,limit)=>{ const out=document.createElement("canvas"); out.width=out.height=size; const o=out.getContext("2d"), k=size/V;
           o.fillStyle="#fff"; o.fillRect(0,0,size,size); o.imageSmoothingQuality="high"; o.drawImage(img,ox*k,oy*k,W()*k,H()*k);
           for(const q of [.86,.74,.6,.45]){ const d=out.toDataURL("image/jpeg",q); if(d.length<=limit) return d; } return null; };
-        const small=render(CROP_OUT,110000), large=render(640,380000)||render(480,380000);
+        const small=render(CROP_OUT,110000), large=render(Math.min(1080,Math.max(640,Math.round(Math.min(iw,ih)/z))),880000)||render(800,880000)||render(640,880000);
         if(!small){ close(null); toast("That photo is too detailed to save. Try another."); return; }
         close({small,large}); } });
     requestAnimationFrame(()=>{ layout(); stage.focus({preventScroll:true}); });
@@ -551,6 +551,10 @@ async function openPhoto(id,name){
   const small=AV[id]?.img; if(!small) return;
   const wrap=document.createElement("div"); wrap.className="photoview"; wrap.setAttribute("role","dialog"); wrap.setAttribute("aria-modal","true"); wrap.setAttribute("aria-label",(name||"Profile")+" photo");
   wrap.innerHTML=`<figure><img src="${AV_LARGE[id]||small}" alt="${esc(name||"Profile picture")}"><figcaption>${esc(name||"")}</figcaption></figure><button class="photoclose" aria-label="Close">×</button>`;
+  /* Pictures saved before the sharp copy existed are only 192px: show them small rather than stretched. */
+  const fit=im=>{ if(!wrap.isConnected) return; const low=im.naturalWidth&&im.naturalWidth<400; wrap.classList.toggle("lowres",low);
+    const note=wrap.querySelector(".pvnote"); if(low&&id===uid()&&!note) wrap.querySelector("figure").insertAdjacentHTML("beforeend",`<p class="pvnote">This is an older, low-resolution copy. Add your photo again in Your account to make it sharp.</p>`); };
+  const imEl=wrap.querySelector("img"); imEl.addEventListener("load",()=>fit(imEl)); if(imEl.complete) fit(imEl);
   document.body.appendChild(wrap); document.body.classList.add("cropping");
   const back=document.activeElement, btn=wrap.querySelector(".photoclose"); btn.focus({preventScroll:true});
   const close=()=>{ document.removeEventListener("keydown",key,true); document.body.classList.remove("cropping"); wrap.remove(); back?.focus?.({preventScroll:true}); };
