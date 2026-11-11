@@ -1,4 +1,5 @@
--- Online status and "typing…" for group chat. Run after chat.sql.
+-- Online status, "typing…" and read receipts for group chat. Run after chat.sql.
+-- 'read' is the last message id each member has seen (they had the chat open).
 -- Someone counts as online if their app checked in within the last minute,
 -- and as typing if they typed in that group's chat within the last 6 seconds.
 
@@ -44,7 +45,8 @@ begin
   where group_id = p_group and user_id = auth.uid();
   select coalesce(jsonb_agg(jsonb_build_object('id', p.id, 'name', p.name,
            'online', coalesce(p.last_seen > now() - interval '60 seconds', false),
-           'typing', coalesce(m.typing_at > now() - interval '6 seconds', false)) order by p.name), '[]'::jsonb)
+           'typing', coalesce(m.typing_at > now() - interval '6 seconds', false),
+           'read', m.last_read) order by p.name), '[]'::jsonb)
   into v_people
   from group_members m join profiles p on p.id = m.user_id
   where m.group_id = p_group and m.user_id <> auth.uid();

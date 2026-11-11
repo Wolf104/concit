@@ -477,13 +477,22 @@ function typing(on){
 const chatTime=t=>{const d=new Date(t), now=new Date(), same=d.toDateString()===now.toDateString();
   return same?d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}):d.toLocaleDateString("en-GB",{day:"numeric",month:"short"})+" "+d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});};
 const linkify=t=>esc(t).replace(/https?:\/\/[^\s<]+/g,u=>`<a href="${u}" target="_blank" rel="noopener">${u}</a>`);
+/* Who has opened the chat since this message arrived. */
+function seenText(m){
+  if(m.pending) return "Sending…";
+  const others=CHAT.people, by=others.filter(p=>(p.read||0)>=m.id).map(p=>p.name);
+  if(!others.length) return "Sent";
+  if(!by.length) return "Not seen yet";
+  return by.length===others.length&&others.length>1?"Seen by everyone":"Seen by "+nameList(by);
+}
 function chatListHtml(){
   if(!CHAT.loaded) return `<p class="empty">Loading messages…</p>`;
   if(!CHAT.msgs.length) return `<p class="empty">No messages yet. Say hi to the group.</p>`;
   /* Messages from the same person within a minute of each other form a run: name on the first, time under the last. */
   const joined=(a,b)=>a&&b&&a.by===b.by&&Math.abs(new Date(b.at)-new Date(a.at))<60e3, L=CHAT.msgs;
-  return L.map((m,i)=>{ const mine=m.by===uid(), cont=joined(L[i-1],m), more=joined(m,L[i+1]);
-    return `<div class="msg${mine?" mine":""}${cont?" cont":""}">${!mine&&!cont?`<span class="who">${esc(m.name||"Former member")}</span>`:""}<p>${linkify(m.body)}</p>${more?"":`<time>${esc(chatTime(m.at))}</time>`}</div>`; }).join("");
+  const lastMine=[...L].reverse().find(m=>m.by===uid());
+  return L.map((m,i)=>{ const mine=m.by===uid(), cont=joined(L[i-1],m), more=joined(m,L[i+1]), seen=mine&&(m===lastMine||CHAT.seenOpen===m.id);
+    return `<div class="msg${mine?" mine":""}${cont?" cont":""}">${!mine&&!cont?`<span class="who">${esc(m.name||"Former member")}</span>`:""}<p${mine&&!m.pending?` data-act="seen" data-id="${m.id}" title="Tap to see who has read this"`:""}>${linkify(m.body)}</p>${more?(seen?`<span class="seen">${esc(seenText(m))}</span>`:""):`<time>${esc(chatTime(m.at))}${seen?" · "+esc(seenText(m)):""}</time>`}</div>`; }).join("");
 }
 function paintChat(stick){
   const el=document.getElementById("chatList"); if(!el) return;
@@ -497,7 +506,8 @@ async function loadChat(first){
   try{
     const gid=CHAT.gid, r=await rpc("chat_poll",{p_group:gid,p_after:CHAT.last});
     if(gid!==CHAT.gid) return;
-    const rows=r?r.messages:null; if(r){ CHAT.people=r.people||[]; paintPresence(); }
+    const rows=r?r.messages:null, readKey=r?JSON.stringify((r.people||[]).map(p=>[p.id,p.read])):"";
+    if(r){ const changed=readKey!==CHAT.readKey; CHAT.readKey=readKey; CHAT.people=r.people||[]; paintPresence(); if(changed&&CHAT.loaded) paintChat(false); }
     if(rows===null){ closeChat(); toast("You're no longer in that group."); return; }
     const fresh=rows.filter(m=>!CHAT.msgs.some(x=>x.id===m.id));
     if(fresh.length||!CHAT.loaded){ CHAT.msgs.push(...fresh); CHAT.msgs.sort((a,b)=>a.id-b.id); CHAT.last=CHAT.msgs.length?CHAT.msgs[CHAT.msgs.length-1].id:0; CHAT.loaded=true; paintChat(first); }
@@ -505,7 +515,7 @@ async function loadChat(first){
   }catch{ if(first&&!CHAT.loaded){ CHAT.loaded=true; paintChat(); toast("Couldn't load messages. Check your connection."); } }
   finally{ CHAT.busy=false; }
 }
-function openChat(gid){ if(CHAT.gid!==gid){ CHAT.gid=gid; CHAT.msgs=[]; CHAT.last=0; CHAT.loaded=false; CHAT.people=[]; CHAT.typingSent=0; } S.chatOpen=true; render(); scrollTo(0,document.documentElement.scrollHeight); loadChat(true); }
+function openChat(gid){ if(CHAT.gid!==gid){ CHAT.gid=gid; CHAT.msgs=[]; CHAT.last=0; CHAT.loaded=false; CHAT.people=[]; CHAT.typingSent=0; CHAT.readKey=""; CHAT.seenOpen=null; } S.chatOpen=true; render(); scrollTo(0,document.documentElement.scrollHeight); loadChat(true); }
 function closeChat(){ typing(false); S.chatOpen=false; CHAT.gid=null; render(); scrollTo(0,0); loadGroups(); }
 async function sendChat(){
   const i=document.getElementById("chatText"), body=(i?.value||"").trim(); if(!body||!CHAT.gid) return;
@@ -836,6 +846,7 @@ const H={
   openPlan(el){ openPlan(el.dataset.code); },
   openGroup(el){ S.chatOpen=false; CHAT.gid=null; S.gid=el.dataset.id; S.leaving=false; render(); scrollTo(0,0); },
   openChat(el){ openChat(el.dataset.id); },
+  seen(el){ if(getSelection&&String(getSelection()).length) return; const id=Number(el.dataset.id); CHAT.seenOpen=CHAT.seenOpen===id?null:id; paintChat(false); },
   closeChat(){ closeChat(); },
   allGroups(){ S.chatOpen=false; CHAT.gid=null; S.gid=null; S.acct=false; S.deleting=false; S.leaving=false; render(); scrollTo(0,0); },
   account(){ S.acct=true; S.deleting=false; render(); scrollTo(0,0); },
