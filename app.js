@@ -625,6 +625,7 @@ const chatNearBottom=()=>{ const el=chatScroller(); return !el||el.scrollHeight-
 const chatToBottom=()=>{ const el=chatScroller(); if(el) el.scrollTop=el.scrollHeight; };
 function sizeChat(){
   const el=chatScroller(), bar=document.getElementById("chatForm"); if(!el||!bar) return;
+  if(scrollY&&!(window.visualViewport&&visualViewport.height<innerHeight-120)) scrollTo(0,0);
   const near=chatNearBottom(), vv=window.visualViewport, nav=document.querySelector("nav div");
   const keyboard=vv&&vv.height<innerHeight-120;
   const bottom=keyboard?vv.offsetTop+vv.height-10:(nav?nav.getBoundingClientRect().top:innerHeight)-12;
@@ -633,6 +634,11 @@ function sizeChat(){
   if(near) chatToBottom();
 }
 addEventListener("resize",()=>sizeChat());
+/* Re-measure whenever anything around the chat changes size (header, fonts, message box, tab bar). */
+const CHAT_RO=typeof ResizeObserver!=="undefined"?new ResizeObserver(()=>requestAnimationFrame(()=>sizeChat())):null;
+function watchChatLayout(){ if(!CHAT_RO) return; CHAT_RO.disconnect(); ["heroText","chatForm"].forEach(id=>{ const el=document.getElementById(id); if(el) CHAT_RO.observe(el); }); const nav=document.querySelector("nav div"); if(nav) CHAT_RO.observe(nav); const hero=document.querySelector(".hero"); if(hero) CHAT_RO.observe(hero,{box:"border-box"}); CHAT_RO.observe(document.documentElement); }
+document.fonts?.ready?.then(()=>sizeChat());
+addEventListener("load",()=>sizeChat());
 window.visualViewport?.addEventListener("resize",()=>{ sizeChat(); if(S.chatOpen) scrollTo(0,0); });
 function paintChat(stick){
   const el=document.getElementById("chatList"); if(!el) return;
@@ -646,6 +652,7 @@ async function loadChat(first){
   try{
     const gid=CHAT.gid, r=await rpc("chat_poll",{p_group:gid,p_after:CHAT.last});
     if(gid!==CHAT.gid) return;
+    sizeChat();
     const rows=r?r.messages:null, readKey=r?JSON.stringify((r.people||[]).map(p=>[p.id,p.read])):"";
     if(r){ const changed=readKey!==CHAT.readKey; CHAT.readKey=readKey; CHAT.people=r.people||[]; paintPresence(); needAv(CHAT.people); if(changed&&CHAT.loaded) paintChat(false); }
     if(rows===null){ closeChat(); toast("You're no longer in that group."); return; }
@@ -669,7 +676,7 @@ function viewChat(g){
   return `<div data-hero><button class="back" data-act="closeChat">‹ Back</button><h1>${esc(g.name)}</h1><p id="chatWho" class="who-online">${whoHtml()}</p></div>
   <div id="chatScroll" class="chatscroll"><div id="chatList" class="chat" aria-live="polite">${chatListHtml()}</div>
   <div id="chatTyping" aria-live="polite">${typingHtml()}</div></div>
-  <form id="chatForm" class="chatbar" novalidate><textarea id="chatText" rows="1" maxlength="1000" placeholder="Message ${esc(g.name)}" aria-label="Message"></textarea><button class="btn small" type="submit" aria-label="Send">Send</button></form>`;
+  <form id="chatForm" class="chatbar" novalidate><textarea id="chatText" rows="1" maxlength="1000" placeholder="Message ${esc(g.name)}" aria-label="Message"></textarea><button class="sendbtn" type="submit" aria-label="Send"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h14M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></form>`;
 }
 function viewGroup(g){
   const n=g.members.length;
@@ -940,7 +947,7 @@ function render(){
   if(authed&&S.tab==="hotspots"&&S.hotView==="map"&&!S.mapFail) mountMap();
   if(authed&&S.pickOpen&&!S.acct&&S.tab==="decide") mountPick();
   document.body.classList.toggle("inchat",!!(authed&&S.chatOpen&&S.tab==="groups"&&!S.acct));
-  if(authed&&S.chatOpen&&S.tab==="groups") sizeChat();
+  if(authed&&S.chatOpen&&S.tab==="groups"){ sizeChat(); watchChatLayout(); requestAnimationFrame(()=>sizeChat()); } else CHAT_RO?.disconnect();
   const badge=document.getElementById("badge"), c=toVote().length; if(badge){ badge.textContent=c; badge.hidden=!c; }
   const me=document.getElementById("me"); if(me){ const mine=S.session&&AV[uid()]; me.innerHTML=mine?`<img src="${mine.img}" alt="">`:esc((S.session?.user?.user_metadata?.name||"?").trim().charAt(0).toUpperCase()); me.classList.toggle("hasav",!!mine); me.toggleAttribute("aria-current",!!S.acct); }
   document.querySelectorAll("nav button").forEach(b=>b.dataset.tab===S.tab&&!S.acct?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current"));

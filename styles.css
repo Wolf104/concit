@@ -214,7 +214,7 @@ body.noauth #me{display:none}
 .msg.mine p a{color:inherit}
 .msg p a{color:var(--link);text-decoration:underline}
 .msg time{display:block;font-size:12px;color:var(--muted);margin:3px 12px 0}
-.chatbar{position:relative;z-index:4;display:flex;gap:8px;align-items:flex-end;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:6px 6px 6px 14px;box-shadow:0 6px 20px rgba(15,42,68,.10);margin-top:10px}
+.chatbar{position:relative;z-index:4;display:flex;gap:6px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:5px 5px 5px 14px;box-shadow:0 6px 20px rgba(15,42,68,.10);margin-top:10px}
 .chatbar textarea{flex:1;min-width:0;border:0;background:transparent;resize:none;font:inherit;font-size:16px;color:var(--fg);padding:9px 0;max-height:140px;outline:none}
 .chatbar .btn{flex:none}
 /* Online and typing */
@@ -286,3 +286,10 @@ body.inchat .app{padding-top:14px}
 #heroText .who-online{margin:4px 0 0;font-size:14px;color:var(--on);opacity:.9;min-height:18px;font-weight:600}
 #heroText .who-online .dot{box-shadow:0 0 0 2px var(--accent)}
 #heroText .who-online .dot{display:inline-block;margin-bottom:0}
+/* In chat only the messages scroll; the page itself stays put */
+html:has(body.inchat),body.inchat{overflow:hidden;overscroll-behavior:none}
+body.inchat .app{min-height:0;padding-bottom:0;box-shadow:0 60vh 0 0 var(--card)}
+.sendbtn{flex:none;display:flex;align-items:center;justify-content:center;width:42px;height:42px;border:0;border-radius:50%;background:transparent;color:#000;cursor:pointer;padding:0}
+.sendbtn svg{width:24px;height:24px;display:block}
+.sendbtn:hover{background:var(--tint)}
+.sendbtn:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
