@@ -318,3 +318,10 @@ select::-ms-expand{display:none}
 .pollwin{display:flex;align-items:center;justify-content:center;gap:8px;margin:16px 0 0;padding-top:14px;border-top:1px solid var(--line);font-size:16px;color:var(--fg)}
 .pollwin svg{width:20px;height:20px;color:#e8a317;flex:none}
 @media (prefers-reduced-motion:reduce){.prbar i{transition:none}}
+/* Meet time and attendance */
+.meetat{display:flex;align-items:center;gap:12px;margin-top:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:6px 8px 6px 14px;position:relative}
+.meetat .label{margin:0;flex:none}
+.meetat input[type=time]{flex:1;min-width:0;border:0;background:transparent;font:inherit;font-size:17px;font-weight:700;color:var(--fg);padding:8px 0;min-height:36px}
+.meetat small{color:var(--muted);font-size:13px;flex:none;padding-right:6px}
+.meetat .wclear{position:static;transform:none;flex:none}
+.rowstat .out{color:#c4314b;font-weight:700}

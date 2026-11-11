@@ -61,11 +61,14 @@ function shortlist(s,seen=[]){
 }
 /* Most yeses wins. Ties go to the place that appeared first, which is the stronger match. */
 function results(p){
-  return p.options.map((id,i)=>({id,i,item:byId(id),yes:Object.values(p.votes||{}).filter(v=>v[id]===1).length}))
+  return p.options.map((id,i)=>({id,i,item:byId(id),yes:Object.entries(p.votes||{}).filter(([n,v])=>!isOut(p,n)&&v[id]===1).length}))
     .filter(r=>r.item).sort((a,b)=>b.yes-a.yes||a.i-b.i);
 }
 const votedAll=(p,n)=>p.options.every(id=>(p.votes?.[n]||{})[id]!==undefined);
-const allDone=p=>p.people.every(n=>votedAll(p,n));
+/* People who said they can't make it don't vote and aren't waited for. */
+const isOut=(p,n)=>(p.out||[]).includes(n);
+const going=p=>p.people.filter(n=>!isOut(p,n));
+const allDone=p=>going(p).length>0&&going(p).every(n=>votedAll(p,n));
 const nextCard=(p,n)=>p.options.find(id=>(p.votes?.[n]||{})[id]===undefined);
 function merge(a,b){const o={...a};for(const k in b)o[k]=b[k]&&typeof b[k]==="object"&&!Array.isArray(b[k])&&a[k]&&typeof a[k]==="object"?merge(a[k],b[k]):b[k];return o}
 
@@ -191,6 +194,13 @@ async function changePlan(p,reset=false){
   S.ver++; S.plan=p; render();
   try{ await rpc("update_plan",{p_code:S.code,p_data:planBody(p),p_reset_votes:reset}); }catch{ toast("That change didn't save. Try again."); }
 }
+async function setAttending(go){
+  const p=S.plan; if(!p||!S.code) return;
+  const me=uid(), out=(p.out||[]).filter(n=>n!==me);
+  S.ver++; S.plan={...p,out:go?out:[...out,me],votes:go?p.votes:Object.fromEntries(Object.entries(p.votes||{}).filter(([n])=>n!==me))}; render(); scrollTo(0,0);
+  try{ await rpc("set_attending",{p_code:S.code,p_going:go}); toast(go?"You're back in. Time to vote.":"Got it, you're not going."); loadGroups(); }
+  catch{ S.plan=p; render(); toast("That didn't save. Try again."); }
+}
 function clearPlan(){ S.plan=null; S.code=null; setUrl(null); render(); }
 async function vote(id,v){
   S.ver++;
@@ -225,8 +235,8 @@ const mapsUrl=q=>"https://www.google.com/maps/search/?api=1&query="+encodeURICom
 
 const WHAT_TEXT={coffee:"Coffee",eat:"Food",drinks:"Drinks",clubs:"Clubs",culture:"Culture",event:"An event"};
 const dayText=d=>d===today?"tonight":d===addDays(today,1)?"tomorrow":`${long(d)} ${short(d)}`;
-const planTitle=p=>`${p.what==="eat"&&p.cuisine?CUISINE_TEXT[p.cuisine]:WHAT_TEXT[p.what]||"Plan"} ${dayText(p.day)}`;
-const toVote=()=>S.groups.flatMap(g=>g.plans.filter(p=>!p.finished&&p.mine<p.options).map(p=>({...p,group:g.name})));
+const planTitle=p=>`${p.what==="eat"&&p.cuisine?CUISINE_TEXT[p.cuisine]:WHAT_TEXT[p.what]||"Plan"} ${dayText(p.day)}${p.time?` at ${p.time}`:""}`;
+const toVote=()=>S.groups.flatMap(g=>g.plans.filter(p=>!p.finished&&!p.me_out&&p.mine<p.options).map(p=>({...p,group:g.name})));
 /* When: two quick picks, or any date up to six months ahead from a calendar. */
 const MAX_AHEAD=180;
 function viewWhen(f){
@@ -235,7 +245,8 @@ function viewWhen(f){
     <button data-act="day" data-v="${today}" aria-pressed="${f.day===today}">Tonight</button>
     <button data-act="day" data-v="${tom}" aria-pressed="${f.day===tom}">Tomorrow</button>
     <button data-act="cal" aria-pressed="${picked}" aria-expanded="${!!S.calOpen}">${picked?`${wday(f.day)} ${short(f.day)}`:"Pick a date"}</button></div>
-    ${S.calOpen?calendar(f.day):""}</div>`;
+    ${S.calOpen?calendar(f.day):""}
+    ${f.what==="event"?"":`<label class="meetat"><span class="label">Meet at</span><input type="time" id="meetTime" data-change="time" step="900" value="${esc(f.time||"")}" aria-label="Meet time">${f.time?`<button type="button" class="wclear" data-act="clearTime" aria-label="Clear meet time">×</button>`:`<small>Optional</small>`}</label>`}</div>`;
 }
 function calendar(sel){
   const base=S.calMonth||sel.slice(0,7), [y,m]=base.split("-").map(Number);
@@ -393,40 +404,45 @@ function viewSetup(){
   <button class="btn${f.mode==="pick"?" stick":""}" data-act="start" id="startBtn" ${f.mode==="pick"&&(f.picks||[]).filter(byId).length<2?"disabled":""}>${f.mode==="pick"?pickStartLabel(f):f.group?"Send to the group":"Find places"}</button>`;
 }
 function viewWaiting(p){
-  const done=p.people.filter(n=>votedAll(p,n)).length, solo=p.people.length===1;
+  const g=going(p), done=g.filter(n=>votedAll(p,n)).length, solo=p.people.length===1, meOut=isOut(p,uid());
   const nameOf=n=>n===uid()?"You":(p.names?.[n]||"Someone");
-  return `<div data-hero><button class="back" data-act="reset">‹ ${esc(p.group_name||"New plan")}</button><h1>${solo?"Invite your friends":`${done} of ${p.people.length} voted`}</h1></div>
+  const status=n=>isOut(p,n)?`<span class="out">Not going</span>`:votedAll(p,n)?`<span class="ok">Done</span>`:`<span>Voting</span>`;
+  return `<div data-hero><button class="back" data-act="reset">‹ ${esc(p.group_name||"New plan")}</button><span>${esc(cap(planTitle(p)))}</span><h1>${solo?"Invite your friends":meOut?"You're not going":`${done} of ${g.length} voted`}</h1></div>
+  ${meOut?`<p class="note">You said you can't make it, so you won't be asked to vote.</p>`:""}
   ${p.group_id?"":`<div class="group"><button class="btn" data-act="share">Share link</button></div>`}
-  <div class="rows">${p.people.map(n=>`<div class="rowstat"><span>${esc(nameOf(n))}</span><span class="${votedAll(p,n)?"ok":""}">${votedAll(p,n)?"Done":"Voting"}</span></div>`).join("")}</div>
-  ${Object.keys(p.votes||{}).length?`<button class="link center" data-act="finish">See the result now</button>`:""}`;
+  <div class="rows">${[...g,...p.people.filter(n=>isOut(p,n))].map(n=>`<div class="rowstat"><span>${esc(nameOf(n))}</span>${status(n)}</div>`).join("")}</div>
+  ${Object.keys(p.votes||{}).length?`<button class="link center" data-act="finish">See the result now</button>`:""}
+  ${solo&&!p.group_id?"":meOut?`<button class="btn plain" style="margin-top:18px" data-act="attend" data-v="1">I can make it after all</button>`:`<button class="link quiet center" data-act="attend" data-v="0">I can't make it</button>`}`;
 }
+const cap=t=>t.charAt(0).toUpperCase()+t.slice(1);
 function viewCard(p){
   const id=nextCard(p,uid()), it=byId(id), i=p.options.indexOf(id);
   const far=p.pin&&it.lat?km([null,p.pin[0],p.pin[1]],[null,it.lat,it.lng]):null;
   const line=(it.cat?`${eventWhen(it)} · ${it.venue}`:placeLine(it))+(far!=null?` · ${far<1?Math.round(far*1000/50)*50+" m":far.toFixed(1)+" km"} from the pin`:"");
-  return `<div data-hero><button class="back" data-act="reset">‹ ${esc(p.group_name||"New plan")}</button><h1>${i+1} of ${p.options.length}</h1></div>
+  return `<div data-hero><button class="back" data-act="reset">‹ ${esc(p.group_name||"New plan")}</button><span>${esc(cap(planTitle(p)))}</span><h1>${i+1} of ${p.options.length}</h1></div>
   <div class="place"><span class="dim">${it.cat?"Event":esc(KIND[it.kind])}</span><h2>${esc(it.name)}</h2>
     ${it.cat?(it.priceText?`<p>${esc(it.priceText)}</p>`:""):`<p>${esc(it.why)}</p>`}
     <p class="dim">${esc(line)}</p></div>
-  <div class="yesno"><button class="btn plain" data-act="vote" data-id="${esc(id)}" data-v="0">No</button><button class="btn" data-act="vote" data-id="${esc(id)}" data-v="1">Yes</button></div>`;
+  <div class="yesno"><button class="btn plain" data-act="vote" data-id="${esc(id)}" data-v="0">No</button><button class="btn" data-act="vote" data-id="${esc(id)}" data-v="1">Yes</button></div>
+  ${p.people.length>1||p.group_id?`<button class="link quiet center" data-act="attend" data-v="0">I can't make it</button>`:""}`;
 }
 function viewResult(p){
-  const r=results(p), w=r[0], total=Object.keys(p.votes||{}).length||p.people.length, back=p.group_id?(p.group_name||"Back"):"New plan";
+  const r=results(p), w=r[0], total=Object.keys(p.votes||{}).filter(n=>!isOut(p,n)).length||going(p).length, back=p.group_id?(p.group_name||"Back"):"New plan";
   if(!w||w.yes===0) return `<div data-hero><button class="back" data-act="reset">‹ ${esc(back)}</button><span>Nobody said yes to any of these</span><h1>No match this round</h1></div>
     <button class="btn" data-act="again">Try 5 more</button>`;
   const it=w.item, where=it.cat?it.venue:`${it.addr}`, sub=it.cat?eventWhen(it):[metroText(it.metro),zname(it.zone)].filter(Boolean).join(" · ");
-  const n=p.people.length, votes=x=>`${x.yes} ${x.yes===1?"vote":"votes"}`;
+  const n=going(p).length, outN=p.people.filter(x=>isOut(p,x)).map(x=>x===uid()?"You":(p.names?.[x]||"Someone")), votes=x=>`${x.yes} ${x.yes===1?"vote":"votes"}`;
   return `<div data-hero><button class="back" data-act="reset">‹ ${esc(back)}</button><h1>Results</h1></div>
   <section class="poll" aria-label="Vote results">
     <div class="pollhead"><div><span class="label">${p.group_id?"Concit group":"Concit plan"}</span><h2>${esc(p.group_name||planTitle(p))}</h2>
-      <p class="dim">${n} ${n===1?"person":"people"} · ${esc(planTitle(p))}</p></div>${GROUP_ICON}</div>
+      <p class="dim">${n} ${n===1?"person":"people"} going · ${esc(planTitle(p))}</p>${outN.length?`<p class="dim">Not going: ${esc(nameList(outN))}</p>`:""}</div>${GROUP_ICON}</div>
     <h3>Where are we going?</h3>
     <div class="pollrows">${r.map((x,i)=>`<div class="pollrow${i===0?" lead":""}">
       <div class="prtop"><span class="prname">${esc(x.item.name)}</span><span class="prvotes">${votes(x)}</span></div>
       <div class="prbar" role="img" aria-label="${esc(x.item.name)}: ${x.yes} of ${total}"><i style="width:${total?Math.round(x.yes/total*100):0}%"></i></div></div>`).join("")}</div>
     <p class="pollwin">${TROPHY_ICON}<span>Winner: <b>${esc(it.name)}</b></span></p>
   </section>
-  <div class="win"><p class="ok">${w.yes} of ${total} said yes</p><p>${esc(where)}</p><p class="dim">${esc(sub)}</p></div>
+  <div class="win"><p class="ok">${w.yes} of ${total} said yes</p>${p.time?`<p><b>Meet at ${esc(p.time)}</b> · ${esc(dayText(p.day))}</p>`:""}<p>${esc(where)}</p><p class="dim">${esc(sub)}</p></div>
   <div class="stack"><button class="btn" data-act="copy">Copy the details</button><a class="btn plain" href="${mapsUrl(it.name+" "+where)}" target="_blank" rel="noopener">Directions</a></div>`;
 }
 const GROUP_ICON='<svg class="pollicon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 19.5c0-3.4 2.7-5.8 6-5.8s6 2.4 6 5.8"/><circle cx="16.6" cy="9" r="2.6"/><path d="M16 13.8c2.8.2 5 2.3 5 5.2"/></svg>';
@@ -435,7 +451,7 @@ function viewDecide(){
   const p=S.plan;
   if(!p) return viewSetup();
   if(p.finished||(allDone(p)&&p.people.length>1)) return viewResult(p);
-  if(p.people.includes(uid())&&nextCard(p,uid())) return viewCard(p);
+  if(p.people.includes(uid())&&!isOut(p,uid())&&nextCard(p,uid())) return viewCard(p);
   return viewWaiting(p);
 }
 
@@ -461,7 +477,7 @@ function viewAuth(){
 
 /* ---------- Groups ---------- */
 function planRow(p){
-  const status=p.finished||p.done>=p.people?"See result":p.mine<p.options?"Vote":`${p.done} of ${p.people} voted`;
+  const status=p.finished||(p.people>0&&p.done>=p.people)?"See result":p.me_out?"Not going":p.mine<p.options?"Vote":`${p.done} of ${p.people} voted`;
   return `<button class="person" data-act="openPlan" data-code="${esc(p.code)}"><span>${esc(planTitle(p))}<small class="sub">Started by ${esc(p.by||"someone")}</small></span><small>${status}</small></button>`;
 }
 /* ---------- Profile pictures ---------- */
@@ -999,11 +1015,13 @@ const H={
     f.mode="pick";
     if(!document.getElementById("pickBox")){ document.querySelectorAll(`.addplan[data-id="${CSS.escape(id)}"]`).forEach(b=>b.textContent=f.picks.includes(id)?"In your plan ✓":"Add to a plan"); if(f.picks.includes(id)) toast(`Added to your plan (${f.picks.length}). Send it from Decide.`); return; }
     updatePicks(); },
-  start(){ const f=S.form, unit=WHAT_UNIT[f.what], ev=f.what==="event", max=maxFromPrice(unit,f.price||0), {group,idx,linkOnly,...rest}=f, q={...rest,max,rating:ev?0:f.rating||0,metro:!ev&&!!f.metro}, options=shortlist(q);
+  start(){ const f=S.form, unit=WHAT_UNIT[f.what], ev=f.what==="event", max=maxFromPrice(unit,f.price||0), {group,idx,linkOnly,...rest}=f, q={...rest,max,rating:ev?0:f.rating||0,metro:!ev&&!!f.metro,time:ev?"":(f.time||"")}, options=shortlist(q);
     if(f.mode==="pick"){ const picks=(f.picks||[]).filter(byId); if(picks.length<2) return;
       newPlan({...q,what:f.what,options:picks,seen:picks,picked:true,finished:false},group); f.picks=[]; S.pickQ=""; return; }
     if(!options.length){ toast(f.what==="event"?"No events listed around that date yet. Try another date or price.":"Nothing matches. Try fewer filters or another day."); return; }
     newPlan({...q,options,seen:options,finished:false},group); },
+  attend(el){ const go=el.dataset.v==="1"; setAttending(go); },
+  clearTime(){ S.form.time=""; render(); },
   share(){ shareOut(`Help choose where we go: ${shareUrl()}`,"Link copied"); },
   authView(el){ S.email=document.getElementById("email")?.value||S.email; S.authView=el.dataset.v; S.authNote=""; render(); },
   logout(){ logout(); },
@@ -1032,7 +1050,7 @@ const H={
   again(){ const p=S.plan, options=shortlist(p,p.seen||p.options); if(!options.length){ toast("That's everything for these choices."); return; }
     S.ver++; changePlan({...p,options,seen:[...(p.seen||[]),...options],votes:{},finished:false},true); },
   copy(){ const it=results(S.plan)[0].item, where=it.cat?it.venue:it.addr, when=parse(S.plan.day).toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"});
-    const t=`${it.name}, ${where}. ${when}.`;
+    const t=`${it.name}, ${where}. ${when}${S.plan.time?` at ${S.plan.time}`:""}.`;
     (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast("Copied"),()=>toast(t)); },
   hot(el){ S.hot=el.dataset.v; render(); },
   hotView(el){ S.hotView=el.dataset.v; render(); },
@@ -1057,7 +1075,7 @@ document.addEventListener("input",e=>{ if(e.target.dataset.search==="pick"){ S.p
 document.addEventListener("input",e=>{const u=e.target.dataset.slider; if(!u) return; const i=Number(e.target.value);
   if(e.target.id==="budget") S.form.idx[u]=i; else S.hotIdx[u]=i;
   document.getElementById(e.target.id+"Val").textContent=stepText(u,i);});
-document.addEventListener("change",e=>{ if(e.target.id==="avFile"){ uploadAvatar(e.target.files&&e.target.files[0]); e.target.value=""; return; } if(e.target.id==="hotBudget") render(); const c=e.target.dataset.change; if(c==="area"){S.form.area=e.target.value} if(c==="sendTo"){S.form.group=e.target.value;S.form.linkOnly=!e.target.value;persist();render()}});
+document.addEventListener("change",e=>{ if(e.target.id==="avFile"){ uploadAvatar(e.target.files&&e.target.files[0]); e.target.value=""; return; } if(e.target.id==="hotBudget") render(); const c=e.target.dataset.change; if(c==="area"){S.form.area=e.target.value} if(c==="time"){S.form.time=e.target.value;render()} if(c==="sendTo"){S.form.group=e.target.value;S.form.linkOnly=!e.target.value;persist();render()}});
 document.addEventListener("submit",async e=>{ e.preventDefault();
   if(e.target.id==="authForm") authSubmit();
   if(e.target.id==="groupForm"){ const i=document.getElementById("groupName"), n=i.value.trim(); if(!n) return; i.value=""; i.blur(); try{ S.gid=await rpc("create_group",{p_name:n}); await loadGroups(); render(); }catch{ toast("Couldn't create the group. Try again."); } }
