@@ -1065,6 +1065,7 @@ function render(){
   document.querySelectorAll("nav button").forEach(b=>b.dataset.tab===S.tab&&!S.acct?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current"));
 }
 const H={
+  home(){ if(!S.session) return; S.acct=false; S.deleting=false; S.pickOpen=false; if(S.plan||S.code) clearPlan(); S.tab="decide"; try{location.hash="decide"}catch{} render(); scrollTo(0,0); },
   tab(el){ S.acct=false; S.deleting=false; S.tab=el.dataset.tab; try{location.hash=S.tab}catch{} render(); scrollTo(0,0); },
   what(el){ const was=S.form.what; S.form.what=el.dataset.v; if((was==="event")!==(el.dataset.v==="event")) S.form.price=0; render(); },
   cuisine(el){ S.form.cuisine=el.dataset.v; render(); },

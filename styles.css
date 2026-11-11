@@ -439,3 +439,5 @@ nav::before{content:"";position:absolute;top:0;bottom:0;left:50%;width:min(520px
 .srow input.tin{width:104px;flex:none;border:0;background:transparent;padding:8px 0;font-size:15px;font-weight:700;color:var(--link);text-align:right;border-radius:10px}
 .srow input.tin:focus{background:var(--tint);padding:8px 10px;outline:none}
 .srow input.tin.bad{color:#c4314b}
+.brandbtn{display:block;background:none;border:0;padding:0;margin:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.brandbtn:active{opacity:.7}
