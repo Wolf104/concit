@@ -163,6 +163,7 @@ async function refresh(){
 async function loadGroups(){
   if(!S.session||document.hidden) return;
   try{
+    rpc("heartbeat").catch(()=>{});
     const g=await rpc("my_groups");
     if(JSON.stringify(g)!==JSON.stringify(S.groups)){ S.groups=g||[]; if(!(S.chatOpen&&S.tab==="groups"&&!S.acct)) render(); }
   }catch{}
@@ -450,7 +451,29 @@ function planRow(p){
   return `<button class="person" data-act="openPlan" data-code="${esc(p.code)}"><span>${esc(planTitle(p))}<small class="sub">Started by ${esc(p.by||"someone")}</small></span><small>${status}</small></button>`;
 }
 /* ---------- Group chat ---------- */
-const CHAT={gid:null,msgs:[],last:0,busy:false,loaded:false};
+const CHAT={gid:null,msgs:[],last:0,busy:false,loaded:false,people:[],typingSent:0};
+const nameList=a=>a.length<=2?a.join(" and "):a.slice(0,-1).join(", ")+" and "+a[a.length-1];
+function whoHtml(){
+  const on=CHAT.people.filter(p=>p.online).map(p=>p.name);
+  return on.length?`<span class="dot" aria-hidden="true"></span>${esc(nameList(on))} ${on.length===1?"is":"are"} online`:CHAT.loaded?"Nobody else is online right now":"";
+}
+function typingHtml(){
+  const t=CHAT.people.filter(p=>p.typing).map(p=>p.name);
+  return t.length?`<div class="typing"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>${esc(nameList(t))} ${t.length===1?"is":"are"} typing…</div>`:"";
+}
+function paintPresence(){
+  const w=document.getElementById("chatWho"), t=document.getElementById("chatTyping"); if(!w||!t) return;
+  const near=innerHeight+scrollY>=document.documentElement.scrollHeight-160, had=!!t.innerHTML;
+  w.innerHTML=whoHtml(); t.innerHTML=typingHtml();
+  if(near&&!had&&t.innerHTML) scrollTo(0,document.documentElement.scrollHeight);
+}
+function typing(on){
+  if(!CHAT.gid) return; const now=Date.now();
+  if(on&&now-CHAT.typingSent<2500) return;
+  if(!on&&!CHAT.typingSent) return;
+  CHAT.typingSent=on?now:0;
+  rpc("set_typing",{p_group:CHAT.gid,p_on:on}).catch(()=>{});
+}
 const chatTime=t=>{const d=new Date(t), now=new Date(), same=d.toDateString()===now.toDateString();
   return same?d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}):d.toLocaleDateString("en-GB",{day:"numeric",month:"short"})+" "+d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});};
 const linkify=t=>esc(t).replace(/https?:\/\/[^\s<]+/g,u=>`<a href="${u}" target="_blank" rel="noopener">${u}</a>`);
@@ -471,8 +494,9 @@ async function loadChat(first){
   if(!CHAT.gid||CHAT.busy||document.hidden) return;
   CHAT.busy=true;
   try{
-    const gid=CHAT.gid, rows=await rpc("get_messages",{p_group:gid,p_after:CHAT.last});
+    const gid=CHAT.gid, r=await rpc("chat_poll",{p_group:gid,p_after:CHAT.last});
     if(gid!==CHAT.gid) return;
+    const rows=r?r.messages:null; if(r){ CHAT.people=r.people||[]; paintPresence(); }
     if(rows===null){ closeChat(); toast("You're no longer in that group."); return; }
     const fresh=rows.filter(m=>!CHAT.msgs.some(x=>x.id===m.id));
     if(fresh.length||!CHAT.loaded){ CHAT.msgs.push(...fresh); CHAT.msgs.sort((a,b)=>a.id-b.id); CHAT.last=CHAT.msgs.length?CHAT.msgs[CHAT.msgs.length-1].id:0; CHAT.loaded=true; paintChat(first); }
@@ -480,11 +504,11 @@ async function loadChat(first){
   }catch{ if(first&&!CHAT.loaded){ CHAT.loaded=true; paintChat(); toast("Couldn't load messages. Check your connection."); } }
   finally{ CHAT.busy=false; }
 }
-function openChat(gid){ if(CHAT.gid!==gid){ CHAT.gid=gid; CHAT.msgs=[]; CHAT.last=0; CHAT.loaded=false; } S.chatOpen=true; render(); scrollTo(0,document.documentElement.scrollHeight); loadChat(true); }
-function closeChat(){ S.chatOpen=false; CHAT.gid=null; render(); scrollTo(0,0); loadGroups(); }
+function openChat(gid){ if(CHAT.gid!==gid){ CHAT.gid=gid; CHAT.msgs=[]; CHAT.last=0; CHAT.loaded=false; CHAT.people=[]; CHAT.typingSent=0; } S.chatOpen=true; render(); scrollTo(0,document.documentElement.scrollHeight); loadChat(true); }
+function closeChat(){ typing(false); S.chatOpen=false; CHAT.gid=null; render(); scrollTo(0,0); loadGroups(); }
 async function sendChat(){
   const i=document.getElementById("chatText"), body=(i?.value||"").trim(); if(!body||!CHAT.gid) return;
-  i.value=""; i.style.height="";
+  i.value=""; i.style.height=""; typing(false);
   const temp={id:Number.MAX_SAFE_INTEGER, body, by:uid(), name:"You", at:new Date().toISOString(), pending:true};
   CHAT.msgs.push(temp); paintChat(true);
   try{ const m=await rpc("send_message",{p_group:CHAT.gid,p_body:body}); CHAT.msgs=CHAT.msgs.filter(x=>x!==temp); if(m&&!CHAT.msgs.some(x=>x.id===m.id)) CHAT.msgs.push(m); CHAT.msgs.sort((a,b)=>a.id-b.id); CHAT.last=Math.max(CHAT.last,m?.id||0); paintChat(true); }
@@ -492,7 +516,9 @@ async function sendChat(){
 }
 function viewChat(g){
   return `<div data-hero><button class="back" data-act="closeChat">‹ ${esc(g.name)}</button><h1>Chat</h1></div>
+  <p id="chatWho" class="who-online">${whoHtml()}</p>
   <div id="chatList" class="chat" aria-live="polite">${chatListHtml()}</div>
+  <div id="chatTyping" aria-live="polite">${typingHtml()}</div>
   <form id="chatForm" class="chatbar" novalidate><textarea id="chatText" rows="1" maxlength="1000" placeholder="Message ${esc(g.name)}" aria-label="Message"></textarea><button class="btn small" type="submit" aria-label="Send">Send</button></form>`;
 }
 function viewGroup(g){
@@ -501,7 +527,7 @@ function viewGroup(g){
   <button class="person chatrow" data-act="openChat" data-id="${esc(g.id)}"><span>Group chat<small class="sub">${g.last?esc((g.last.mine?"You":g.last.name||"Someone")+": "+g.last.body):"No messages yet"}</small></span><small>${g.unread?`<b class="pill">${g.unread} new</b>`:"Open"}</small></button>
   <button class="btn" data-act="newGroupPlan" data-id="${esc(g.id)}" style="margin-top:12px">Start a plan</button>
   ${g.plans.length?`<div class="group" style="margin-top:24px"><span class="label">Plans</span><div class="stack">${g.plans.map(planRow).join("")}</div></div>`:""}
-  <div class="group" style="margin-top:24px"><span class="label">Members · ${n}</span><div class="rows">${g.members.map(m=>`<div class="rowstat"><span>${esc(m.name)}${m.id===uid()?" (you)":""}</span></div>`).join("")}</div>
+  <div class="group" style="margin-top:24px"><span class="label">Members · ${n}</span><div class="rows">${g.members.map(m=>`<div class="rowstat"><span>${m.id!==uid()&&m.online?'<span class="dot" aria-hidden="true"></span>':""}${esc(m.name)}${m.id===uid()?" (you)":""}</span>${m.id!==uid()&&m.online?'<span class="ok">Online</span>':""}</div>`).join("")}</div>
   <button class="link" data-act="invite" data-id="${esc(g.id)}">+ Invite people</button><p class="fine">Or share the code <b class="code">${esc(g.invite_code)}</b></p></div>
   <button class="link quiet center danger" data-act="leave" data-id="${esc(g.id)}">${S.leaving?"Tap again to leave this group":"Leave group"}</button>`;
 }
@@ -509,7 +535,7 @@ function viewGroups(){
   const g=S.groups.find(x=>x.id===S.gid);
   if(g) return S.chatOpen&&CHAT.gid===g.id?viewChat(g):viewGroup(g);
   return `<div data-hero><h1>My groups</h1></div>
-  ${S.groups.length?`<div class="stack">${S.groups.map(x=>{const v=x.plans.filter(p=>!p.finished&&p.mine<p.options).length;return `<button class="person" data-act="openGroup" data-id="${esc(x.id)}"><span>${esc(x.name)}<small class="sub">${x.last?esc((x.last.mine?"You":x.last.name||"Someone")+": "+x.last.body):`${x.members.length} ${x.members.length===1?"member":"members"}`}</small></span><small>${x.unread?`<b class="pill">${x.unread} new</b>`:v?`${v} to vote on`:"Open"}</small></button>`}).join("")}</div>`:`<p class="hint left">Create a group for your friends or family, then invite them. Plans you send there appear for everyone.</p>`}
+  ${S.groups.length?`<div class="stack">${S.groups.map(x=>{const v=x.plans.filter(p=>!p.finished&&p.mine<p.options).length;return `<button class="person" data-act="openGroup" data-id="${esc(x.id)}"><span>${esc(x.name)}<small class="sub">${x.last?esc((x.last.mine?"You":x.last.name||"Someone")+": "+x.last.body):`${x.members.length} ${x.members.length===1?"member":"members"}`}</small></span><small>${x.unread?`<b class="pill">${x.unread} new</b>`:v?`${v} to vote on`:(()=>{const o=x.members.filter(m=>m.online&&m.id!==uid()).length;return o?`<span class="dot" aria-hidden="true"></span>${o} online`:"Open"})()}</small></button>`}).join("")}</div>`:`<p class="hint left">Create a group for your friends or family, then invite them. Plans you send there appear for everyone.</p>`}
   ${S.joinMode?`<form id="codeForm" class="group" style="margin-top:20px" novalidate><span class="label">Join with an invite code</span><div class="inline"><input type="text" id="joinCode" placeholder="Invite code" maxlength="14" autocomplete="off" autocapitalize="off"><button class="btn small" type="submit">Join</button></div></form>
   <button class="link center" data-act="joinMode" data-v="0">Create a group instead</button>`
   :`<form id="groupForm" class="group" style="margin-top:20px" novalidate><span class="label">New group</span><div class="inline"><input type="text" id="groupName" placeholder="Group name" maxlength="40" autocomplete="off"><button class="btn small" type="submit">Create</button></div></form>
@@ -922,8 +948,8 @@ function sessionFromHash(){
 })();
 setInterval(refresh,2500);
 setInterval(loadGroups,8000);
-setInterval(()=>{ if(S.chatOpen&&S.tab==="groups") loadChat(); },3000);
+setInterval(()=>{ if(S.chatOpen&&S.tab==="groups") loadChat(); },2500);
 document.addEventListener("keydown",e=>{ if(e.target.id==="chatText"&&e.key==="Enter"&&!e.shiftKey&&!e.isComposing&&!matchMedia("(pointer:coarse)").matches){ e.preventDefault(); sendChat(); } });
-document.addEventListener("input",e=>{ if(e.target.id==="chatText"){ const t=e.target; t.style.height=""; t.style.height=Math.min(t.scrollHeight,140)+"px"; } });
+document.addEventListener("input",e=>{ if(e.target.id==="chatText"){ const t=e.target; typing(!!t.value.trim()); t.style.height=""; t.style.height=Math.min(t.scrollHeight,140)+"px"; } });
 document.addEventListener("visibilitychange",()=>{refresh();loadGroups()});
 addEventListener("popstate",()=>{ if(!S.session) return; const c=new URLSearchParams(location.search).get("plan"); if(c===S.code||(!c&&!S.code)) return; if(c) openPlan(c); else {S.code=null;S.plan=null;render()} });

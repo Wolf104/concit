@@ -216,3 +216,12 @@ body.noauth #me{display:none}
 .chatbar{position:sticky;bottom:calc(92px + env(safe-area-inset-bottom,0px));z-index:4;display:flex;gap:8px;align-items:flex-end;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:6px 6px 6px 14px;box-shadow:0 6px 20px rgba(15,42,68,.10);margin-top:10px}
 .chatbar textarea{flex:1;min-width:0;border:0;background:transparent;resize:none;font:inherit;font-size:16px;color:var(--fg);padding:9px 0;max-height:140px;outline:none}
 .chatbar .btn{flex:none}
+/* Online and typing */
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#22b35e;margin-right:7px;vertical-align:1px;box-shadow:0 0 0 2px var(--card)}
+.who-online{margin:0 0 6px;font-size:14px;color:var(--muted);min-height:20px}
+.typing{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted);margin:2px 0 4px}
+.typing .dots{display:inline-flex;gap:3px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:9px 11px}
+.typing .dots i{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:tdot 1.2s infinite ease-in-out}
+.typing .dots i:nth-child(2){animation-delay:.15s}.typing .dots i:nth-child(3){animation-delay:.3s}
+@keyframes tdot{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+@media (prefers-reduced-motion:reduce){.typing .dots i{animation:none;opacity:.6}}
