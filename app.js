@@ -415,10 +415,22 @@ function viewResult(p){
   if(!w||w.yes===0) return `<div data-hero><button class="back" data-act="reset">‹ ${esc(back)}</button><span>Nobody said yes to any of these</span><h1>No match this round</h1></div>
     <button class="btn" data-act="again">Try 5 more</button>`;
   const it=w.item, where=it.cat?it.venue:`${it.addr}`, sub=it.cat?eventWhen(it):[metroText(it.metro),zname(it.zone)].filter(Boolean).join(" · ");
-  return `<div data-hero><button class="back" data-act="reset">‹ ${esc(back)}</button><h1 class="placename">${esc(it.name)}</h1></div><div class="win"><p class="ok">${w.yes} of ${total} said yes</p><p>${esc(where)}</p><p class="dim">${esc(sub)}</p></div>
-  <div class="stack"><button class="btn" data-act="copy">Copy the details</button><a class="btn plain" href="${mapsUrl(it.name+" "+where)}" target="_blank" rel="noopener">Directions</a></div>
-  <div class="group" style="margin-top:24px"><span class="label">Other options</span><div class="rows">${r.slice(1).map(x=>`<div class="rowstat"><span>${esc(x.item.name)}</span><span>${x.yes} yes</span></div>`).join("")}</div></div>`;
+  const n=p.people.length, votes=x=>`${x.yes} ${x.yes===1?"vote":"votes"}`;
+  return `<div data-hero><button class="back" data-act="reset">‹ ${esc(back)}</button><h1>Results</h1></div>
+  <section class="poll" aria-label="Vote results">
+    <div class="pollhead"><div><span class="label">${p.group_id?"Concit group":"Concit plan"}</span><h2>${esc(p.group_name||planTitle(p))}</h2>
+      <p class="dim">${n} ${n===1?"person":"people"} · ${esc(planTitle(p))}</p></div>${GROUP_ICON}</div>
+    <h3>Where are we going?</h3>
+    <div class="pollrows">${r.map((x,i)=>`<div class="pollrow${i===0?" lead":""}">
+      <div class="prtop"><span class="prname">${esc(x.item.name)}</span><span class="prvotes">${votes(x)}</span></div>
+      <div class="prbar" role="img" aria-label="${esc(x.item.name)}: ${x.yes} of ${total}"><i style="width:${total?Math.round(x.yes/total*100):0}%"></i></div></div>`).join("")}</div>
+    <p class="pollwin">${TROPHY_ICON}<span>Winner: <b>${esc(it.name)}</b></span></p>
+  </section>
+  <div class="win"><p class="ok">${w.yes} of ${total} said yes</p><p>${esc(where)}</p><p class="dim">${esc(sub)}</p></div>
+  <div class="stack"><button class="btn" data-act="copy">Copy the details</button><a class="btn plain" href="${mapsUrl(it.name+" "+where)}" target="_blank" rel="noopener">Directions</a></div>`;
 }
+const GROUP_ICON='<svg class="pollicon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 19.5c0-3.4 2.7-5.8 6-5.8s6 2.4 6 5.8"/><circle cx="16.6" cy="9" r="2.6"/><path d="M16 13.8c2.8.2 5 2.3 5 5.2"/></svg>';
+const TROPHY_ICON='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 6H5a2 2 0 0 0 2 4h1M16 6h3a2 2 0 0 1-2 4h-1M12 13v4M8.5 20h7M10 17h4"/></svg>';
 function viewDecide(){
   const p=S.plan;
   if(!p) return viewSetup();
