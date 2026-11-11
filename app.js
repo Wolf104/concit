@@ -171,7 +171,7 @@ async function openPlan(code){
   try{
     await rpc("join_plan",{p_code:code});
     const p=await rpc("get_plan",{p_code:code});
-    if(!p){ toast("That plan has expired. Start a new one."); setUrl(null); return; }
+    if(!p){ toast("That plan link doesn't work any more. Start a new plan."); setUrl(null); return; }
     p.options=p.options.filter(byId);
     S.code=code; S.plan=p; S.tab="decide";
     if(new URLSearchParams(location.search).get("plan")!==code) setUrl(`plan=${code}`);
@@ -204,7 +204,8 @@ async function joinByCode(code){
     await loadGroups(); S.gid=g.id; S.tab="groups"; toast(`You're in ${g.name}`); render();
   }catch{ toast("Couldn't join that group. Check your connection."); }
 }
-function toast(t){const el=document.getElementById("toast");el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,3500)}
+function toast(t){const el=document.getElementById("toast");el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,3000)}
+const hideToast=()=>{const el=document.getElementById("toast"); if(el) el.hidden=true; clearTimeout(toast.t);};
 
 /* ---------- Views ---------- */
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -343,7 +344,7 @@ function viewSetup(){
   ${viewWhen(f)}
   ${slider("budget",unit,f.idx[unit])}
   ${viewWhere(f)}
-  <div class="group"><span class="label">Send to</span><select id="sendTo" data-change="sendTo" aria-label="Send to">${S.groups.map(g=>`<option value="${esc(g.id)}" ${f.group===g.id?"selected":""}>${esc(g.name)}</option>`).join("")}<option value="" ${f.group?"":"selected"}>Share by link</option></select></div>
+  ${S.groups.length?`<div class="group"><span class="label">Send to</span><select id="sendTo" data-change="sendTo" aria-label="Send to">${S.groups.map(g=>`<option value="${esc(g.id)}" ${f.group===g.id?"selected":""}>${esc(g.name)}</option>`).join("")}<option value="" ${f.group?"":"selected"}>Share by link</option></select></div>`:""}
   <button class="btn" data-act="start">${f.group?"Send to the group":"Find places"}</button>`;
 }
 function viewWaiting(p){
@@ -594,7 +595,7 @@ function viewHot(){
 function evRow(e){
   const on=S.saved.has(e.id), info=[e.venue,e.sold?"Sold out":e.priceText].filter(Boolean).join(" · ");
   return `<details><summary><div><b>${esc(e.name)}</b><small>${esc(info)}</small></div><span class="when">${esc(eventWhen(e))}</span></summary>
-  <div class="more"><div class="actions"><button data-act="save" data-id="${e.id}">${on?"Saved":"Save"}</button><a href="${esc(srcUrl(e.src))}" target="_blank" rel="noopener">Source</a></div>${e.time?`<p class="dim">${esc(e.time)}</p>`:""}</div></details>`;
+  <div class="more">${e.time?`<p class="dim">Starts ${esc(e.time)}</p>`:""}<div class="actions"><button data-act="save" data-id="${e.id}">${on?"Saved ✓":"Save"}</button><a href="${esc(srcUrl(e.src))}" target="_blank" rel="noopener">Source</a></div></div></details>`;
 }
 /* Events calendar: days with events get a dot; tapping a day shows what's on. */
 const CAL_ICON='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7zm-2 8h14v10H5V10z"/></svg>';
@@ -696,7 +697,8 @@ const H={
   save(el){ const id=el.dataset.id; S.saved.has(id)?S.saved.delete(id):S.saved.add(id); persist(); render();
   }
 };
-document.addEventListener("click",e=>{const el=e.target.closest("[data-act]");if(el) H[el.dataset.act]?.(el)});
+document.addEventListener("click",e=>{const el=e.target.closest("[data-act]");if(el){ hideToast(); H[el.dataset.act]?.(el); }});
+document.addEventListener("submit",hideToast,true);
 document.addEventListener("input",e=>{const u=e.target.dataset.slider; if(!u) return; const i=Number(e.target.value);
   if(e.target.id==="budget") S.form.idx[u]=i; else S.hotIdx[u]=i;
   document.getElementById(e.target.id+"Val").textContent=stepText(u,i);});
