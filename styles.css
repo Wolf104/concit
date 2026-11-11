@@ -432,3 +432,10 @@ nav::before{content:"";position:absolute;top:0;bottom:0;left:50%;width:min(520px
 .chips.times{margin:0 -14px;padding:2px 14px;gap:6px;scroll-snap-type:x proximity;-webkit-mask-image:linear-gradient(90deg,transparent,#000 18px,#000 calc(100% - 18px),transparent);mask-image:linear-gradient(90deg,transparent,#000 18px,#000 calc(100% - 18px),transparent)}
 .chips.times .chip{font-variant-numeric:tabular-nums;padding:8px 13px;scroll-snap-align:center}
 .chips.times .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on)}
+.tin{text-align:right;width:110px;border-radius:8px}
+.tin::placeholder{color:var(--muted);font-weight:600;opacity:1}
+.tin:focus{outline:none;background:var(--tint);padding-inline:8px}
+.tin.bad{color:#c4314b}
+.srow input.tin{width:104px;flex:none;border:0;background:transparent;padding:8px 0;font-size:15px;font-weight:700;color:var(--link);text-align:right;border-radius:10px}
+.srow input.tin:focus{background:var(--tint);padding:8px 10px;outline:none}
+.srow input.tin.bad{color:#c4314b}

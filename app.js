@@ -430,8 +430,7 @@ function viewSetup(){
   const row=(k,v,body="")=>`<div class="srow"><span class="k">${k}</span><div class="v">${v}</div></div>${body?`<div class="sbody">${body}</div>`:""}`;
   const rows=[
     row("When",`<div class="seg" role="group" aria-label="When"><button data-act="day" data-v="${today}" aria-pressed="${f.day===today}">Tonight</button><button data-act="day" data-v="${tom}" aria-pressed="${f.day===tom}">Tomorrow</button><button data-act="cal" aria-pressed="${picked}" aria-expanded="${!!S.calOpen}">${picked?short(f.day):"Other"}</button></div>`,S.calOpen?calendar(f.day):""),
-    ev?"":row("Time",`<button class="sval${f.time?" on":""}" data-act="addTime" aria-expanded="${!!S.timeOpen}">${f.time?esc(f.time):"Any time"}</button>${f.time?`<button type="button" class="pillx" data-act="clearTime" aria-label="Remove the time">×</button>`:""}`,
-      S.timeOpen?`<div class="chips times" id="timeStrip" role="group" aria-label="Meet time">${TIMES.map(t=>`<button class="chip" data-act="setTime" data-v="${t}" aria-pressed="${f.time===t}">${t}</button>`).join("")}</div>`:""),
+    ev?"":row("Time",`<input type="text" class="tin" id="meetTime" inputmode="numeric" maxlength="5" autocomplete="off" placeholder="Any time" value="${esc(f.time||"")}" aria-label="Meet time, 24-hour, for example 19:30">`),
     S.mapFail?row("Where",`<select id="area" data-change="area" aria-label="Area"><option value="">Anywhere in Milan</option>${AREAS.map(z=>`<option value="${z}" ${f.area===z?"selected":""}>${esc(zname(z))}</option>`).join("")}</select>`)
       :row("Where",`<button class="sval${f.pin?" on":""}" data-act="pickOpen" data-v="form" aria-expanded="${S.pickOpen===true}">${f.pin?esc(pinText(f.pin,f.radius)):"Anywhere in Milan"}</button>${f.pin?`<button class="pillx" data-act="pinClear" data-v="form" aria-label="Remove pin">×</button>`:""}`,S.pickOpen===true?viewPinPicker():""),
     pick?"":row("Filters",`<button class="sval${ftxt?" on":""}" data-act="dfltOpen" aria-expanded="${!!S.dfltOpen}">${ftxt?esc(ftxt):"None"}</button>`,S.dfltOpen?viewDecideFilters(f,unit):""),
@@ -1167,7 +1166,21 @@ document.addEventListener("input",e=>{ if(e.target.dataset.search==="pick"){ S.p
 document.addEventListener("input",e=>{const u=e.target.dataset.slider; if(!u) return; const i=Number(e.target.value);
   if(e.target.id==="budget") S.form.idx[u]=i; else S.hotIdx[u]=i;
   document.getElementById(e.target.id+"Val").textContent=stepText(u,i);});
-document.addEventListener("change",e=>{ if(e.target.id==="avFile"){ uploadAvatar(e.target.files&&e.target.files[0]); e.target.value=""; return; } if(e.target.id==="hotBudget") render(); const c=e.target.dataset.change; if(c==="area"){S.form.area=e.target.value} if(c==="time"){S.form.time=e.target.value;render()} if(c==="sendTo"){S.form.group=e.target.value;S.form.linkOnly=!e.target.value;persist();render()}});
+/* Meet time is typed: "1930", "19:30" or "9" all work. It's tidied as you type and checked when you finish. */
+function timeTyping(v){
+  if(v.includes(":")){ const [h,m=""]=v.split(":"); return h.replace(/\D/g,"").slice(0,2)+":"+m.replace(/\D/g,"").slice(0,2); }
+  const d=v.replace(/\D/g,"").slice(0,4); if(d.length<2) return d;
+  const one=+d[0]>2||+d.slice(0,2)>23;
+  return one?(d.length>1?d[0]+":"+d.slice(1,3):d):(d.length>2?d.slice(0,2)+":"+d.slice(2):d);
+}
+function timeDone(v){
+  v=v.trim(); if(!v) return "";
+  const [h,m="0"]=timeTyping(v).split(":"); if(h===""||+h>23||+m>59) return null;
+  return String(+h).padStart(2,"0")+":"+String(m.length===1&&m!=="0"?m+"0":+m).padStart(2,"0").slice(0,2);
+}
+document.addEventListener("input",e=>{ if(e.target.id!=="meetTime") return; const el=e.target, atEnd=el.selectionStart===el.value.length, del=e.inputType&&e.inputType.startsWith("delete"); if(atEnd&&!del) el.value=timeTyping(el.value); el.classList.remove("bad"); });
+document.addEventListener("keydown",e=>{ if(e.key==="Enter"&&e.target.id==="meetTime") e.target.blur(); });
+document.addEventListener("change",e=>{ if(e.target.id==="meetTime"){ const t=timeDone(e.target.value); if(t===null){ e.target.classList.add("bad"); S.form.time=""; toast("Type the time like 19:30."); } else { S.form.time=t; e.target.value=t; } return; } if(e.target.id==="avFile"){ uploadAvatar(e.target.files&&e.target.files[0]); e.target.value=""; return; } if(e.target.id==="hotBudget") render(); const c=e.target.dataset.change; if(c==="area"){S.form.area=e.target.value}  if(c==="sendTo"){S.form.group=e.target.value;S.form.linkOnly=!e.target.value;persist();render()}});
 document.addEventListener("submit",async e=>{ e.preventDefault();
   if(e.target.id==="authForm") authSubmit();
   if(e.target.id==="groupForm"){ const i=document.getElementById("groupName"), n=i.value.trim(); if(!n) return; i.value=""; i.blur(); try{ S.gid=await rpc("create_group",{p_name:n}); await loadGroups(); render(); }catch{ toast("Couldn't create the group. Try again."); } }
