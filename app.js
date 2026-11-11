@@ -480,9 +480,10 @@ const linkify=t=>esc(t).replace(/https?:\/\/[^\s<]+/g,u=>`<a href="${u}" target=
 function chatListHtml(){
   if(!CHAT.loaded) return `<p class="empty">Loading messages…</p>`;
   if(!CHAT.msgs.length) return `<p class="empty">No messages yet. Say hi to the group.</p>`;
-  let prev=null;
-  return CHAT.msgs.map(m=>{ const mine=m.by===uid(), cont=prev&&prev.by===m.by&&(new Date(m.at)-new Date(prev.at))<5*60e3; prev=m;
-    return `<div class="msg${mine?" mine":""}${cont?" cont":""}">${!mine&&!cont?`<span class="who">${esc(m.name||"Former member")}</span>`:""}<p>${linkify(m.body)}</p>${cont?"":`<time>${esc(chatTime(m.at))}</time>`}</div>`; }).join("");
+  /* Messages from the same person within a minute of each other form a run: name on the first, time under the last. */
+  const joined=(a,b)=>a&&b&&a.by===b.by&&Math.abs(new Date(b.at)-new Date(a.at))<60e3, L=CHAT.msgs;
+  return L.map((m,i)=>{ const mine=m.by===uid(), cont=joined(L[i-1],m), more=joined(m,L[i+1]);
+    return `<div class="msg${mine?" mine":""}${cont?" cont":""}">${!mine&&!cont?`<span class="who">${esc(m.name||"Former member")}</span>`:""}<p>${linkify(m.body)}</p>${more?"":`<time>${esc(chatTime(m.at))}</time>`}</div>`; }).join("");
 }
 function paintChat(stick){
   const el=document.getElementById("chatList"); if(!el) return;
