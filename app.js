@@ -15,6 +15,7 @@ function costText(p){const u=KIND_UNIT[p.kind],c=costOf(p,u);return c===0?"Free"
 const CUISINES=[["","Any"],["pizza","Pizza"],["pasta","Pasta"],["milanese","Milanese"],["seafood","Seafood"],["sushi","Sushi"],["asian","Asian"],["meat","Meat"],["street","Street food"],["world","World"],["veggie","Veggie"],["fine","Fine dining"]];
 const CUISINE_TEXT=Object.fromEntries(CUISINES);
 const hasCuisine=(p,c)=>!c||(p.cuisine||[]).includes(c);
+const cuisineSelect=(act,val,any)=>`<select class="csel${val?" on":""}" data-cs="${act}" aria-label="Cuisine">${CUISINES.map(([k,l])=>`<option value="${k}" ${(val||"")===k?"selected":""}>${k?l:any}</option>`).join("")}</select>`;
 const cuisineChips=(act,val)=>`<div class="chips sub" role="group" aria-label="Cuisine">${CUISINES.map(([k,l])=>`<button class="chip" data-act="${act}" data-v="${k}" aria-pressed="${(val||"")===k}">${l}</button>`).join("")}</div>`;
 const AREAS=["brera","duomo","garibaldi","isola","lambrate","navigli","nolo","romana","venezia","sarpi","tortona"];
 
@@ -437,6 +438,7 @@ function viewSetup(){
   const tom=addDays(today,1), picked=f.day!==today&&f.day!==tom, ftxt=viewDecideFilters(f,unit,"text");
   const row=(k,v,body="")=>`<div class="srow"><span class="k">${k}</span><div class="v">${v}</div></div>${body?`<div class="sbody">${body}</div>`:""}`;
   const rows=[
+    f.what==="eat"?row("Cuisine",cuisineSelect("cuisine",f.cuisine,"Any")):"",
     row("When",`<div class="seg" role="group" aria-label="When"><button data-act="day" data-v="${today}" aria-pressed="${f.day===today}">Tonight</button><button data-act="day" data-v="${tom}" aria-pressed="${f.day===tom}">Tomorrow</button><button data-act="cal" aria-pressed="${picked}" aria-expanded="${!!S.calOpen}">${picked?short(f.day):"Other"}</button></div>`,S.calOpen?calendar(f.day):""),
     ev?"":row("Time",`<input type="text" class="tin" id="meetTime" inputmode="numeric" maxlength="5" autocomplete="off" placeholder="Any time" value="${esc(f.time||"")}" aria-label="Meet time, 24-hour, for example 19:30">`),
     S.mapFail?row("Where",`<select id="area" data-change="area" aria-label="Area"><option value="">Anywhere in Milan</option>${AREAS.map(z=>`<option value="${z}" ${f.area===z?"selected":""}>${esc(zname(z))}</option>`).join("")}</select>`)
@@ -447,7 +449,6 @@ function viewSetup(){
   return `<div data-hero><h1>Where to?</h1></div>
   ${todo.length?`<div class="group"><span class="label">Waiting for your vote</span><div class="stack">${todo.map(p=>`<button class="person" data-act="openPlan" data-code="${esc(p.code)}"><span>${esc(planTitle(p))}<small class="sub">${esc(p.by||"Someone")} in ${esc(p.group)}</small></span><small>Vote</small></button>`).join("")}</div></div>`:""}
   <div class="tiles" role="group" aria-label="What">${WHATS.map(([k,l,ic])=>`<button class="tile" data-act="what" data-v="${k}" aria-pressed="${f.what===k}">${evIcon(ic)}<span>${l}</span></button>`).join("")}</div>
-  ${f.what==="eat"?cuisineChips("cuisine",f.cuisine):""}
   <div class="sheet">${rows}</div>
   ${pick?viewPicker(f):""}
   ${pick?`<button class="btn stick" data-act="start" id="startBtn" ${(f.picks||[]).filter(byId).length?"":"hidden"}>${pickStartLabel(f)}</button>
@@ -991,8 +992,7 @@ function viewHot(){
   }
   return `<div data-hero><h1>Hotspots</h1></div>
   <div class="chips hottypes">${HOT_TYPES.map(([k,l])=>`<button class="chip" data-act="hot" data-v="${k}" aria-pressed="${S.hot===k}">${l}</button>`).join("")}</div>
-  ${S.hot==="eat"?cuisineChips("hotCuisine",S.hotCuisine):""}
-  <div class="hotbar">${seg("hotView",S.hotView,[["list","List"],["map","Map"]],"View")}<span class="grow1"></span>${viewFilters("pill")}</div>
+  <div class="hotbar${S.hot==="eat"?" tight":""}">${seg("hotView",S.hotView,[["list","List"],["map","Map"]],"View")}${S.hot==="eat"?cuisineSelect("hotCuisine",S.hotCuisine,"Cuisine"):""}<span class="grow1"></span>${viewFilters("pill")}</div>
   ${viewFilters()}
   ${body||`<p class="empty">Nothing matches these filters.</p>${fltCount()?`<button class="link center" data-act="fltReset">Clear filters</button>`:""}`}
   <p class="foot">Prices are typical estimates. Checked ${CHECKED}, so confirm before you go.${S.hotView==="map"?" Map data © OpenStreetMap contributors.":""}</p>`;
@@ -1180,7 +1180,7 @@ function refreshPicks(){ const box=document.getElementById("pickBox"), b=documen
 document.addEventListener("keydown",e=>{ if(e.key==="Enter"&&e.target.id==="pickQ"){ e.preventDefault(); e.target.blur(); H.pickSearch(); } });
 document.addEventListener("input",e=>{ if(e.target.dataset.search==="pick"){ S.pickQ=e.target.value; refreshPicks(); } });
 document.addEventListener("input",e=>{ const el=e.target; if(!el.dataset.ps) return; const o=JSON.parse(el.dataset.opts)[+el.value]; el.parentNode.querySelector(".psval").textContent=o[1]; el.setAttribute("aria-valuetext",o[1]); });
-document.addEventListener("change",e=>{ const el=e.target; if(!el.dataset.ps) return; const o=JSON.parse(el.dataset.opts)[+el.value]; H[el.dataset.ps]({dataset:{v:String(o[0])}}); });
+document.addEventListener("change",e=>{ const el=e.target; if(el.dataset.cs){ H[el.dataset.cs]({dataset:{v:el.value}}); return; } if(!el.dataset.ps) return; const o=JSON.parse(el.dataset.opts)[+el.value]; H[el.dataset.ps]({dataset:{v:String(o[0])}}); });
 document.addEventListener("input",e=>{const u=e.target.dataset.slider; if(!u) return; const i=Number(e.target.value);
   if(e.target.id==="budget") S.form.idx[u]=i; else S.hotIdx[u]=i;
   document.getElementById(e.target.id+"Val").textContent=stepText(u,i);});
