@@ -79,7 +79,7 @@ const load=k=>{try{return JSON.parse(localStorage.getItem(k))}catch{return null}
 const init=load(KEY)||{};
 const S={tab:"decide",plan:null,code:null,saved:new Set(init.saved||[]),session:load(SKEY),authView:"login",authBusy:false,authNote:"",email:"",pending:init.pending||null,
   groups:[],gid:null,leaving:false,ver:0,inflight:0,
-  form:{what:"drinks",day:today,area:"",group:init.group||"",idx:{coffee:4,meal:5,drink:5,entry:2,ticket:6}},hotIdx:{coffee:9,meal:12,drink:10,entry:7,ticket:9},hot:"all",hotView:"list",zone:null,sel:null,open:new Set(),mapFail:false,mapOk:false,ev:"all"};
+  form:{what:"drinks",day:today,area:"",group:init.group||"",idx:{coffee:4,meal:5,drink:5,entry:2,ticket:6}},hotIdx:{coffee:9,meal:12,drink:10,entry:7,ticket:9},hot:"all",hotView:"list",zone:null,sel:null,open:new Set(),mapFail:false,mapOk:false,ev:null};
 const uid=()=>S.session?.user?.id;
 const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify({saved:[...S.saved],pending:S.pending,group:S.form.group}))}catch{}};
 const saveSession=()=>{try{S.session?localStorage.setItem(SKEY,JSON.stringify(S.session)):localStorage.removeItem(SKEY)}catch{}};
@@ -382,7 +382,7 @@ function pickListHtml(f,picks,pool,sub){
   return `<div class="stack picklist">${pool.map(x=>{ const on=picks.includes(x.id);
     return `<button class="person" data-act="pickToggle" data-id="${esc(x.id)}" aria-pressed="${on}" ${!on&&picks.length>=PICK_MAX?"disabled":""}><span>${esc(x.name)}<small class="sub">${esc(sub(x))}</small></span><small>${on?"Added ✓":"Add"}</small></button>`; }).join("")||`<p class="empty">${S.pickQ?`No places match “${esc(S.pickQ)}”`:"Nothing here"}${S.pickArea?` in ${esc(zname(S.pickArea))}`:""}.</p>`}</div>`;
 }
-const pickStartLabel=f=>{ const n=(f.picks||[]).filter(byId).length; return n<2?"Choose at least 2 places":(f.group?"Send to the group":"Start the vote")+` (${n})`; };
+const pickStartLabel=f=>{ const n=(f.picks||[]).filter(byId).length; return (f.group?"Send to the group":"Start the vote")+` (${n})`; };
 function viewPicker(f){
   return `<div class="group"><span class="label">Your places · up to ${PICK_MAX}</span>
   <input type="text" id="pickQ" data-search="pick" value="${esc(S.pickQ||"")}" placeholder="Search any place or area" autocomplete="off" aria-label="Search places">
@@ -401,7 +401,7 @@ function viewSetup(){
   ${viewWhen(f)}
   ${f.mode==="pick"?viewPicker(f):viewDecideFilters(f,unit)+viewWhere(f)}
   ${S.groups.length?`<div class="group"><span class="label">Send to</span><select id="sendTo" data-change="sendTo" aria-label="Send to">${S.groups.map(g=>`<option value="${esc(g.id)}" ${f.group===g.id?"selected":""}>${esc(g.name)}</option>`).join("")}<option value="" ${f.group?"":"selected"}>Share by link</option></select></div>`:""}
-  <button class="btn${f.mode==="pick"?" stick":""}" data-act="start" id="startBtn" ${f.mode==="pick"&&(f.picks||[]).filter(byId).length<2?"disabled":""}>${f.mode==="pick"?pickStartLabel(f):f.group?"Send to the group":"Find places"}</button>`;
+  <button class="btn${f.mode==="pick"?" stick":""}" data-act="start" id="startBtn" ${f.mode==="pick"&&!(f.picks||[]).filter(byId).length?"hidden":""}>${f.mode==="pick"?pickStartLabel(f):f.group?"Send to the group":"Find places"}</button>`;
 }
 function viewWaiting(p){
   const g=going(p), done=g.filter(n=>votedAll(p,n)).length, solo=p.people.length===1, meOut=isOut(p,uid());
@@ -945,16 +945,31 @@ function evCalendar(list){
   return `<div class="cal evcal"><div class="calhead"><button class="calnav" data-act="evMove" data-v="-1" ${base<=today.slice(0,7)?"disabled":""} aria-label="Previous month">‹</button><b>${title}</b><button class="calnav" data-act="evMove" data-v="1" ${base>=last.slice(0,7)?"disabled":""} aria-label="Next month">›</button></div>
   <div class="calgrid">${["M","T","W","T","F","S","S"].map(x=>`<span class="dow">${x}</span>`).join("")}${cells}</div></div>`;
 }
+const EV_CATS=[
+  ["music","Music","Concerts, gigs and DJ sets",e=>e.cat==="music",'<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>'],
+  ["culture","Culture","Exhibitions, theatre and opera",e=>e.cat==="art"||e.cat==="theatre",'<path d="M3 21h18M4 10h16M12 3 3 8h18zM6 10v8M10 10v8M14 10v8M18 10v8"/>'],
+  ["sport","Sport","Matches and races",e=>e.cat==="sport",'<circle cx="12" cy="12" r="9"/><path d="m12 7 4 3-1.5 4.5h-5L8 10zM12 3v4M21 10l-5 0M15 14.5l2.5 5M9 14.5 6.5 19.5M3 10h5"/>'],
+  ["activities","Activities","Festivals, fairs and markets",e=>e.cat==="festival",'<path d="M12 3l2.3 5.3L20 9l-4.3 3.9L17 19l-5-3-5 3 1.3-6.1L4 9l5.7-.7z"/>']];
+const EV_MORE=[["free","Free","Nothing to pay",e=>e.priceNum===0],["saved","Saved","Events you kept",e=>S.saved.has(e.id)],["all","Everything","All upcoming events",()=>true]];
+const evIcon=p=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 function viewEvents(){
-  const test={all:()=>true,music:e=>e.cat==="music",sport:e=>e.cat==="sport",art:e=>e.cat==="art",theatre:e=>e.cat==="theatre",festival:e=>e.cat==="festival",free:e=>e.priceNum===0,saved:e=>S.saved.has(e.id)}[S.ev]||(()=>true);
-  const all=EVENTS.filter(e=>e.end>=today&&test(e)), d=S.evDate;
+  const live=EVENTS.filter(e=>e.end>=today);
+  const cat=[...EV_CATS,...EV_MORE].find(c=>c[0]===S.ev);
+  if(!cat){
+    const n=f=>live.filter(f).length;
+    return `<div data-hero><h1>Events</h1></div>
+    <p class="evintro">What are you in the mood for?</p>
+    <div class="evtiles">${EV_CATS.map(([k,l,sub,f,ic])=>`<button class="evtile ev-${k}" data-act="ev" data-v="${k}"><span class="evic">${evIcon(ic)}</span><b>${l}</b><small>${esc(sub)}</small><i>${n(f)} on</i></button>`).join("")}</div>
+    <div class="evmore">${EV_MORE.map(([k,l,sub,f])=>`<button class="evmini" data-act="ev" data-v="${k}"><b>${l}</b><small>${k==="saved"?`${n(f)} saved`:`${n(f)} events`}</small></button>`).join("")}</div>
+    <p class="foot">Checked ${S.evChecked||CHECKED}. Confirm dates before you go.</p>`;
+  }
+  const all=live.filter(cat[3]), d=S.evDate;
   const list=d?all.filter(e=>e.start<=d&&e.end>=d):all;
   const dated=list.filter(e=>!isRun(e)).sort((a,b)=>a.start.localeCompare(b.start));
   const runs=list.filter(isRun).sort((a,b)=>a.end.localeCompare(b.end));
   const wk=addDays(today,7), groups=d?[[parse(d).toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"}),()=>true]]:[["Today",e=>e.start<=today],["This week",e=>e.start>today&&e.start<=wk],["Later",e=>e.start>wk]];
   const body=groups.map(([t,f])=>{const g=dated.filter(f);return g.length?`<p class="head">${t}</p>${g.map(evRow).join("")}`:""}).join("")+(runs.length?`<p class="head">${d?"Also on that day":"Running for a while"}</p>${runs.map(evRow).join("")}`:"");
-  return `<div data-hero><h1>Events</h1></div>
-  <div class="chips">${[["all","All"],["music","Music"],["sport","Sport"],["art","Art"],["theatre","Theatre"],["festival","Festivals"],["free","Free"],["saved","Saved"]].map(([k,l])=>`<button class="chip" data-act="ev" data-v="${k}" aria-pressed="${S.ev===k}">${l}</button>`).join("")}</div>
+  return `<div data-hero><button class="back" data-act="ev" data-v="">‹ Events</button><span>${esc(cat[2])}</span><h1>${cat[1]}</h1></div>
   <div class="where evwhen"><button class="wherebtn" data-act="evCal" aria-expanded="${!!S.evCalOpen}"><span class="wpin">${CAL_ICON}</span><span>${d?esc(parse(d).toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"})):"All dates"}</span><small>${S.evCalOpen?"Hide calendar":"Calendar"}</small></button>
     ${d?`<button class="wclear" data-act="evPick" data-v="" aria-label="Show all dates">×</button>`:""}</div>
   ${S.evCalOpen?evCalendar(all):""}
@@ -1016,7 +1031,7 @@ const H={
     if(!document.getElementById("pickBox")){ document.querySelectorAll(`.addplan[data-id="${CSS.escape(id)}"]`).forEach(b=>b.textContent=f.picks.includes(id)?"In your plan ✓":"Add to a plan"); if(f.picks.includes(id)) toast(`Added to your plan (${f.picks.length}). Send it from Decide.`); return; }
     updatePicks(); },
   start(){ const f=S.form, unit=WHAT_UNIT[f.what], ev=f.what==="event", max=maxFromPrice(unit,f.price||0), {group,idx,linkOnly,...rest}=f, q={...rest,max,rating:ev?0:f.rating||0,metro:!ev&&!!f.metro,time:ev?"":(f.time||"")}, options=shortlist(q);
-    if(f.mode==="pick"){ const picks=(f.picks||[]).filter(byId); if(picks.length<2) return;
+    if(f.mode==="pick"){ const picks=(f.picks||[]).filter(byId); if(!picks.length) return;
       newPlan({...q,what:f.what,options:picks,seen:picks,picked:true,finished:false},group); f.picks=[]; S.pickQ=""; return; }
     if(!options.length){ toast(f.what==="event"?"No events listed around that date yet. Try another date or price.":"Nothing matches. Try fewer filters or another day."); return; }
     newPlan({...q,options,seen:options,finished:false},group); },
@@ -1057,7 +1072,7 @@ const H={
   zoneMap(el){ S.zone=el.dataset.z; render(); },
   pin(el){ S.sel=el.dataset.id; render(); },
   showGroup(el){ S.open.add(el.dataset.v); render(); },
-  ev(el){ S.ev=el.dataset.v; render(); },
+  ev(el){ S.ev=el.dataset.v||null; S.evCalOpen=false; S.evDate=null; render(); scrollTo(0,0); },
   save(el){ const id=el.dataset.id; S.saved.has(id)?S.saved.delete(id):S.saved.add(id); persist(); render();
   }
 };
@@ -1068,9 +1083,9 @@ function updatePicks(){ const f=S.form, picks=(f.picks||[]).filter(byId), list=d
   if(!list||!c){ render(); return; }
   const y0=list.getBoundingClientRect().top; c.innerHTML=pickChipsHtml(picks); const dy=list.getBoundingClientRect().top-y0; if(dy) scrollBy(0,dy);
   list.querySelectorAll(".person[data-id]").forEach(el=>{ const on=picks.includes(el.dataset.id); el.setAttribute("aria-pressed",on); el.disabled=!on&&picks.length>=PICK_MAX; el.lastElementChild.textContent=on?"Added ✓":"Add"; });
-  if(b){ b.textContent=pickStartLabel(f); b.disabled=picks.length<2; } }
+  if(b){ b.textContent=pickStartLabel(f); b.hidden=!picks.length; } }
 function refreshPicks(){ const box=document.getElementById("pickBox"), b=document.getElementById("startBtn"); if(!box){ render(); return; }
-  const sl=box.querySelector(".pickareas")?.scrollLeft||0; box.innerHTML=pickBoxHtml(S.form); const ar=box.querySelector(".pickareas"); if(ar) ar.scrollLeft=sl; if(b){ b.textContent=pickStartLabel(S.form); b.disabled=(S.form.picks||[]).filter(byId).length<2; } }
+  const sl=box.querySelector(".pickareas")?.scrollLeft||0; box.innerHTML=pickBoxHtml(S.form); const ar=box.querySelector(".pickareas"); if(ar) ar.scrollLeft=sl; if(b){ b.textContent=pickStartLabel(S.form); b.hidden=!(S.form.picks||[]).filter(byId).length; } }
 document.addEventListener("input",e=>{ if(e.target.dataset.search==="pick"){ S.pickQ=e.target.value; refreshPicks(); } });
 document.addEventListener("input",e=>{const u=e.target.dataset.slider; if(!u) return; const i=Number(e.target.value);
   if(e.target.id==="budget") S.form.idx[u]=i; else S.hotIdx[u]=i;
