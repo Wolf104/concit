@@ -242,3 +242,16 @@ body.noauth #me{display:none}
 .avbtns label.busy{opacity:.6;cursor:default}
 #me.hasav{padding:0;overflow:hidden}
 #me img{width:100%;height:100%;object-fit:cover;display:block;border-radius:50%}
+/* Photo cropper */
+body.cropping{overflow:hidden}
+.cropwrap{position:fixed;inset:0;z-index:50;background:rgba(10,24,40,.6);display:flex;align-items:center;justify-content:center;padding:16px}
+.cropbox{background:var(--card);border-radius:24px;padding:20px 20px 16px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.cropbox h2{margin:0 0 14px;font-size:20px;text-align:center;color:var(--fg)}
+.cropstage{position:relative;width:100%;aspect-ratio:1;border-radius:16px;overflow:hidden;touch-action:none;cursor:grab;background:#fff;outline-offset:3px}
+.cropstage:active{cursor:grabbing}
+.cropstage canvas{width:100%;height:100%;display:block}
+.cropring{position:absolute;inset:0;border-radius:50%;box-shadow:0 0 0 999px rgba(10,24,40,.5);border:2px solid rgba(255,255,255,.9);pointer-events:none}
+.cropzoom{display:flex;align-items:center;gap:10px;margin:14px 4px 4px;color:var(--muted);font-weight:800;font-size:18px}
+.cropzoom input{flex:1;height:40px}
+.cropbox .fine{margin:4px 0 14px}
+.cropbox .yesno{margin:0}

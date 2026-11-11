@@ -476,28 +476,65 @@ function avatarHtml(id,name,cls=""){
   let h=0; for(const c of String(id||name)) h=(h*31+c.charCodeAt(0))>>>0;
   return `<span class="av ${cls}" style="background:${AV_COLORS[h%AV_COLORS.length]}" aria-hidden="true">${esc((name||"?").trim().charAt(0).toUpperCase()||"?")}</span>`;
 }
-/* Centre-crop to a square and shrink, so a phone photo becomes a ~15 KB JPEG. */
-async function shrinkPhoto(file){
-  const url=URL.createObjectURL(file);
-  try{
-    const img=await new Promise((ok,no)=>{const i=new Image(); i.onload=()=>ok(i); i.onerror=no; i.src=url;});
-    const side=Math.min(img.naturalWidth,img.naturalHeight); if(!side) throw new Error("empty");
-    const c=document.createElement("canvas"); c.width=c.height=192;
-    const g=c.getContext("2d"); g.fillStyle="#fff"; g.fillRect(0,0,192,192);
-    g.drawImage(img,(img.naturalWidth-side)/2,(img.naturalHeight-side)/2,side,side,0,0,192,192);
-    for(const q of [.85,.72,.6,.45]){ const d=c.toDataURL("image/jpeg",q); if(d.length<=110000) return d; }
-    throw new Error("too big");
-  } finally { URL.revokeObjectURL(url); }
+/* Photo cropper: drag to move, slider / pinch / scroll to zoom, inside a circular frame.
+   It lives in its own overlay outside #view so background refreshes never redraw it. */
+const CROP_OUT=192;
+function loadImage(file){
+  return new Promise((ok,no)=>{ const url=URL.createObjectURL(file), i=new Image();
+    i.onload=()=>{ URL.revokeObjectURL(url); i.naturalWidth?ok(i):no(new Error("empty")); };
+    i.onerror=()=>{ URL.revokeObjectURL(url); no(new Error("empty")); }; i.src=url; });
+}
+function openCropper(img){
+  return new Promise(done=>{
+    const wrap=document.createElement("div"); wrap.className="cropwrap"; wrap.setAttribute("role","dialog"); wrap.setAttribute("aria-modal","true"); wrap.setAttribute("aria-label","Adjust your photo");
+    wrap.innerHTML=`<div class="cropbox"><h2>Adjust your photo</h2>
+      <div class="cropstage" tabindex="0" aria-label="Photo position. Drag, or use the arrow keys; plus and minus zoom."><canvas></canvas><div class="cropring" aria-hidden="true"></div></div>
+      <label class="cropzoom"><span aria-hidden="true">−</span><input type="range" min="1" max="4" step="0.01" value="1" aria-label="Zoom"><span aria-hidden="true">+</span></label>
+      <p class="fine center">Drag to move · pinch or use the slider to zoom</p>
+      <div class="yesno"><button class="btn plain" data-c="cancel">Cancel</button><button class="btn" data-c="save">Save</button></div></div>`;
+    document.body.appendChild(wrap); document.body.classList.add("cropping");
+    const stage=wrap.querySelector(".cropstage"), cv=wrap.querySelector("canvas"), zoomEl=wrap.querySelector("input"), g=cv.getContext("2d");
+    const iw=img.naturalWidth, ih=img.naturalHeight;
+    let V=0, base=1, z=1, ox=0, oy=0;
+    const W=()=>iw*base*z, H=()=>ih*base*z;
+    const clamp=()=>{ ox=Math.min(0,Math.max(V-W(),ox)); oy=Math.min(0,Math.max(V-H(),oy)); };
+    const draw=()=>{ const r=devicePixelRatio||1; if(cv.width!==Math.round(V*r)){ cv.width=cv.height=Math.round(V*r); }
+      g.setTransform(r,0,0,r,0,0); g.fillStyle="#fff"; g.fillRect(0,0,V,V); g.imageSmoothingQuality="high"; g.drawImage(img,ox,oy,W(),H()); };
+    const layout=()=>{ const nv=stage.clientWidth; if(!nv) return; const f=V?nv/V:1; ox*=f; oy*=f; V=nv; base=Math.max(V/iw,V/ih); if(!layout.done){ ox=(V-W())/2; oy=(V-H())/2; layout.done=true; } clamp(); draw(); };
+    /* Zoom keeping the point (cx,cy) on the stage still. */
+    const zoomTo=(nz,cx=V/2,cy=V/2)=>{ nz=Math.min(4,Math.max(1,nz)); const k=nz/z; ox=cx-(cx-ox)*k; oy=cy-(cy-oy)*k; z=nz; zoomEl.value=z; clamp(); draw(); };
+    const pts=new Map(); let pinch=null;
+    const local=e=>{ const b=stage.getBoundingClientRect(); return [e.clientX-b.left,e.clientY-b.top]; };
+    stage.addEventListener("pointerdown",e=>{ stage.setPointerCapture(e.pointerId); pts.set(e.pointerId,local(e)); if(pts.size===2){ const [a,b]=[...pts.values()]; pinch={d:Math.hypot(a[0]-b[0],a[1]-b[1]),z}; } e.preventDefault(); });
+    stage.addEventListener("pointermove",e=>{ if(!pts.has(e.pointerId)) return; const prev=pts.get(e.pointerId), cur=local(e); pts.set(e.pointerId,cur);
+      if(pts.size===2&&pinch){ const [a,b]=[...pts.values()], d=Math.hypot(a[0]-b[0],a[1]-b[1]); zoomTo(pinch.z*d/pinch.d,(a[0]+b[0])/2,(a[1]+b[1])/2); }
+      else if(pts.size===1){ ox+=cur[0]-prev[0]; oy+=cur[1]-prev[1]; clamp(); draw(); } });
+    const up=e=>{ pts.delete(e.pointerId); if(pts.size<2) pinch=null; };
+    stage.addEventListener("pointerup",up); stage.addEventListener("pointercancel",up);
+    stage.addEventListener("wheel",e=>{ e.preventDefault(); const [x,y]=local(e); zoomTo(z*Math.exp(-e.deltaY*0.0015),x,y); },{passive:false});
+    zoomEl.addEventListener("input",()=>zoomTo(+zoomEl.value));
+    const close=val=>{ removeEventListener("resize",layout); document.removeEventListener("keydown",key,true); document.body.classList.remove("cropping"); wrap.remove(); done(val); };
+    const key=e=>{ if(e.key==="Escape"){ e.preventDefault(); close(null); return; }
+      if(document.activeElement!==stage) return; const step=e.shiftKey?30:8;
+      if(e.key==="ArrowLeft"){ox+=step;} else if(e.key==="ArrowRight"){ox-=step;} else if(e.key==="ArrowUp"){oy+=step;} else if(e.key==="ArrowDown"){oy-=step;}
+      else if(e.key==="+"||e.key==="="){ zoomTo(z*1.1); e.preventDefault(); return; } else if(e.key==="-"){ zoomTo(z/1.1); e.preventDefault(); return; } else return;
+      e.preventDefault(); clamp(); draw(); };
+    document.addEventListener("keydown",key,true); addEventListener("resize",layout);
+    wrap.addEventListener("click",e=>{ const c=e.target.closest("[data-c]")?.dataset.c; if(c==="cancel"||e.target===wrap) close(null);
+      if(c==="save"){ const out=document.createElement("canvas"); out.width=out.height=CROP_OUT; const o=out.getContext("2d"), k=CROP_OUT/V;
+        o.fillStyle="#fff"; o.fillRect(0,0,CROP_OUT,CROP_OUT); o.imageSmoothingQuality="high"; o.drawImage(img,ox*k,oy*k,W()*k,H()*k);
+        for(const q of [.86,.74,.6,.45]){ const d=out.toDataURL("image/jpeg",q); if(d.length<=110000){ close(d); return; } } close(null); toast("That photo is too detailed to save. Try another."); } });
+    requestAnimationFrame(()=>{ layout(); stage.focus({preventScroll:true}); });
+  });
 }
 async function uploadAvatar(file){
   if(!file) return;
   if(!/^image\//.test(file.type||"image/")){ toast("Choose a photo (JPEG or PNG)."); return; }
+  let img; try{ img=await loadImage(file); }catch{ toast("That photo couldn't be opened. Try a JPEG or PNG."); return; }
+  const data=await openCropper(img); if(!data) return;
   S.avBusy=true; render();
-  try{
-    const data=await shrinkPhoto(file);
-    const v=await rpc("set_avatar",{p_data:data});
-    AV[uid()]={v,img:data}; saveAv(); toast("Profile picture saved");
-  }catch(e){ toast(e&&e.message==="empty"||e instanceof Event?"That photo couldn't be opened. Try a JPEG or PNG.":"Couldn't save your picture. Check your connection and try again."); }
+  try{ const v=await rpc("set_avatar",{p_data:data}); AV[uid()]={v,img:data}; saveAv(); toast("Profile picture saved"); }
+  catch{ toast("Couldn't save your picture. Check your connection and try again."); }
   finally{ S.avBusy=false; render(); loadGroups(); }
 }
 async function removeAvatar(){
