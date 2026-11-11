@@ -395,7 +395,7 @@ function pickBoxHtml(f){
   const far=x=>{ const d=f.pin&&f.radius?pinDist(f,x):null; return d==null?"":` · ${d<0.975?Math.round(d*1000/50)*50+" m":d.toFixed(1)+" km"}`; };
   const sub=x=>x.cat?`${eventWhen(x)} · ${x.venue}${far(x)}`:`${KIND[x.kind]} · ${zname(x.zone)}${far(x)}${open(x,f.day)?"":" · closed that day"}`;
   const areas=S.mapFail?`<div class="chips pickareas" role="group" aria-label="Area">${areaOpts().map(([k,l])=>`<button class="chip" data-act="pickArea" data-v="${k}" aria-pressed="${(S.pickArea||"")===k}">${esc(l)}</button>`).join("")}</div>`:"";
-  if(!S.pickSearched) return `${areas}<div id="pickChips">${pickChipsHtml(picks)}</div><p class="hint pickhint">Set your area, pick a category or type a name, then tap Search.</p>`;
+  if(!S.pickSearched) return `${areas}<div id="pickChips">${pickChipsHtml(picks)}</div><p class="hint pickhint">Pick a category, set your area or type a name, then tap Search.</p>`;
   return `${areas}<div id="pickChips">${pickChipsHtml(picks)}</div>${pickListHtml(f,picks,pool,sub)}`;
 }
 const pickChipsHtml=picks=>picks.length?`<div class="picked">${picks.map(id=>`<button class="chip" data-act="pickToggle" data-id="${esc(id)}" aria-pressed="true" aria-label="Remove ${esc(byId(id).name)}">${esc(byId(id).name)} <span aria-hidden="true">×</span></button>`).join("")}</div>`:"";
@@ -406,8 +406,8 @@ function pickListHtml(f,picks,pool,sub){
 const pickStartLabel=f=>{ const n=(f.picks||[]).filter(byId).length; return (f.group?"Send to the group":"Start the vote")+` (${n})`; };
 function viewPicker(f){
   return `<section class="dsec"><span class="label">Your places · up to ${PICK_MAX}</span>
-  <div class="searchrow"><input type="text" id="pickQ" data-search="pick" value="${esc(S.pickQ||"")}" placeholder="Search a name or area" autocomplete="off" aria-label="Search places">
-  ${S.pickSearched?"":`<button class="btn searchgo" data-act="pickSearch">Search</button>`}</div>
+  <input type="text" id="pickQ" data-search="pick" value="${esc(S.pickQ||"")}" placeholder="Search a name" autocomplete="off" aria-label="Search places by name">
+  ${S.pickSearched?"":`<button class="btn pickgo" data-act="pickSearch">Search</button>`}
   <div id="pickBox">${pickBoxHtml(f)}</div></section>`;
 }
 /* Meet times to pick from: every half hour from 07:00 through to 03:00. */
