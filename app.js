@@ -578,6 +578,15 @@ function seenText(m){
   if(!by.length) return "Not seen yet";
   return by.length===others.length&&others.length>1?"Seen by everyone":"Seen by "+nameList(by);
 }
+/* Read receipts as tiny profile pictures of the people who have seen the message. */
+function seenHtml(m){
+  if(m.pending) return `<span class="seentxt">Sending…</span>`;
+  const others=CHAT.people, by=others.filter(p=>(p.read||0)>=m.id);
+  if(!others.length) return `<span class="seentxt">Sent</span>`;
+  if(!by.length) return `<span class="seentxt">Not seen yet</span>`;
+  const label=by.length===others.length&&others.length>1?"Seen by everyone":"Seen by "+nameList(by.map(p=>p.name));
+  return `<span class="seenavs" role="img" aria-label="${esc(label)}" title="${esc(label)}">${by.slice(0,6).map(p=>avatarHtml(p.id,p.name,"tiny")).join("")}${by.length>6?`<span class="seenmore">+${by.length-6}</span>`:""}</span>`;
+}
 function chatListHtml(){
   if(!CHAT.loaded) return `<p class="empty">Loading messages…</p>`;
   if(!CHAT.msgs.length) return `<p class="empty">No messages yet. Say hi to the group.</p>`;
@@ -585,7 +594,7 @@ function chatListHtml(){
   const joined=(a,b)=>a&&b&&a.by===b.by&&Math.abs(new Date(b.at)-new Date(a.at))<60e3, L=CHAT.msgs;
   const lastMine=[...L].reverse().find(m=>m.by===uid());
   return L.map((m,i)=>{ const mine=m.by===uid(), cont=joined(L[i-1],m), more=joined(m,L[i+1]), seen=mine&&(m===lastMine||CHAT.seenOpen===m.id);
-    return `<div class="msg${mine?" mine":" theirs"}${cont?" cont":""}">${!mine&&!more?avatarHtml(m.by,m.name,"msgav"):""}${!mine&&!cont?`<span class="who">${esc(m.name||"Former member")}</span>`:""}<p${mine&&!m.pending?` data-act="seen" data-id="${m.id}" title="Tap to see who has read this"`:""}>${linkify(m.body)}</p>${more?(seen?`<span class="seen">${esc(seenText(m))}</span>`:""):`<time>${esc(chatTime(m.at))}${seen?" · "+esc(seenText(m)):""}</time>`}</div>`; }).join("");
+    return `<div class="msg${mine?" mine":" theirs"}${cont?" cont":""}">${!mine&&!more?avatarHtml(m.by,m.name,"msgav"):""}${!mine&&!cont?`<span class="who">${esc(m.name||"Former member")}</span>`:""}<p${mine&&!m.pending?` data-act="seen" data-id="${m.id}" title="Tap to see who has read this"`:""}>${linkify(m.body)}</p>${more?(seen?`<div class="seen">${seenHtml(m)}</div>`:""):`<div class="meta"><time>${esc(chatTime(m.at))}</time>${seen?seenHtml(m):""}</div>`}</div>`; }).join("");
 }
 function paintChat(stick){
   const el=document.getElementById("chatList"); if(!el) return;
