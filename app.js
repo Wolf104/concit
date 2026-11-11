@@ -772,13 +772,18 @@ function viewChat(g){
   <form id="chatForm" class="chatbar" novalidate><textarea id="chatText" rows="1" maxlength="1000" placeholder="Message ${esc(g.name)}" aria-label="Message"></textarea><button class="sendbtn" type="submit" aria-label="Send"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h14M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></form>`;
 }
 function viewGroup(g){
-  const n=g.members.length;
-  return `<div data-hero><button class="back" data-act="allGroups">‹ Groups</button><h1>${esc(g.name)}</h1></div>
-  <button class="person chatrow" data-act="openChat" data-id="${esc(g.id)}"><span>Group chat<small class="sub">${g.last?esc((g.last.mine?"You":g.last.name||"Someone")+": "+g.last.body):"No messages yet"}</small></span><small>${g.unread?`<b class="pill">${g.unread} new</b>`:"Open"}</small></button>
-  <button class="btn" data-act="newGroupPlan" data-id="${esc(g.id)}" style="margin-top:12px">Start a plan</button>
-  ${g.plans.length?`<div class="group" style="margin-top:24px"><span class="label">Plans</span><div class="stack">${g.plans.map(planRow).join("")}</div></div>`:""}
-  <div class="group" style="margin-top:24px"><span class="label">Members · ${n}</span><div class="rows">${g.members.map(m=>`<div class="rowstat"><span class="mem">${avatarHtml(m.id,m.name,"small")}${m.id!==uid()&&m.online?'<span class="dot" aria-hidden="true"></span>':""}${esc(m.name)}${m.id===uid()?" (you)":""}</span>${m.id!==uid()&&m.online?'<span class="ok">Online</span>':""}</div>`).join("")}</div>
-  <button class="link" data-act="invite" data-id="${esc(g.id)}">+ Invite people</button><p class="fine">Or share the code <b class="code">${esc(g.invite_code)}</b></p></div>
+  const n=g.members.length, on=g.members.filter(m=>m.online&&m.id!==uid()).length;
+  const planStatus=p=>p.finished||(p.people>0&&p.done>=p.people)?["See result","done"]:p.me_out?["Not going","out"]:p.mine<p.options?["Vote","todo"]:[`${p.done} of ${p.people} voted`,""];
+  return `<div data-hero><button class="back" data-act="allGroups">‹ Groups</button><span>${n} ${n===1?"member":"members"}${on?` · ${on} online`:""}</span><h1>${esc(g.name)}</h1></div>
+  <div class="gacts">
+    <button class="gact" data-act="openChat" data-id="${esc(g.id)}">${evIcon('<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/>')}${g.unread?`<i class="gbadge">${g.unread}</i>`:""}<b>Chat</b><small>${g.last?esc((g.last.mine?"You":(g.last.name||"Someone").split(" ")[0])+": "+g.last.body):"Say hello"}</small></button>
+    <button class="gact primary" data-act="newGroupPlan" data-id="${esc(g.id)}">${evIcon('<path d="M12 5v14M5 12h14"/>')}<b>Start a plan</b><small>Vote on where to go</small></button>
+  </div>
+  ${g.plans.length?`<p class="glabel">Plans</p><div class="sheet glist">${g.plans.map(p=>{ const [t,c]=planStatus(p); return `<button class="grow" data-act="openPlan" data-code="${esc(p.code)}"><span class="gmain"><b>${esc(cap(planTitle(p)))}</b><small>Started by ${esc(p.by||"someone")}</small></span><span class="gstat ${c}">${esc(t)}</span></button>`; }).join("")}</div>`:""}
+  <p class="glabel">Members</p>
+  <div class="sheet glist">${g.members.map(m=>{ const me=m.id===uid(); return `<div class="grow">${avatarHtml(m.id,m.name,"mid")}<span class="gmain"><b>${esc(m.name)}</b>${me?"<small>You</small>":m.online?'<small class="live"><span class="dot" aria-hidden="true"></span>Online</small>':""}</span></div>`; }).join("")}
+    <button class="grow ginvite" data-act="invite" data-id="${esc(g.id)}"><span class="gplus" aria-hidden="true">+</span><span class="gmain"><b>Invite people</b><small>Share a link to join</small></span></button></div>
+  <button class="gcode" data-act="copyCode" data-v="${esc(g.invite_code)}" aria-label="Copy invite code">Invite code <b class="code">${esc(g.invite_code)}</b><span>Copy</span></button>
   <button class="link quiet center danger" data-act="leave" data-id="${esc(g.id)}">${S.leaving?"Tap again to leave this group":"Leave group"}</button>`;
 }
 function viewGroups(){
@@ -1107,6 +1112,7 @@ const H={
   addTime(){ S.timeOpen=!S.timeOpen; S.calOpen=false; render(); const strip=document.getElementById("timeStrip"), c=strip?.querySelector(`[data-v="${S.form.time||TIME_HINT[S.form.what]||"19:00"}"]`); if(c) strip.scrollLeft=c.offsetLeft-strip.offsetLeft-(strip.clientWidth-c.offsetWidth)/2; },
   setTime(el){ S.form.time=el.dataset.v; S.timeOpen=false; render(); },
   pickCancelAll(){ S.form.picks=[]; updatePicks(); toast("Selection cleared."); },
+  copyCode(el){ const c=el.dataset.v; (navigator.clipboard?navigator.clipboard.writeText(c):Promise.reject()).then(()=>toast("Invite code copied."),()=>toast(c)); },
   pickToggle(el){ const f=S.form, id=el.dataset.id, l=(f.picks||[]).filter(byId);
     f.picks=l.includes(id)?l.filter(x=>x!==id):l.length<PICK_MAX?[...l,id]:l;
     f.mode="pick";
