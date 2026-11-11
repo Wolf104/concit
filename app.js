@@ -248,13 +248,13 @@ const toVote=()=>S.groups.flatMap(g=>g.plans.filter(p=>!p.finished&&!p.me_out&&p
 /* When: two quick picks, or any date up to six months ahead from a calendar. */
 const MAX_AHEAD=180;
 function viewWhen(f){
-  const tom=addDays(today,1), picked=f.day!==today&&f.day!==tom;
-  return `<div class="group"><div class="seg" role="group" aria-label="When">
-    <button data-act="day" data-v="${today}" aria-pressed="${f.day===today}">Tonight</button>
-    <button data-act="day" data-v="${tom}" aria-pressed="${f.day===tom}">Tomorrow</button>
-    <button data-act="cal" aria-pressed="${picked}" aria-expanded="${!!S.calOpen}">${picked?`${wday(f.day)} ${short(f.day)}`:"Pick a date"}</button></div>
+  const tom=addDays(today,1), picked=f.day!==today&&f.day!==tom, showTime=f.what!=="event"&&(f.time||S.timeOpen);
+  const chip=(act,v,on,label,extra="")=>`<button class="chip" data-act="${act}" ${v?`data-v="${v}"`:""} aria-pressed="${on}" ${extra}>${label}</button>`;
+  return `<section class="dsec"><span class="label">When</span><div class="chips wrap" role="group" aria-label="When">
+    ${chip("day",today,f.day===today,"Tonight")}${chip("day",tom,f.day===tom,"Tomorrow")}${chip("cal","",picked,picked?`${wday(f.day)} ${short(f.day)}`:"Pick a date",`aria-expanded="${!!S.calOpen}"`)}
+    ${f.what==="event"||showTime?"":`<button class="chip addtime" data-act="addTime" aria-label="Add a meet time">+ Time</button>`}</div>
     ${S.calOpen?calendar(f.day):""}
-    ${f.what==="event"?"":`<label class="meetat"><span class="label">Meet at</span><input type="time" id="meetTime" data-change="time" step="900" value="${esc(f.time||"")}" aria-label="Meet time">${f.time?`<button type="button" class="wclear" data-act="clearTime" aria-label="Clear meet time">×</button>`:`<small>Optional</small>`}</label>`}</div>`;
+    ${showTime?`<label class="meetat"><span class="label">Meet at</span><input type="time" id="meetTime" data-change="time" step="900" value="${esc(f.time||"")}" aria-label="Meet time"><button type="button" class="wclear" data-act="clearTime" aria-label="Remove the time">×</button></label>`:""}</section>`;
 }
 function calendar(sel){
   const base=S.calMonth||sel.slice(0,7), [y,m]=base.split("-").map(Number);
@@ -372,13 +372,12 @@ async function mountPick(){
       const d=ringPx(), m=ringRoom(); if(d>m*.92||d<m*.3) PICK.easeTo({zoom:radZoom(S.pickR),duration:250}); };
   }catch{ S.pickOpen=false; mapFailed(); }
 }
-function viewDecideFilters(f,unit){
+function viewDecideFilters(f,unit,part){
   const ev=f.what==="event", price=f.price||0, rating=ev?0:f.rating||0, metro=!ev&&f.metro;
   const parts=[price?priceOptsFor(unit).find(o=>o[0]===price)?.[1]:"", rating===3?"Top picks":rating===2?"Popular":"", metro?"Near a metro":""].filter(Boolean);
   const chips=(act,opts,val)=>`<div class="chips wrap">${opts.map(([k,l])=>`<button class="chip" data-act="${act}" data-v="${k}" aria-pressed="${String(val)===String(k)}">${l}</button>`).join("")}</div>`;
-  return `<div class="where evwhen"><button class="wherebtn" data-act="dfltOpen" aria-expanded="${!!S.dfltOpen}"><span class="wpin">${FILTER_ICON}</span><span>${parts.length?esc(parts.join(" · ")):"Any price"}</span><small>${S.dfltOpen?"Done":"Filters"}</small></button>
-    ${parts.length?`<button class="wclear" data-act="dfltReset" aria-label="Clear filters">×</button>`:""}</div>
-  ${S.dfltOpen?`<div class="fpanel">
+  if(part==="pill") return `<button class="pill${parts.length?" on":""}" data-act="dfltOpen" aria-expanded="${!!S.dfltOpen}">${FILTER_ICON}<span>${parts.length?esc(parts.join(" · ")):"Filters"}</span></button>`;
+  return `${S.dfltOpen?`<div class="fpanel">${parts.length?`<button class="link quiet fclear" data-act="dfltReset">Clear filters</button>`:""}
     <div class="fsec"><span class="label">Price</span>${chips("dPrice",priceOptsFor(unit),price)}</div>
     ${ev?"":`<div class="fsec"><span class="label">Rating</span>${chips("dRating",[[0,"Any"],[2,"★★ Popular"],[3,"★★★ Top picks"]],rating)}</div>
     <div class="fsec"><span class="label">Show only</span><div class="chips wrap"><button class="chip" data-act="dMetro" aria-pressed="${!!metro}">Near a metro</button></div></div>`}
@@ -414,26 +413,32 @@ function pickListHtml(f,picks,pool,sub){
 }
 const pickStartLabel=f=>{ const n=(f.picks||[]).filter(byId).length; return (f.group?"Send to the group":"Start the vote")+` (${n})`; };
 function viewPicker(f){
-  return `<div class="group"><span class="label">Your places · up to ${PICK_MAX}</span>
-  <input type="text" id="pickQ" data-search="pick" value="${esc(S.pickQ||"")}" placeholder="Search any place or area" autocomplete="off" aria-label="Search places">
-  ${S.mapFail?"":S.pickOpen===true?`<div class="pickwhere">${viewPinPicker()}</div>`:pinButton(f,"form")}
-  ${S.pickOpen===true||S.pickSearched?"":`<button class="btn pickgo" data-act="pickSearch">Search</button>`}
-  <div id="pickBox">${pickBoxHtml(f)}</div></div>`;
+  return `<section class="dsec"><span class="label">Your places · up to ${PICK_MAX}</span>
+  <div class="searchrow"><input type="text" id="pickQ" data-search="pick" value="${esc(S.pickQ||"")}" placeholder="Search a name or area" autocomplete="off" aria-label="Search places">
+  ${S.pickSearched?"":`<button class="btn searchgo" data-act="pickSearch">Search</button>`}</div>
+  <div id="pickBox">${pickBoxHtml(f)}</div></section>`;
 }
+const WHATS=[["eat","Restaurants"],["drinks","Bars"],["coffee","Coffee"],["clubs","Clubs"],["culture","Culture"],["event","Event"]];
 function viewSetup(){
-  const f=S.form, unit=WHAT_UNIT[f.what], todo=toVote();
+  const f=S.form, unit=WHAT_UNIT[f.what], todo=toVote(), pick=f.mode==="pick";
   if(f.day<today) f.day=today;
   if(f.group&&!S.groups.some(g=>g.id===f.group)) f.group="";
   if(!f.group&&S.groups.length&&!f.linkOnly) f.group=S.groups[0].id;
+  const where=S.mapFail?viewWhere(f):`<div class="duo">${S.pickOpen===true?"":`<button class="pill${f.pin?" on":""}" data-act="pickOpen" data-v="form">${PIN}<span>${f.pin?esc(pinText(f.pin,f.radius)):"Anywhere in Milan"}</span></button>${f.pin?`<button class="pillx" data-act="pinClear" data-v="form" aria-label="Remove pin">×</button>`:""}`}
+      ${pick?"":viewDecideFilters(f,unit,"pill")}</div>
+    ${S.pickOpen===true?viewPinPicker():""}${pick?"":viewDecideFilters(f,unit)}`;
   return `<div data-hero><h1>Where to?</h1></div>
   ${todo.length?`<div class="group"><span class="label">Waiting for your vote</span><div class="stack">${todo.map(p=>`<button class="person" data-act="openPlan" data-code="${esc(p.code)}"><span>${esc(planTitle(p))}<small class="sub">${esc(p.by||"Someone")} in ${esc(p.group)}</small></span><small>Vote</small></button>`).join("")}</div></div>`:""}
-  <div class="group">${seg("what",f.what,[["coffee","Coffee"],["eat","Restaurants"],["drinks","Bars"],["clubs","Clubs"],["culture","Culture"],["event","Event"]],"What").replace('class="seg"','class="seg grid"')}
-  ${f.what==="eat"?cuisineChips("cuisine",f.cuisine):""}</div>
-  <div class="group">${seg("mode",f.mode==="pick"?"pick":"auto",[["auto","Suggest 5 for me"],["pick","I'll choose"]],"How to choose")}</div>
+  <section class="dsec"><span class="label">What</span><div class="chips wrap" role="group" aria-label="What">${WHATS.map(([k,l])=>`<button class="chip" data-act="what" data-v="${k}" aria-pressed="${f.what===k}">${l}</button>`).join("")}</div>
+    ${f.what==="eat"?cuisineChips("cuisine",f.cuisine):""}</section>
   ${viewWhen(f)}
-  ${f.mode==="pick"?viewPicker(f):viewDecideFilters(f,unit)+viewWhere(f)}
-  ${S.groups.length?`<div class="group"><span class="label">Send to</span><select id="sendTo" data-change="sendTo" aria-label="Send to">${S.groups.map(g=>`<option value="${esc(g.id)}" ${f.group===g.id?"selected":""}>${esc(g.name)}</option>`).join("")}<option value="" ${f.group?"":"selected"}>Share by link</option></select></div>`:""}
-  <button class="btn${f.mode==="pick"?" stick":""}" data-act="start" id="startBtn" ${f.mode==="pick"&&!(f.picks||[]).filter(byId).length?"hidden":""}>${f.mode==="pick"?pickStartLabel(f):f.group?"Send to the group":"Find places"}</button>`;
+  <section class="dsec"><span class="label">Where</span>${where}</section>
+  ${pick?viewPicker(f):""}
+  ${S.groups.length?`<label class="sendto"><span class="label">Send to</span><select id="sendTo" data-change="sendTo" aria-label="Send to">${S.groups.map(g=>`<option value="${esc(g.id)}" ${f.group===g.id?"selected":""}>${esc(g.name)}</option>`).join("")}<option value="" ${f.group?"":"selected"}>Share by link</option></select></label>`:""}
+  ${pick?`<button class="btn stick" data-act="start" id="startBtn" ${(f.picks||[]).filter(byId).length?"":"hidden"}>${pickStartLabel(f)}</button>
+    <button class="link quiet center" data-act="mode" data-v="auto">Suggest 5 for me instead</button>`
+  :`<div class="ctas"><button class="btn" data-act="start" id="startBtn">Suggest 5 for me</button>
+    <button class="link center" data-act="mode" data-v="pick">I'll pick myself</button></div>`}`;
 }
 function viewWaiting(p){
   const g=going(p), done=g.filter(n=>votedAll(p,n)).length, solo=p.people.length===1, meOut=isOut(p,uid());
@@ -1082,7 +1087,8 @@ const H={
   cal(){ S.calOpen=!S.calOpen; S.calMonth=S.form.day.slice(0,7); render(); },
   calMove(el){ const [y,m]=S.calMonth.split("-").map(Number); S.calMonth=iso(new Date(y,m-1+Number(el.dataset.v),1)).slice(0,7); render(); },
   pickDay(el){ S.form.day=el.dataset.v; S.calOpen=false; render(); },
-  mode(el){ S.form.mode=el.dataset.v; S.pickOpen=false; render(); },
+  mode(el){ S.form.mode=el.dataset.v; S.pickOpen=false; S.dfltOpen=false; render(); scrollTo(0,0); },
+  addTime(){ S.timeOpen=true; render(); setTimeout(()=>{ const t=document.getElementById("meetTime"); t?.focus(); try{ t?.showPicker?.(); }catch{} },50); },
   pickToggle(el){ const f=S.form, id=el.dataset.id, l=(f.picks||[]).filter(byId);
     f.picks=l.includes(id)?l.filter(x=>x!==id):l.length<PICK_MAX?[...l,id]:l;
     f.mode="pick";
@@ -1097,7 +1103,7 @@ const H={
   planLeave(){ if(S.confirm!==S.code) return armConfirm(); closePlan("leave_plan","You left the plan."); },
   async planRejoin(){ const code=S.code; try{ await rpc("rejoin_plan",{p_code:code}); await openPlan(code); loadGroups(); toast("You're back in."); }catch{ toast("Couldn't rejoin. Try again."); } },
   attend(el){ const go=el.dataset.v==="1"; setAttending(go); },
-  clearTime(){ S.form.time=""; render(); },
+  clearTime(){ S.timeOpen=false;  S.form.time=""; render(); },
   share(){ shareOut(`Help choose where we go: ${shareUrl()}`,"Link copied"); },
   authView(el){ S.email=document.getElementById("email")?.value||S.email; S.authView=el.dataset.v; S.authNote=""; render(); },
   logout(){ logout(); },

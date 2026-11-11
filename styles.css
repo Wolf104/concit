@@ -378,3 +378,30 @@ nav::before{content:"";position:absolute;top:0;bottom:0;left:50%;width:min(520px
 .pickgo{margin-top:2px}
 .manage{margin-top:22px;padding-top:6px;border-top:1px solid var(--line)}
 .link.danger{color:#c4314b;font-weight:700}
+/* Decide setup: three plain sections, no boxes */
+.dsec{display:flex;flex-direction:column;gap:8px;margin-bottom:22px}
+.dsec>.label{font-size:13px;letter-spacing:.04em;text-transform:uppercase;font-weight:700}
+.dsec .chips{margin-bottom:0}
+.dsec .chips.wrap+.chips{margin-top:2px}
+.chip.addtime{border-style:dashed;color:var(--link);background:transparent}
+.dsec .meetat{margin-top:4px;padding:2px 6px 2px 14px;border-radius:99px;align-self:flex-start;gap:8px}
+.dsec .meetat input[type=time]{font-size:16px;min-height:32px;padding:4px 0;flex:none;width:auto}
+.duo{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:7px;max-width:100%;min-width:0;border:1px solid var(--line);background:var(--card);border-radius:99px;padding:8px 14px 8px 11px;font-size:15px;font-weight:600;color:var(--fg);cursor:pointer}
+.pill svg{width:18px;height:18px;flex:none;color:var(--link)}
+.pill span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pill.on{background:var(--tint);color:var(--link);font-weight:700}
+.pillx{border:0;background:none;color:var(--muted);font-size:20px;line-height:1;padding:4px 6px;margin-left:-6px;cursor:pointer}
+.dsec .fpanel{margin-top:4px}
+.fclear{float:right;margin:-4px 0 0}
+.sendto{display:flex;align-items:center;gap:12px;margin:-4px 0 22px}
+.sendto .label{flex:none;font-size:13px;letter-spacing:.04em;text-transform:uppercase;font-weight:700}
+.sendto select{flex:1;min-width:0}
+.ctas{margin-top:6px}
+.ctas .link.center{margin-top:12px}
+.searchrow{display:flex;gap:8px}
+.searchrow input{flex:1;min-width:0}
+.btn.searchgo{width:auto;flex:none;padding:0 18px;font-size:16px;border-radius:14px;box-shadow:none}
+.pill svg path{fill:currentColor}
+.dsec .chips.wrap .chip{padding:7px 10px}
+@media (max-width:370px){.dsec .chips.wrap .chip{padding:6px 8px;font-size:13px}.dsec .chips.wrap{gap:5px}}
