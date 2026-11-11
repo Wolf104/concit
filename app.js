@@ -36,11 +36,12 @@ function shortlist(s,seen=[]){
   const pin=s.pin?[null,s.pin[0],s.pin[1]]:null;
   const near=(z,x)=>pin?(x&&x.lat?km(pin,[null,x.lat,x.lng]):ZONES[z]?km(pin,ZONES[z]):6):s.area&&z&&ZONES[z]?km(ZONES[s.area],ZONES[z]):(s.area?6:0);
   const local=pin||s.area;
+  const R=pin&&s.radius?s.radius:0, inR=x=>{ if(!R) return true; const d=x.lat?km(pin,[null,x.lat,x.lng]):ZONES[x.zone]?km(pin,ZONES[x.zone]):null; return d!=null&&d<=R; };
   const unit=WHAT_UNIT[s.what], fits=x=>s.max==null||(x.cat?(s.max===0?x.priceNum===0:x.priceNum==null||x.priceNum<=s.max):costOf(x,unit)<=s.max);
   const places=want=>PLACES.filter(p=>want(p)&&open(p,s.day)&&!seen.includes(p.id)&&(!s.rating||(p.hot||0)>=s.rating)&&(!s.metro||(p.metro||[]).length));
   let pool=[];
   if(s.what==="event"){
-    pool=EVENTS.filter(e=>!e.sold&&e.cat!=="art"&&!isRun(e)&&e.end>=s.day&&e.start<=addDays(s.day,6)&&!seen.includes(e.id)&&fits(e));
+    pool=EVENTS.filter(e=>!e.sold&&e.cat!=="art"&&!isRun(e)&&e.end>=s.day&&e.start<=addDays(s.day,6)&&!seen.includes(e.id)&&fits(e)&&inR(e));
     pool.sort((a,b)=>(a.start>s.day?a.start:s.day).localeCompare(b.start>s.day?b.start:s.day)||near(a.zone,a)-near(b.zone,b));
     return pool.slice(0,5).map(e=>e.id);
   }
@@ -53,6 +54,7 @@ function shortlist(s,seen=[]){
     const occ=s.what==="eat"?["dinner","cheap"]:s.what==="coffee"?["coffee"]:["drinks"];
     pool=places(p=>p.occ.some(o=>occ.includes(o))&&fits(p)&&(s.what!=="eat"||hasCuisine(p,s.cuisine)));
   }
+  pool=pool.filter(inR);
   const score=x=>pin?near(x.zone,x)*1.8-(x.hot||1)*.5:near(x.zone,x)-(x.hot||1)*.9;
   pool.sort((a,b)=>score(a)-score(b));
   const out=[],zones={};
@@ -262,14 +264,23 @@ function calendar(sel){
 /* Where: drop a pin by moving the map under a fixed centre pin. Falls back to an area list if the map can't load. */
 const MILAN=[45.4642,9.19];
 const nearestZone=([lat,lng])=>Object.entries(ZONES).reduce((b,[k,z])=>{const d=km([null,lat,lng],z);return d<b[1]?[k,d]:b},[null,1e9])[0];
-const pinText=pin=>`Near ${zname(nearestZone(pin))}`;
+const radText=r=>r<1?`${Math.round(r*1000)} m`:`${r} km`;
+const pinText=(pin,r)=>r?`Within ${radText(r)} of ${zname(nearestZone(pin))}`:`Near ${zname(nearestZone(pin))}`;
+const pickTarget=()=>S.pickOpen==="hot"?flt():S.form;
+function viewPinPicker(){
+  const r=S.pickR||2;
+  return `<div id="pickSlot" class="pickslot"><div id="radRing" class="radring" aria-hidden="true"></div><div class="centerpin" aria-hidden="true">${PIN}</div></div>
+    <div class="radrow"><label for="radius">Radius</label><input type="range" id="radius" min="0.5" max="10" step="0.5" value="${r}"><b id="radVal">${radText(r)}</b></div>
+    <p class="fine center" style="margin-top:4px">Move the map to place the pin, then set how far you'll go.</p>
+    <div class="inline" style="margin-top:10px"><button class="btn small plain" data-act="pickCancel">Cancel</button><button class="btn" data-act="pickSet" style="flex:1">Set area</button></div>`;
+}
+function pinButton(t,which){
+  return `<div class="where"><button class="wherebtn" data-act="pickOpen" data-v="${which}"><span class="wpin">${PIN}</span><span>${t.pin?esc(pinText(t.pin,t.radius)):"Anywhere in Milan"}</span><small>${t.pin?"Change":"Drop a pin"}</small></button>
+    ${t.pin?`<button class="wclear" data-act="pinClear" data-v="${which}" aria-label="Remove pin">×</button>`:""}</div>`;
+}
 function viewWhere(f){
   if(S.mapFail) return `<div class="group"><select id="area" data-change="area" aria-label="Area"><option value="">Anywhere in Milan</option>${AREAS.map(z=>`<option value="${z}" ${f.area===z?"selected":""}>${esc(zname(z))}</option>`).join("")}</select></div>`;
-  if(S.pickOpen) return `<div class="group"><div id="pickSlot" class="pickslot"><div class="centerpin" aria-hidden="true">${PIN}</div></div>
-    <p class="fine center" style="margin-top:8px">Move the map so the pin sits where you want to meet.</p>
-    <div class="inline" style="margin-top:10px"><button class="btn small plain" data-act="pickCancel">Cancel</button><button class="btn" data-act="pickSet" style="flex:1">Drop pin here</button></div></div>`;
-  return `<div class="group"><div class="where"><button class="wherebtn" data-act="pickOpen"><span class="wpin">${PIN}</span><span>${f.pin?esc(pinText(f.pin)):"Anywhere in Milan"}</span><small>${f.pin?"Move":"Drop a pin"}</small></button>
-    ${f.pin?`<button class="wclear" data-act="pinClear" aria-label="Remove pin">×</button>`:""}</div></div>`;
+  return `<div class="group">${S.pickOpen===true?viewPinPicker():pinButton(f,"form")}</div>`;
 }
 let PICK=null, PICK_HOST=null;
 /* Milan metro lines by station (M1–M5, including the full M4 opened in 2024). Names are matched to the map's station labels. */
@@ -327,6 +338,12 @@ function zoneLabels(map,tap){
   const fit=()=>map.getContainer().classList.toggle("far",map.getZoom()<(tap?12.3:12.9));
   map.on("zoom",fit); fit();
 }
+/* The radius ring is drawn over the map around the pin; its size follows the map's scale. */
+const mPerPx=(lat,z)=>40075016.686*Math.cos(lat*Math.PI/180)/(512*Math.pow(2,z));
+const ringRoom=()=>{ const el=document.getElementById("pickSlot"); return el?Math.min(el.clientWidth,el.clientHeight):300; };
+const ringPx=()=>PICK?2*(S.pickR||2)*1000/mPerPx(PICK.getCenter().lat,PICK.getZoom()):0;
+const radZoom=r=>Math.min(16,Math.max(9,Math.log2(40075016.686*Math.cos(45.46*Math.PI/180)/(512*(2*r*1000/(ringRoom()*.72))))));
+function sizeRing(){ const ring=document.getElementById("radRing"); if(!ring||!PICK) return; const d=ringPx(); ring.style.width=ring.style.height=d+"px"; }
 async function mountPick(){
   const slot=document.getElementById("pickSlot"); if(!slot) return;
   if(!PICK_HOST){ PICK_HOST=document.createElement("div"); PICK_HOST.id="pickmap"; }
@@ -334,16 +351,19 @@ async function mountPick(){
   try{
     await loadMapLib();
     if(!document.getElementById("pickSlot")) return;
-    const c=S.form.pin||MILAN;
+    const t=pickTarget(), c=t.pin||MILAN;
     if(!PICK){
-      PICK=new maplibregl.Map({container:PICK_HOST,style:MAP_STYLE,center:[c[1],c[0]],zoom:S.form.pin?13.3:12.2,dragRotate:false,touchPitch:false,attributionControl:{compact:true}});
+      PICK=new maplibregl.Map({container:PICK_HOST,style:MAP_STYLE,center:[c[1],c[0]],zoom:radZoom(S.pickR||2),dragRotate:false,touchPitch:false,attributionControl:{compact:true}});
       PICK.addControl(new maplibregl.NavigationControl({showCompass:false}),"top-right");
       PICK.touchZoomRotate.disableRotation();
       PICK.on("click",e=>PICK.easeTo({center:e.lngLat}));
-      zoneLabels(PICK,true); addStations(PICK);
+      zoneLabels(PICK,true); addStations(PICK); PICK.on("move",sizeRing);
       let ok=false; PICK.on("load",()=>{ok=true}); setTimeout(()=>{ if(!ok&&S.pickOpen){ S.pickOpen=false; mapFailed(); } },12000);
-    } else if(S.pickFresh){ PICK.jumpTo({center:[c[1],c[0]],zoom:Math.max(PICK.getZoom(),13)}); }
-    S.pickFresh=false; PICK.resize();
+    } else if(S.pickFresh){ PICK.jumpTo({center:[c[1],c[0]],zoom:radZoom(S.pickR||2)}); }
+    S.pickFresh=false; PICK.resize(); sizeRing();
+    const sl=document.getElementById("radius");
+    if(sl) sl.oninput=()=>{ S.pickR=+sl.value; document.getElementById("radVal").textContent=radText(S.pickR); sizeRing();
+      const d=ringPx(), m=ringRoom(); if(d>m*.92||d<m*.3) PICK.easeTo({zoom:radZoom(S.pickR),duration:250}); };
   }catch{ S.pickOpen=false; mapFailed(); }
 }
 function viewDecideFilters(f,unit){
@@ -418,7 +438,7 @@ const cap=t=>t.charAt(0).toUpperCase()+t.slice(1);
 function viewCard(p){
   const id=nextCard(p,uid()), it=byId(id), i=p.options.indexOf(id);
   const far=p.pin&&it.lat?km([null,p.pin[0],p.pin[1]],[null,it.lat,it.lng]):null;
-  const line=(it.cat?`${eventWhen(it)} · ${it.venue}`:placeLine(it))+(far!=null?` · ${far<1?Math.round(far*1000/50)*50+" m":far.toFixed(1)+" km"} from the pin`:"");
+  const line=(it.cat?`${eventWhen(it)} · ${it.venue}`:placeLine(it))+(far!=null?` · ${far<0.975?Math.round(far*1000/50)*50+" m":far.toFixed(1)+" km"} from the pin`:"");
   return `<div data-hero><button class="back" data-act="reset">‹ ${esc(p.group_name||"New plan")}</button><span>${esc(cap(planTitle(p)))}</span><h1>${i+1} of ${p.options.length}</h1></div>
   <div class="place"><span class="dim">${it.cat?"Event":esc(KIND[it.kind])}</span><h2>${esc(it.name)}</h2>
     ${it.cat?(it.priceText?`<p>${esc(it.priceText)}</p>`:""):`<p>${esc(it.why)}</p>`}
@@ -825,11 +845,11 @@ async function mountMap(){
 const hotType=p=>({all:true,cafe:p.kind==="cafe",eat:["eat","cheap"].includes(p.kind)&&hasCuisine(p,S.hotCuisine),drink:["drink","wine","beer"].includes(p.kind),club:p.kind==="club",culture:p.kind==="culture"})[S.hot];
 const hotUnit=()=>HOT_UNIT[S.hot];
 /* Hotspots filters: price, rating, open today, near a metro, and sort order. */
-const FLT0={price:0,rating:0,open:false,metro:false,sort:"top",area:""};
+const FLT0={price:0,rating:0,open:false,metro:false,sort:"top",area:"",pin:null,radius:null};
 /* Every area that has at least one place, A–Z. */
 const areaOpts=()=>[["","All areas"],...[...new Set(PLACES.map(p=>p.zone).filter(Boolean))].sort((a,b)=>zname(a).localeCompare(zname(b))).map(z=>[z,zname(z)])];
 const flt=()=>S.flt||(S.flt={...FLT0});
-const fltCount=()=>{const f=flt(); return (f.price?1:0)+(f.rating?1:0)+(f.open?1:0)+(f.metro?1:0)+(f.area?1:0)+(f.sort!=="top"?1:0);};
+const fltCount=()=>{const f=flt(); return (f.price?1:0)+(f.rating?1:0)+(f.open?1:0)+(f.metro?1:0)+(f.area||f.pin?1:0)+(f.sort!=="top"?1:0);};
 const priceOptsFor=u=>u==="ticket"?[[0,"Any"],[-1,"Free"],[2,"Up to €15"],[3,"Up to €25"]]:[[0,"Any"],...[1,2,3].map(i=>[i,u?`Up to €${BAND[u][i-1]}`:"€".repeat(i)])];
 const priceOpts=()=>priceOptsFor(hotUnit());
 const maxFromPrice=(u,v)=>v<0?0:v?BAND[u][v-1]:null;
@@ -839,6 +859,7 @@ function hotMatch(p){ if(!hotType(p)) return false; const f=flt(), u=hotUnit();
   if(f.open&&(p.closed||[]).includes(new Date().getDay())) return false;
   if(f.metro&&!(p.metro||[]).length) return false;
   if(f.area&&p.zone!==f.area) return false;
+  if(f.pin&&f.radius){ const d=p.lat?km([null,f.pin[0],f.pin[1]],[null,p.lat,p.lng]):ZONES[p.zone]?km([null,f.pin[0],f.pin[1]],ZONES[p.zone]):null; if(d==null||d>f.radius) return false; }
   return true; }
 const priceOf=p=>{const u=KIND_UNIT[p.kind]; return u?costOf(p,u):p.price*10;};
 const byHot=(a,b)=>{const s=flt().sort; return s==="cheap"?priceOf(a)-priceOf(b)||b.hot-a.hot:s==="dear"?priceOf(b)-priceOf(a)||b.hot-a.hot:s==="az"?a.name.localeCompare(b.name):b.hot-a.hot||a.price-b.price;};
@@ -849,7 +870,7 @@ function viewFilters(){
     ${n?`<button class="wclear" data-act="fltReset" aria-label="Clear filters">×</button>`:""}</div>
   ${S.fltOpen?`<div class="fpanel">
     ${row("Price","fltPrice",priceOpts(),f.price)}
-    ${row("Area","fltArea",areaOpts(),f.area)}
+    ${S.mapFail?row("Area","fltArea",areaOpts(),f.area):`<div class="fsec"><span class="label">Area</span>${S.pickOpen==="hot"?viewPinPicker():pinButton(f,"hot")}</div>`}
     ${row("Rating","fltRating",[[0,"Any"],[2,"★★ Popular"],[3,"★★★ Top picks"]],f.rating)}
     ${row("Show only","fltToggle",[["open","Open today"],["metro","Near a metro"]].map(([k,l])=>[k,l]),"")
       .replace(/data-v="open" aria-pressed="false"/,`data-v="open" aria-pressed="${f.open}"`).replace(/data-v="metro" aria-pressed="false"/,`data-v="metro" aria-pressed="${f.metro}"`)}
@@ -999,7 +1020,7 @@ function render(){
   ht.innerHTML=h?h.innerHTML:""; h?.remove();
   document.querySelectorAll("details").forEach(d=>{ if(open.includes(d.querySelector("b").textContent)) d.open=true; });
   if(authed&&S.tab==="hotspots"&&S.hotView==="map"&&!S.mapFail) mountMap();
-  if(authed&&S.pickOpen&&!S.acct&&S.tab==="decide") mountPick();
+  if(authed&&S.pickOpen&&!S.acct&&(S.pickOpen==="hot"?S.tab==="hotspots"&&S.fltOpen:S.tab==="decide")) mountPick();
   document.body.classList.toggle("inchat",!!(authed&&S.chatOpen&&S.tab==="groups"&&!S.acct));
   if(authed&&S.chatOpen&&S.tab==="groups"){ sizeChat(); watchChatLayout(); requestAnimationFrame(()=>sizeChat()); } else CHAT_RO?.disconnect();
   const badge=document.getElementById("badge"), c=toVote().length; if(badge){ badge.textContent=c; badge.hidden=!c; }
@@ -1018,7 +1039,7 @@ const H={
   dRating(el){ S.form.rating=+el.dataset.v; render(); },
   dMetro(){ S.form.metro=!S.form.metro; render(); },
   fltOpen(){ S.fltOpen=!S.fltOpen; render(); },
-  fltReset(){ S.flt={...FLT0}; render(); },
+  fltReset(){ S.flt={...FLT0}; if(S.pickOpen==="hot") S.pickOpen=false; FIT=null; render(); },
   fltPrice(el){ flt().price=+el.dataset.v; FIT=null; render(); },
   fltRating(el){ flt().rating=+el.dataset.v; FIT=null; render(); },
   fltToggle(el){ const f=flt(), k=el.dataset.v; f[k]=!f[k]; FIT=null; render(); },
@@ -1028,10 +1049,10 @@ const H={
   evCal(){ S.evCalOpen=!S.evCalOpen; if(S.evCalOpen&&S.evDate) S.evMonth=S.evDate.slice(0,7); render(); },
   evMove(el){ const [y,m]=(S.evMonth||today.slice(0,7)).split("-").map(Number); S.evMonth=iso(new Date(y,m-1+Number(el.dataset.v),1)).slice(0,7); render(); },
   day(el){ S.form.day=el.dataset.v; S.calOpen=false; render(); },
-  pickOpen(){ S.pickOpen=true; S.pickFresh=true; S.calOpen=false; render(); document.querySelector("[data-act=pickSet]")?.scrollIntoView({block:"center",behavior:"smooth"}); },
+  pickOpen(el){ S.pickOpen=el?.dataset.v==="hot"?"hot":true; S.pickR=pickTarget().radius||2; S.pickFresh=true; S.calOpen=false; render(); document.querySelector("[data-act=pickSet]")?.scrollIntoView({block:"center",behavior:"smooth"}); },
   pickCancel(){ S.pickOpen=false; render(); },
-  pickSet(){ if(!PICK) return; const c=PICK.getCenter(); S.form.pin=[+c.lat.toFixed(5),+c.lng.toFixed(5)]; S.form.area=""; S.pickOpen=false; render(); },
-  pinClear(){ S.form.pin=null; render(); },
+  pickSet(){ if(!PICK) return; const c=PICK.getCenter(), t=pickTarget(); t.pin=[+c.lat.toFixed(5),+c.lng.toFixed(5)]; t.radius=S.pickR||2; t.area=""; if(S.pickOpen==="hot") FIT=null; S.pickOpen=false; render(); },
+  pinClear(el){ const t=el?.dataset.v==="hot"?flt():S.form; t.pin=null; t.radius=null; if(t!==S.form) FIT=null; render(); },
   cal(){ S.calOpen=!S.calOpen; S.calMonth=S.form.day.slice(0,7); render(); },
   calMove(el){ const [y,m]=S.calMonth.split("-").map(Number); S.calMonth=iso(new Date(y,m-1+Number(el.dataset.v),1)).slice(0,7); render(); },
   pickDay(el){ S.form.day=el.dataset.v; S.calOpen=false; render(); },
@@ -1044,7 +1065,7 @@ const H={
   start(){ const f=S.form, unit=WHAT_UNIT[f.what], ev=f.what==="event", max=maxFromPrice(unit,f.price||0), {group,idx,linkOnly,...rest}=f, q={...rest,max,rating:ev?0:f.rating||0,metro:!ev&&!!f.metro,time:ev?"":(f.time||"")}, options=shortlist(q);
     if(f.mode==="pick"){ const picks=(f.picks||[]).filter(byId); if(!picks.length) return;
       newPlan({...q,what:f.what,options:picks,seen:picks,picked:true,finished:false},group); f.picks=[]; S.pickQ=""; return; }
-    if(!options.length){ toast(f.what==="event"?"No events listed around that date yet. Try another date or price.":"Nothing matches. Try fewer filters or another day."); return; }
+    if(!options.length){ toast(f.pin&&f.radius&&shortlist({...q,radius:null}).length?`Nothing within ${radText(f.radius)} of the pin. Try a bigger radius.`:f.what==="event"?"No events listed around that date yet. Try another date or price.":"Nothing matches. Try fewer filters or another day."); return; }
     newPlan({...q,options,seen:options,finished:false},group); },
   attend(el){ const go=el.dataset.v==="1"; setAttending(go); },
   clearTime(){ S.form.time=""; render(); },

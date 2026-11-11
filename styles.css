@@ -368,3 +368,8 @@ nav::before{content:"";position:absolute;top:0;bottom:0;left:50%;width:min(520px
 .hottypes .chip{flex:1 1 auto;min-width:0;padding:6px 6px;font-size:13px;text-align:center;white-space:nowrap}
 @media (max-width:380px){.hottypes{gap:3px}.hottypes .chip{font-size:12px;padding:6px 3px}}
 @media (max-width:340px){.hottypes .chip{font-size:11px;padding:5px 2px}}
+.radring{position:absolute;left:50%;top:50%;width:0;height:0;transform:translate(-50%,-50%);border-radius:50%;border:2px solid var(--accent);background:rgba(47,155,255,.13);pointer-events:none;z-index:1;box-shadow:0 0 0 1px rgba(255,255,255,.6) inset}
+.radrow{display:flex;align-items:center;gap:12px;margin-top:12px;font-size:15px;font-weight:700}
+.radrow input{flex:1;accent-color:var(--accent);min-width:0}
+.radrow b{min-width:52px;text-align:right;color:var(--link)}
+.fpanel .pickslot{height:min(40vh,280px)}
