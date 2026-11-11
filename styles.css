@@ -196,5 +196,7 @@ body.noauth #me{display:none}
 .star{color:#c98a00;font-weight:700}
 .picked{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 4px}
 .picked .chip span{margin-left:4px;font-weight:700}
-.picklist{margin-top:10px;max-height:440px;overflow-y:auto;padding:1px}
+.picklist{margin-top:10px}
 .person[aria-pressed="true"]{background:var(--tint);border-color:var(--link)}
+.btn.stick{position:sticky;bottom:calc(92px + env(safe-area-inset-bottom,0px));z-index:4;margin-top:14px}
+.btn.stick:disabled{opacity:1;background:var(--tint);color:var(--muted);box-shadow:none}
