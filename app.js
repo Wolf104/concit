@@ -367,12 +367,30 @@ function viewWaiting(p){
   <div class="rows">${p.people.map(n=>`<div class="rowstat"><span>${esc(nameOf(n))}</span><span class="${votedAll(p,n)?"ok":""}">${votedAll(p,n)?"Done":"Voting"}</span></div>`).join("")}</div>
   ${Object.keys(p.votes||{}).length?`<button class="link center" data-act="finish">See the result now</button>`:""}`;
 }
+/* A photo for each place: a real one where Commons has it, otherwise a labelled example for that kind of place. */
+const CUISINE_ORDER=["pizza","sushi","seafood","milanese","asian","meat","veggie","fine","street","pasta","world"];
+function photoFor(p){
+  if(!p||p.cat) return null;
+  const real=PHOTO_REAL[p.id];
+  if(real) return {file:real[0],real:!real[2],of:real[1]||null};
+  let k=p.kind;
+  if(k==="cafe") k=/pasticceria|brioche|croissant|cornett|bakery|bun|babka|pastr/i.test(p.name+" "+p.why)?"pastry":"cafe";
+  else if(k==="eat"||k==="cheap") k=CUISINE_ORDER.find(c=>(p.cuisine||[]).includes(c))||(k==="cheap"?"street":"pasta");
+  const file=PHOTO_TYPE[k]; return file?{file,real:false}:null;
+}
+const photoUrl=f=>"https://commons.wikimedia.org/wiki/Special:FilePath/"+encodeURIComponent(f)+"?width=800";
+const photoPage=f=>"https://commons.wikimedia.org/wiki/File:"+encodeURIComponent(f);
+function photoHtml(p,cls="ph"){
+  const ph=photoFor(p); if(!ph) return "";
+  const cap=ph.real?(ph.of?`Photo of ${esc(ph.of)}`:"Photo"):"Example photo";
+  return `<figure class="${cls}"><img src="${photoUrl(ph.file)}" alt="${ph.real?esc(p.name):"Example photo"}" loading="lazy" referrerpolicy="no-referrer" onerror="this.closest('figure').remove()"><figcaption>${cap} · <a href="${photoPage(ph.file)}" target="_blank" rel="noopener">Wikimedia Commons</a></figcaption></figure>`;
+}
 function viewCard(p){
   const id=nextCard(p,uid()), it=byId(id), i=p.options.indexOf(id);
   const far=p.pin&&it.lat?km([null,p.pin[0],p.pin[1]],[null,it.lat,it.lng]):null;
   const line=(it.cat?`${eventWhen(it)} · ${it.venue}`:placeLine(it))+(far!=null?` · ${far<1?Math.round(far*1000/50)*50+" m":far.toFixed(1)+" km"} from the pin`:"");
   return `<div data-hero><button class="back" data-act="reset">‹ ${esc(p.group_name||"New plan")}</button><h1>${i+1} of ${p.options.length}</h1></div>
-  <div class="place"><span class="dim">${it.cat?"Event":esc(KIND[it.kind])}</span><h2>${esc(it.name)}</h2>
+  <div class="place${photoFor(it)?" withph":""}">${photoHtml(it)}<span class="dim">${it.cat?"Event":esc(KIND[it.kind])}</span><h2>${esc(it.name)}</h2>
     ${it.cat?(it.priceText?`<p>${esc(it.priceText)}</p>`:""):`<p>${esc(it.why)}</p>`}
     <p class="dim">${esc(line)}</p></div>
   <div class="yesno"><button class="btn plain" data-act="vote" data-id="${esc(id)}" data-v="0">No</button><button class="btn" data-act="vote" data-id="${esc(id)}" data-v="1">Yes</button></div>`;
@@ -382,7 +400,7 @@ function viewResult(p){
   if(!w||w.yes===0) return `<div data-hero><button class="back" data-act="reset">‹ ${esc(back)}</button><span>Nobody said yes to any of these</span><h1>No match this round</h1></div>
     <button class="btn" data-act="again">Try 5 more</button>`;
   const it=w.item, where=it.cat?it.venue:`${it.addr}`, sub=it.cat?eventWhen(it):[metroText(it.metro),zname(it.zone)].filter(Boolean).join(" · ");
-  return `<div data-hero><button class="back" data-act="reset">‹ ${esc(back)}</button><h1 class="placename">${esc(it.name)}</h1></div><div class="win"><p class="ok">${w.yes} of ${total} said yes</p><p>${esc(where)}</p><p class="dim">${esc(sub)}</p></div>
+  return `<div data-hero><button class="back" data-act="reset">‹ ${esc(back)}</button><h1 class="placename">${esc(it.name)}</h1></div>${photoHtml(it,"ph win-ph")}<div class="win"><p class="ok">${w.yes} of ${total} said yes</p><p>${esc(where)}</p><p class="dim">${esc(sub)}</p></div>
   <div class="stack"><button class="btn" data-act="copy">Copy the details</button><a class="btn plain" href="${mapsUrl(it.name+" "+where)}" target="_blank" rel="noopener">Directions</a></div>
   <div class="group" style="margin-top:24px"><span class="label">Other options</span><div class="rows">${r.slice(1).map(x=>`<div class="rowstat"><span>${esc(x.item.name)}</span><span>${x.yes} yes</span></div>`).join("")}</div></div>`;
 }
@@ -562,7 +580,7 @@ function viewFilters(){
 }
 function placeRow(p){
   return `<details><summary><div><b>${esc(p.name)}</b><small>${esc(zname(p.zone))} · ${esc(costText(p))}${p.hot>=3?' · <span class="star">★ Top pick</span>':""}</small></div></summary>
-  <div class="more"><p>${esc(p.why)}. ${esc(p.detail)}</p><p class="dim">${esc(p.addr)}${p.metro[0]?" · "+esc(metroText(p.metro)):""}</p>
+  <div class="more">${photoHtml(p,"ph small")}<p>${esc(p.why)}. ${esc(p.detail)}</p><p class="dim">${esc(p.addr)}${p.metro[0]?" · "+esc(metroText(p.metro)):""}</p>
   <div class="actions"><a href="${mapsUrl(p.name+" "+p.addr)}" target="_blank" rel="noopener">Directions</a><a href="${esc(srcUrl(p.src))}" target="_blank" rel="noopener">Source</a></div></div></details>`;
 }
 const MAP_SPOTS={bicocca:[270,30],isola:[175,88],lambrate:[320,80],sarpi:[64,140],garibaldi:[178,140],centrale:[300,130],cittastudi:[318,178],brera:[100,192],venezia:[240,212],duomo:[190,265],tortona:[66,305],navigli:[135,345],romana:[285,320],lodi:[270,375]};

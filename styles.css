@@ -194,3 +194,15 @@ body.noauth #me{display:none}
 .chips.wrap{flex-wrap:wrap;overflow:visible;margin:0;padding:0;gap:6px}
 .chips.wrap .chip{font-size:14px;padding:7px 12px}
 .star{color:#c98a00;font-weight:700}
+/* Place photos */
+.ph{margin:0;position:relative}
+.ph img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;background:var(--line);border-radius:16px}
+.ph figcaption{font-size:11.5px;color:var(--muted);margin-top:5px}
+.ph figcaption a{color:var(--muted);text-decoration:underline}
+.place.withph{min-height:0;justify-content:flex-start;padding:14px 14px 20px}
+.place.withph .ph{margin:0 0 10px}
+.place.withph .ph img{border-radius:14px}
+.place.withph>span,.place.withph>h2,.place.withph>p{padding:0 8px}
+.win-ph{margin:-2px 0 12px}
+.ph.small img{aspect-ratio:16/9;border-radius:12px}
+.ph.small{margin-bottom:10px}
