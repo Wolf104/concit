@@ -950,6 +950,15 @@ const EV_CATS=[
   ["culture","Culture","Exhibitions, theatre and opera",e=>e.cat==="art"||e.cat==="theatre",'<path d="M3 21h18M4 10h16M12 3 3 8h18zM6 10v8M10 10v8M14 10v8M18 10v8"/>'],
   ["sport","Sport","Matches and races",e=>e.cat==="sport",'<circle cx="12" cy="12" r="9"/><path d="m12 7 4 3-1.5 4.5h-5L8 10zM12 3v4M21 10l-5 0M15 14.5l2.5 5M9 14.5 6.5 19.5M3 10h5"/>'],
   ["activities","Activities","Festivals, fairs and markets",e=>e.cat==="festival",'<path d="M12 3l2.3 5.3L20 9l-4.3 3.9L17 19l-5-3-5 3 1.3-6.1L4 9l5.7-.7z"/>']];
+/* Photos for the event boxes, per city. Freely licensed files on Wikimedia Commons, credited under the boxes. */
+const CITY_PHOTOS={milan:{
+  music:["Destrage_-_The_Last_Dance,_Alcatraz,_Milan_(October_20,_2024)_-_3609_02.jpg","a gig at Alcatraz"],
+  culture:["Milan_Cathedral_from_Piazza_del_Duomo.jpg","the Duomo"],
+  sport:["Stadio_Meazza_2021_3.jpg","San Siro"],
+  activities:["Milan_Naviglio_Grande_at_sunset_HD_01.jpg","the Naviglio Grande"]}};
+const CITY="milan";
+const commonsImg=(f,w=600)=>"https://commons.wikimedia.org/wiki/Special:FilePath/"+encodeURIComponent(f)+"?width="+w;
+const commonsPage=f=>"https://commons.wikimedia.org/wiki/File:"+encodeURIComponent(f);
 const EV_MORE=[["free","Free","Nothing to pay",e=>e.priceNum===0],["saved","Saved","Events you kept",e=>S.saved.has(e.id)],["all","Everything","All upcoming events",()=>true]];
 const evIcon=p=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 function viewEvents(){
@@ -959,9 +968,11 @@ function viewEvents(){
     const n=f=>live.filter(f).length;
     return `<div data-hero><h1>Events</h1></div>
     <p class="evintro">What are you in the mood for?</p>
-    <div class="evtiles">${EV_CATS.map(([k,l,sub,f,ic])=>`<button class="evtile ev-${k}" data-act="ev" data-v="${k}"><span class="evic">${evIcon(ic)}</span><b>${l}</b><small>${esc(sub)}</small><i>${n(f)} on</i></button>`).join("")}</div>
+    <div class="evtiles">${EV_CATS.map(([k,l,sub,f,ic])=>{const ph=(CITY_PHOTOS[CITY]||{})[k];
+      return `<button class="evtile ev-${k}${ph?" hasph":""}" data-act="ev" data-v="${k}">${ph?`<img src="${commonsImg(ph[0])}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.classList.remove('hasph');this.remove()">`:""}<span class="evic">${evIcon(ic)}</span><b>${l}</b><small>${esc(sub)}</small><i>${n(f)} on</i></button>`}).join("")}</div>
     <div class="evmore">${EV_MORE.map(([k,l,sub,f])=>`<button class="evmini" data-act="ev" data-v="${k}"><b>${l}</b><small>${k==="saved"?`${n(f)} saved`:`${n(f)} events`}</small></button>`).join("")}</div>
-    <p class="foot">Checked ${S.evChecked||CHECKED}. Confirm dates before you go.</p>`;
+    <p class="foot">Checked ${S.evChecked||CHECKED}. Confirm dates before you go.</p>
+    <p class="foot credits">Photos from Wikimedia Commons: ${EV_CATS.map(c=>(CITY_PHOTOS[CITY]||{})[c[0]]).filter(Boolean).map(([f,of])=>`<a href="${commonsPage(f)}" target="_blank" rel="noopener">${esc(of)}</a>`).join(", ")}. Tap a name for the photographer and licence.</p>`;
   }
   const all=live.filter(cat[3]), d=S.evDate;
   const list=d?all.filter(e=>e.start<=d&&e.end>=d):all;

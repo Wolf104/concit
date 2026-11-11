@@ -341,3 +341,13 @@ select::-ms-expand{display:none}
 .evmore{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
 .evmini{display:flex;flex-direction:column;align-items:flex-start;padding:11px 12px;border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--fg);font:inherit;cursor:pointer;text-align:left}
 .evmini b{font-size:15px}.evmini small{font-size:12px;color:var(--muted)}
+.evtile{overflow:hidden;isolation:isolate}
+.evtile.hasph{background:#1c2733;color:#fff;border-color:transparent}
+.evtile.hasph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2}
+.evtile.hasph::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(0,0,0,.05) 25%,rgba(0,0,0,.72) 100%)}
+.evtile.hasph small{color:rgba(255,255,255,.88)}
+.evtile.hasph b{text-shadow:0 1px 6px rgba(0,0,0,.35)}
+.evtile.hasph .evic{width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.92)}
+.evtile.hasph .evic svg{width:22px;height:22px}
+.credits{margin-top:4px;font-size:12px}
+.credits a{color:inherit}
