@@ -578,9 +578,9 @@ function typingHtml(){
 }
 function paintPresence(){
   const w=document.getElementById("chatWho"), t=document.getElementById("chatTyping"); if(!w||!t) return;
-  const near=innerHeight+scrollY>=document.documentElement.scrollHeight-160, had=!!t.innerHTML;
+  const near=chatNearBottom(), had=!!t.innerHTML;
   w.innerHTML=whoHtml(); t.innerHTML=typingHtml();
-  if(near&&!had&&t.innerHTML) scrollTo(0,document.documentElement.scrollHeight);
+  if(near&&!had&&t.innerHTML) chatToBottom();
 }
 function typing(on){
   if(!CHAT.gid) return; const now=Date.now();
@@ -618,11 +618,27 @@ function chatListHtml(){
   return L.map((m,i)=>{ const mine=m.by===uid(), cont=joined(L[i-1],m), more=joined(m,L[i+1]), seen=mine&&(m===lastMine||CHAT.seenOpen===m.id);
     return `<div class="msg${mine?" mine":" theirs"}${cont?" cont":""}">${!mine&&!more?avatarHtml(m.by,m.name,"msgav"):""}${!mine&&!cont?`<span class="who">${esc(m.name||"Former member")}</span>`:""}<p${mine&&!m.pending?` data-act="seen" data-id="${m.id}" title="Tap to see who has read this"`:""}>${linkify(m.body)}</p>${more?(seen?`<div class="seen">${seenHtml(m)}</div>`:""):`<div class="meta"><time>${esc(chatTime(m.at))}</time>${seen?seenHtml(m):""}</div>`}</div>`; }).join("");
 }
+/* The messages scroll inside their own panel, sized to end just above the message box,
+   which sits above the tab bar (or above the phone keyboard when it is open). */
+const chatScroller=()=>document.getElementById("chatScroll");
+const chatNearBottom=()=>{ const el=chatScroller(); return !el||el.scrollHeight-el.scrollTop-el.clientHeight<120; };
+const chatToBottom=()=>{ const el=chatScroller(); if(el) el.scrollTop=el.scrollHeight; };
+function sizeChat(){
+  const el=chatScroller(), bar=document.getElementById("chatForm"); if(!el||!bar) return;
+  const near=chatNearBottom(), vv=window.visualViewport, nav=document.querySelector("nav div");
+  const keyboard=vv&&vv.height<innerHeight-120;
+  const bottom=keyboard?vv.offsetTop+vv.height-10:(nav?nav.getBoundingClientRect().top:innerHeight)-12;
+  const h=Math.max(160,Math.floor(bottom-bar.offsetHeight-10-el.getBoundingClientRect().top));
+  if(Math.abs(el.offsetHeight-h)>1) el.style.height=h+"px";
+  if(near) chatToBottom();
+}
+addEventListener("resize",()=>sizeChat());
+window.visualViewport?.addEventListener("resize",()=>{ sizeChat(); if(S.chatOpen) scrollTo(0,0); });
 function paintChat(stick){
   const el=document.getElementById("chatList"); if(!el) return;
-  const near=stick||innerHeight+scrollY>=document.documentElement.scrollHeight-160;
+  const near=stick||chatNearBottom();
   el.innerHTML=chatListHtml();
-  if(near) scrollTo(0,document.documentElement.scrollHeight);
+  if(near) chatToBottom();
 }
 async function loadChat(first){
   if(!CHAT.gid||CHAT.busy||document.hidden) return;
@@ -639,7 +655,7 @@ async function loadChat(first){
   }catch{ if(first&&!CHAT.loaded){ CHAT.loaded=true; paintChat(); toast("Couldn't load messages. Check your connection."); } }
   finally{ CHAT.busy=false; }
 }
-function openChat(gid){ if(CHAT.gid!==gid){ CHAT.gid=gid; CHAT.msgs=[]; CHAT.last=0; CHAT.loaded=false; CHAT.people=[]; CHAT.typingSent=0; CHAT.readKey=""; CHAT.seenOpen=null; } S.chatOpen=true; render(); scrollTo(0,document.documentElement.scrollHeight); loadChat(true); }
+function openChat(gid){ if(CHAT.gid!==gid){ CHAT.gid=gid; CHAT.msgs=[]; CHAT.last=0; CHAT.loaded=false; CHAT.people=[]; CHAT.typingSent=0; CHAT.readKey=""; CHAT.seenOpen=null; } S.chatOpen=true; render(); scrollTo(0,0); sizeChat(); chatToBottom(); loadChat(true); }
 function closeChat(){ typing(false); S.chatOpen=false; CHAT.gid=null; render(); scrollTo(0,0); loadGroups(); }
 async function sendChat(){
   const i=document.getElementById("chatText"), body=(i?.value||"").trim(); if(!body||!CHAT.gid) return;
@@ -652,8 +668,8 @@ async function sendChat(){
 function viewChat(g){
   return `<div data-hero><button class="back" data-act="closeChat">‹ ${esc(g.name)}</button><h1>Chat</h1></div>
   <p id="chatWho" class="who-online">${whoHtml()}</p>
-  <div id="chatList" class="chat" aria-live="polite">${chatListHtml()}</div>
-  <div id="chatTyping" aria-live="polite">${typingHtml()}</div>
+  <div id="chatScroll" class="chatscroll"><div id="chatList" class="chat" aria-live="polite">${chatListHtml()}</div>
+  <div id="chatTyping" aria-live="polite">${typingHtml()}</div></div>
   <form id="chatForm" class="chatbar" novalidate><textarea id="chatText" rows="1" maxlength="1000" placeholder="Message ${esc(g.name)}" aria-label="Message"></textarea><button class="btn small" type="submit" aria-label="Send">Send</button></form>`;
 }
 function viewGroup(g){
@@ -924,6 +940,7 @@ function render(){
   document.querySelectorAll("details").forEach(d=>{ if(open.includes(d.querySelector("b").textContent)) d.open=true; });
   if(authed&&S.tab==="hotspots"&&S.hotView==="map"&&!S.mapFail) mountMap();
   if(authed&&S.pickOpen&&!S.acct&&S.tab==="decide") mountPick();
+  if(authed&&S.chatOpen&&S.tab==="groups") sizeChat();
   const badge=document.getElementById("badge"), c=toVote().length; if(badge){ badge.textContent=c; badge.hidden=!c; }
   const me=document.getElementById("me"); if(me){ const mine=S.session&&AV[uid()]; me.innerHTML=mine?`<img src="${mine.img}" alt="">`:esc((S.session?.user?.user_metadata?.name||"?").trim().charAt(0).toUpperCase()); me.classList.toggle("hasav",!!mine); me.toggleAttribute("aria-current",!!S.acct); }
   document.querySelectorAll("nav button").forEach(b=>b.dataset.tab===S.tab&&!S.acct?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current"));
@@ -1093,6 +1110,6 @@ setInterval(refresh,2500);
 setInterval(loadGroups,8000);
 setInterval(()=>{ if(S.chatOpen&&S.tab==="groups") loadChat(); },2500);
 document.addEventListener("keydown",e=>{ if(e.target.id==="chatText"&&e.key==="Enter"&&!e.shiftKey&&!e.isComposing&&!matchMedia("(pointer:coarse)").matches){ e.preventDefault(); sendChat(); } });
-document.addEventListener("input",e=>{ if(e.target.id==="chatText"){ const t=e.target; typing(!!t.value.trim()); t.style.height=""; t.style.height=Math.min(t.scrollHeight,140)+"px"; } });
+document.addEventListener("input",e=>{ if(e.target.id==="chatText"){ const t=e.target; typing(!!t.value.trim()); t.style.height=""; t.style.height=Math.min(t.scrollHeight,140)+"px"; sizeChat(); } });
 document.addEventListener("visibilitychange",()=>{refresh();loadGroups()});
 addEventListener("popstate",()=>{ if(!S.session) return; const c=new URLSearchParams(location.search).get("plan"); if(c===S.code||(!c&&!S.code)) return; if(c) openPlan(c); else {S.code=null;S.plan=null;render()} });
