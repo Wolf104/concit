@@ -969,7 +969,7 @@ function viewEvents(){
     return `<div data-hero><h1>Events</h1></div>
     <p class="evintro">What are you in the mood for?</p>
     <div class="evtiles">${EV_CATS.map(([k,l,sub,f,ic])=>{const ph=(CITY_PHOTOS[CITY]||{})[k];
-      return `<button class="evtile ev-${k}${ph?" hasph":""}" data-act="ev" data-v="${k}">${ph?`<img src="${commonsImg(ph[0])}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.classList.remove('hasph');this.remove()">`:""}<span class="evic">${evIcon(ic)}</span><b>${l}</b><small>${esc(sub)}</small><i>${n(f)} on</i></button>`}).join("")}</div>
+      return `<button class="evtile ev-${k}${ph?" hasph":""}" data-act="ev" data-v="${k}">${ph?`<img src="${commonsImg(ph[0])}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.classList.remove('hasph');this.remove()">`:""}<b>${l}</b><small>${esc(sub)}</small></button>`}).join("")}</div>
     <div class="evmore">${EV_MORE.map(([k,l,sub,f])=>`<button class="evmini" data-act="ev" data-v="${k}"><b>${l}</b><small>${k==="saved"?`${n(f)} saved`:`${n(f)} events`}</small></button>`).join("")}</div>
     <p class="foot">Checked ${S.evChecked||CHECKED}. Confirm dates before you go.</p>
     <p class="foot credits">Photos from Wikimedia Commons: ${EV_CATS.map(c=>(CITY_PHOTOS[CITY]||{})[c[0]]).filter(Boolean).map(([f,of])=>`<a href="${commonsPage(f)}" target="_blank" rel="noopener">${esc(of)}</a>`).join(", ")}. Tap a name for the photographer and licence.</p>`;
