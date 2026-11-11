@@ -152,7 +152,7 @@ async function rpc(fn,args,retry=true){
 function setUrl(q){ history.pushState(null,"",q?`?${q}`:location.pathname); }
 const shareUrl=()=>`${location.origin}${location.pathname}?plan=${S.code}`;
 const inviteUrl=g=>`${location.origin}${location.pathname}?join=${g.invite_code}`;
-const planBody=({votes,names,group_id,group_name,...rest})=>rest;
+const planBody=({votes,names,group_id,group_name,mine,left,...rest})=>rest;
 async function shareOut(text,done){
   if(navigator.share){ try{ await navigator.share({text}); return; }catch(e){ if(e.name==="AbortError") return; } }
   (navigator.clipboard?navigator.clipboard.writeText(text):Promise.reject()).then(()=>toast(done),()=>toast(text));
@@ -195,6 +195,12 @@ async function newPlan(p,group){
 async function changePlan(p,reset=false){
   S.ver++; S.plan=p; render();
   try{ await rpc("update_plan",{p_code:S.code,p_data:planBody(p),p_reset_votes:reset}); }catch{ toast("That change didn't save. Try again."); }
+}
+function armConfirm(){ S.confirm=S.code; render(); clearTimeout(armConfirm.t); armConfirm.t=setTimeout(()=>{ if(S.confirm){ S.confirm=null; render(); } },4000); }
+async function closePlan(rpcName,msg){
+  const code=S.code; S.confirm=null;
+  try{ await rpc(rpcName,{p_code:code}); }catch{ toast("That didn't work. Check your connection and try again."); render(); return; }
+  S.code=null; S.plan=null; setUrl(null); render(); scrollTo(0,0); toast(msg); loadGroups();
 }
 async function setAttending(go){
   const p=S.plan; if(!p||!S.code) return;
@@ -476,9 +482,22 @@ const TROPHY_ICON='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" strok
 function viewDecide(){
   const p=S.plan;
   if(!p) return viewSetup();
-  if(p.finished||(allDone(p)&&p.people.length>1)) return viewResult(p);
-  if(p.people.includes(uid())&&!isOut(p,uid())&&nextCard(p,uid())) return viewCard(p);
-  return viewWaiting(p);
+  if((p.left||[]).includes(uid())&&!p.people.includes(uid())) return viewLeft(p);
+  if(p.finished||(allDone(p)&&p.people.length>1)) return viewResult(p)+planManage(p);
+  if(p.people.includes(uid())&&!isOut(p,uid())&&nextCard(p,uid())) return viewCard(p)+planManage(p);
+  return viewWaiting(p)+planManage(p);
+}
+/* Delete (whoever made the plan) or leave (everyone else). Both need a second tap to confirm. */
+function planManage(p){
+  const me=uid(), ask=S.confirm===S.code;
+  if(p.mine) return `<div class="manage"><button class="link danger center" data-act="planDelete">${ask?"Tap again to delete it for everyone":"Delete plan"}</button></div>`;
+  if(p.people.includes(me)) return `<div class="manage"><button class="link danger center" data-act="planLeave">${ask?"Tap again to leave":"Leave plan"}</button></div>`;
+  return "";
+}
+function viewLeft(p){
+  return `<div data-hero><button class="back" data-act="reset">‹ ${esc(p.group_name||"Back")}</button><span>${esc(cap(planTitle(p)))}</span><h1>You left this plan</h1></div>
+  <p class="note">You won't be asked to vote and it's off your list.</p>
+  ${p.finished?"":`<button class="btn plain" data-act="planRejoin">Rejoin the plan</button>`}`;
 }
 
 /* ---------- Login ---------- */
@@ -1074,6 +1093,9 @@ const H={
       newPlan({...q,what:f.what,options:picks,seen:picks,picked:true,finished:false},group); f.picks=[]; S.pickQ=""; S.pickSearched=false; return; }
     if(!options.length){ toast(f.pin&&f.radius&&shortlist({...q,radius:null}).length?`Nothing within ${radText(f.radius)} of the pin. Try a bigger radius.`:f.what==="event"?"No events listed around that date yet. Try another date or price.":"Nothing matches. Try fewer filters or another day."); return; }
     newPlan({...q,options,seen:options,finished:false},group); },
+  planDelete(){ if(S.confirm!==S.code) return armConfirm(); closePlan("delete_plan","Plan deleted."); },
+  planLeave(){ if(S.confirm!==S.code) return armConfirm(); closePlan("leave_plan","You left the plan."); },
+  async planRejoin(){ const code=S.code; try{ await rpc("rejoin_plan",{p_code:code}); await openPlan(code); loadGroups(); toast("You're back in."); }catch{ toast("Couldn't rejoin. Try again."); } },
   attend(el){ const go=el.dataset.v==="1"; setAttending(go); },
   clearTime(){ S.form.time=""; render(); },
   share(){ shareOut(`Help choose where we go: ${shareUrl()}`,"Link copied"); },
