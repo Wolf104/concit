@@ -347,24 +347,26 @@ function viewDecideFilters(f,unit){
 /* Choosing your own places: up to 8, searched by name, area or type. */
 const PICK_MAX=8;
 function pickPool(f){
-  const q=(S.pickQ||"").trim().toLowerCase();
-  const evs=EVENTS.filter(e=>!e.sold&&e.end>=f.day);
-  if(q){ const m=x=>(x.name+" "+(x.zone?zname(x.zone):"")+" "+(x.venue||"")+" "+(x.kind?KIND[x.kind]:"")).toLowerCase().includes(q);
-    return [...PLACES.filter(m).sort((a,b)=>(b.hot||0)-(a.hot||0)),...evs.filter(m)]; }
+  const q=(S.pickQ||"").trim().toLowerCase(), z=S.pickArea||"";
+  const evs=EVENTS.filter(e=>!e.sold&&e.end>=f.day&&(!z||e.zone===z));
+  const inArea=p=>!z||p.zone===z;
+  if(q){ const m=x=>(x.name+" "+(x.zone?zname(x.zone):"")+" "+(x.venue||"")+" "+(x.kind?KIND[x.kind]:"")+" "+(x.cuisine||[]).map(c=>(CUISINES.find(k=>k[0]===c)||[c,c])[1]+" "+c).join(" ")+" "+(x.why||"")).toLowerCase().includes(q);
+    return [...PLACES.filter(p=>inArea(p)&&m(p)).sort((a,b)=>(b.hot||0)-(a.hot||0)),...evs.filter(m)]; }
   if(f.what==="event") return evs.sort((a,b)=>a.start.localeCompare(b.start));
   const occ={eat:["dinner","cheap"],coffee:["coffee"],drinks:["drinks"]}[f.what];
   const want=f.what==="clubs"?p=>p.occ.includes("night"):f.what==="culture"?p=>p.kind==="culture":p=>p.occ.some(o=>occ.includes(o))&&(f.what!=="eat"||hasCuisine(p,f.cuisine));
-  return PLACES.filter(want).sort((a,b)=>(b.hot||0)-(a.hot||0)||a.name.localeCompare(b.name));
+  return PLACES.filter(p=>inArea(p)&&want(p)).sort((a,b)=>(b.hot||0)-(a.hot||0)||a.name.localeCompare(b.name));
 }
 function pickBoxHtml(f){
   const picks=(f.picks||[]).filter(byId), pool=pickPool(f);
   const sub=x=>x.cat?`${eventWhen(x)} · ${x.venue}`:`${KIND[x.kind]} · ${zname(x.zone)}${x.cat||open(x,f.day)?"":" · closed that day"}`;
-  return `<div id="pickChips">${pickChipsHtml(picks)}</div>${pickListHtml(f,picks,pool,sub)}`;
+  return `<div class="chips pickareas" role="group" aria-label="Area">${areaOpts().map(([k,l])=>`<button class="chip" data-act="pickArea" data-v="${k}" aria-pressed="${(S.pickArea||"")===k}">${esc(l)}</button>`).join("")}</div>
+  <div id="pickChips">${pickChipsHtml(picks)}</div>${pickListHtml(f,picks,pool,sub)}`;
 }
 const pickChipsHtml=picks=>picks.length?`<div class="picked">${picks.map(id=>`<button class="chip" data-act="pickToggle" data-id="${esc(id)}" aria-pressed="true" aria-label="Remove ${esc(byId(id).name)}">${esc(byId(id).name)} <span aria-hidden="true">×</span></button>`).join("")}</div>`:"";
 function pickListHtml(f,picks,pool,sub){
   return `<div class="stack picklist">${pool.map(x=>{ const on=picks.includes(x.id);
-    return `<button class="person" data-act="pickToggle" data-id="${esc(x.id)}" aria-pressed="${on}" ${!on&&picks.length>=PICK_MAX?"disabled":""}><span>${esc(x.name)}<small class="sub">${esc(sub(x))}</small></span><small>${on?"Added ✓":"Add"}</small></button>`; }).join("")||`<p class="empty">No places match “${esc(S.pickQ||"")}”.</p>`}</div>`;
+    return `<button class="person" data-act="pickToggle" data-id="${esc(x.id)}" aria-pressed="${on}" ${!on&&picks.length>=PICK_MAX?"disabled":""}><span>${esc(x.name)}<small class="sub">${esc(sub(x))}</small></span><small>${on?"Added ✓":"Add"}</small></button>`; }).join("")||`<p class="empty">${S.pickQ?`No places match “${esc(S.pickQ)}”`:"Nothing here"}${S.pickArea?` in ${esc(zname(S.pickArea))}`:""}.</p>`}</div>`;
 }
 const pickStartLabel=f=>{ const n=(f.picks||[]).filter(byId).length; return n<2?"Choose at least 2 places":(f.group?"Send to the group":"Start the vote")+` (${n})`; };
 function viewPicker(f){
@@ -561,9 +563,11 @@ async function mountMap(){
 const hotType=p=>({all:true,cafe:p.kind==="cafe",eat:["eat","cheap"].includes(p.kind)&&hasCuisine(p,S.hotCuisine),drink:["drink","wine","beer"].includes(p.kind),club:p.kind==="club",culture:p.kind==="culture"})[S.hot];
 const hotUnit=()=>HOT_UNIT[S.hot];
 /* Hotspots filters: price, rating, open today, near a metro, and sort order. */
-const FLT0={price:0,rating:0,open:false,metro:false,sort:"top"};
+const FLT0={price:0,rating:0,open:false,metro:false,sort:"top",area:""};
+/* Every area that has at least one place, A–Z. */
+const areaOpts=()=>[["","All areas"],...[...new Set(PLACES.map(p=>p.zone).filter(Boolean))].sort((a,b)=>zname(a).localeCompare(zname(b))).map(z=>[z,zname(z)])];
 const flt=()=>S.flt||(S.flt={...FLT0});
-const fltCount=()=>{const f=flt(); return (f.price?1:0)+(f.rating?1:0)+(f.open?1:0)+(f.metro?1:0)+(f.sort!=="top"?1:0);};
+const fltCount=()=>{const f=flt(); return (f.price?1:0)+(f.rating?1:0)+(f.open?1:0)+(f.metro?1:0)+(f.area?1:0)+(f.sort!=="top"?1:0);};
 const priceOptsFor=u=>u==="ticket"?[[0,"Any"],[-1,"Free"],[2,"Up to €15"],[3,"Up to €25"]]:[[0,"Any"],...[1,2,3].map(i=>[i,u?`Up to €${BAND[u][i-1]}`:"€".repeat(i)])];
 const priceOpts=()=>priceOptsFor(hotUnit());
 const maxFromPrice=(u,v)=>v<0?0:v?BAND[u][v-1]:null;
@@ -572,6 +576,7 @@ function hotMatch(p){ if(!hotType(p)) return false; const f=flt(), u=hotUnit();
   if(f.rating&&(p.hot||0)<f.rating) return false;
   if(f.open&&(p.closed||[]).includes(new Date().getDay())) return false;
   if(f.metro&&!(p.metro||[]).length) return false;
+  if(f.area&&p.zone!==f.area) return false;
   return true; }
 const priceOf=p=>{const u=KIND_UNIT[p.kind]; return u?costOf(p,u):p.price*10;};
 const byHot=(a,b)=>{const s=flt().sort; return s==="cheap"?priceOf(a)-priceOf(b)||b.hot-a.hot:s==="dear"?priceOf(b)-priceOf(a)||b.hot-a.hot:s==="az"?a.name.localeCompare(b.name):b.hot-a.hot||a.price-b.price;};
@@ -582,6 +587,7 @@ function viewFilters(){
     ${n?`<button class="wclear" data-act="fltReset" aria-label="Clear filters">×</button>`:""}</div>
   ${S.fltOpen?`<div class="fpanel">
     ${row("Price","fltPrice",priceOpts(),f.price)}
+    ${row("Area","fltArea",areaOpts(),f.area)}
     ${row("Rating","fltRating",[[0,"Any"],[2,"★★ Popular"],[3,"★★★ Top picks"]],f.rating)}
     ${row("Show only","fltToggle",[["open","Open today"],["metro","Near a metro"]].map(([k,l])=>[k,l]),"")
       .replace(/data-v="open" aria-pressed="false"/,`data-v="open" aria-pressed="${f.open}"`).replace(/data-v="metro" aria-pressed="false"/,`data-v="metro" aria-pressed="${f.metro}"`)}
@@ -726,6 +732,8 @@ const H={
   fltPrice(el){ flt().price=+el.dataset.v; FIT=null; render(); },
   fltRating(el){ flt().rating=+el.dataset.v; FIT=null; render(); },
   fltToggle(el){ const f=flt(), k=el.dataset.v; f[k]=!f[k]; FIT=null; render(); },
+  fltArea(el){ flt().area=el.dataset.v; FIT=null; render(); },
+  pickArea(el){ S.pickArea=el.dataset.v; refreshPicks(); },
   fltSort(el){ flt().sort=el.dataset.v; render(); },
   evCal(){ S.evCalOpen=!S.evCalOpen; if(S.evCalOpen&&S.evDate) S.evMonth=S.evDate.slice(0,7); render(); },
   evMove(el){ const [y,m]=(S.evMonth||today.slice(0,7)).split("-").map(Number); S.evMonth=iso(new Date(y,m-1+Number(el.dataset.v),1)).slice(0,7); render(); },
@@ -791,7 +799,7 @@ function updatePicks(){ const f=S.form, picks=(f.picks||[]).filter(byId), list=d
   list.querySelectorAll(".person[data-id]").forEach(el=>{ const on=picks.includes(el.dataset.id); el.setAttribute("aria-pressed",on); el.disabled=!on&&picks.length>=PICK_MAX; el.lastElementChild.textContent=on?"Added ✓":"Add"; });
   if(b){ b.textContent=pickStartLabel(f); b.disabled=picks.length<2; } }
 function refreshPicks(){ const box=document.getElementById("pickBox"), b=document.getElementById("startBtn"); if(!box){ render(); return; }
-  box.innerHTML=pickBoxHtml(S.form); if(b){ b.textContent=pickStartLabel(S.form); b.disabled=(S.form.picks||[]).filter(byId).length<2; } }
+  const sl=box.querySelector(".pickareas")?.scrollLeft||0; box.innerHTML=pickBoxHtml(S.form); const ar=box.querySelector(".pickareas"); if(ar) ar.scrollLeft=sl; if(b){ b.textContent=pickStartLabel(S.form); b.disabled=(S.form.picks||[]).filter(byId).length<2; } }
 document.addEventListener("input",e=>{ if(e.target.dataset.search==="pick"){ S.pickQ=e.target.value; refreshPicks(); } });
 document.addEventListener("input",e=>{const u=e.target.dataset.slider; if(!u) return; const i=Number(e.target.value);
   if(e.target.id==="budget") S.form.idx[u]=i; else S.hotIdx[u]=i;

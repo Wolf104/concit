@@ -200,3 +200,4 @@ body.noauth #me{display:none}
 .person[aria-pressed="true"]{background:var(--tint);border-color:var(--link)}
 .btn.stick{position:sticky;bottom:calc(92px + env(safe-area-inset-bottom,0px));z-index:4;margin-top:14px}
 .btn.stick:disabled{opacity:1;background:var(--tint);color:var(--muted);box-shadow:none}
+.pickareas{margin:12px -4px 0}
