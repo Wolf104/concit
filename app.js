@@ -232,6 +232,12 @@ const hideToast=()=>{const el=document.getElementById("toast"); if(el) el.hidden
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const seg=(act,val,opts,label)=>`<div class="seg" role="group" aria-label="${label}">${opts.map(([v,l])=>`<button data-act="${act}" data-v="${v}" aria-pressed="${String(v)===String(val)}">${l}</button>`).join("")}</div>`;
 const zname=z=>ZONES[z]?ZONES[z][0]:"";
+/* Price as a slider: tightest limit on the left, "Any price" at the far right. */
+function priceSlider(act,opts,val){
+  const o=[...opts.slice(1),[0,"Any price"]], i=Math.max(0,o.findIndex(x=>String(x[0])===String(val)));
+  return `<div class="fsec"><div class="sliderhead"><span class="label">Price</span><b class="psval">${o[i][1]}</b></div>
+    <input type="range" class="pslider" data-ps="${act}" data-opts='${esc(JSON.stringify(o))}' min="0" max="${o.length-1}" step="1" value="${i}" aria-label="Price" aria-valuetext="${o[i][1]}"></div>`;
+}
 function slider(id,unit,i){
   return `<div class="group"><div class="sliderhead"><span class="label">${LABEL[unit]}</span><b id="${id}Val">${stepText(unit,i)}</b></div><input type="range" id="${id}" data-slider="${unit}" min="0" max="${STEPS[unit].length}" step="1" value="${i}" aria-label="${LABEL[unit]}"></div>`;
 }
@@ -370,7 +376,7 @@ function viewDecideFilters(f,unit,part){
   if(part==="text") return parts.join(" · ");
   if(part==="pill") return `<button class="pill${parts.length?" on":""}" data-act="dfltOpen" aria-expanded="${!!S.dfltOpen}">${FILTER_ICON}<span>${parts.length?esc(parts.join(" · ")):"Filters"}</span></button>`;
   return `${S.dfltOpen?`<div class="fpanel">${parts.length?`<button class="link quiet fclear" data-act="dfltReset">Clear filters</button>`:""}
-    <div class="fsec"><span class="label">Price</span>${chips("dPrice",priceOptsFor(unit),price)}</div>
+    ${priceSlider("dPrice",priceOptsFor(unit),price)}
     ${ev?"":`<div class="fsec"><span class="label">Rating</span>${chips("dRating",[[0,"Any"],[2,"★★ Popular"],[3,"★★★ Top picks"]],rating)}</div>
     <div class="fsec"><span class="label">Show only</span><div class="chips wrap"><button class="chip" data-act="dMetro" aria-pressed="${!!metro}">Near a metro</button></div></div>`}
   </div>`:""}`;
@@ -379,7 +385,9 @@ function viewDecideFilters(f,unit,part){
 const PICK_MAX=8;
 function pickPool(f){
   const q=(S.pickQ||"").trim().toLowerCase(), z=S.mapFail?S.pickArea||"":"", R=f.pin&&f.radius?f.radius:0;
-  const inArea=p=>(!z||p.zone===z)&&(!R||(pinDist(f,p)??99)<=R);
+  const unit=WHAT_UNIT[f.what], max=maxFromPrice(unit,f.price||0);
+  const fits=x=>(max==null||(x.cat?(max===0?x.priceNum===0:x.priceNum==null||x.priceNum<=max):costOf(x,unit)<=max))&&(x.cat||((!f.rating||(x.hot||0)>=f.rating)&&(!f.metro||(x.metro||[]).length)));
+  const inArea=p=>(!z||p.zone===z)&&(!R||(pinDist(f,p)??99)<=R)&&fits(p);
   const evs=EVENTS.filter(e=>!e.sold&&e.end>=f.day&&inArea(e));
   if(q){ const m=x=>(x.name+" "+(x.zone?zname(x.zone):"")+" "+(x.venue||"")+" "+(x.kind?KIND[x.kind]:"")+" "+(x.cuisine||[]).map(c=>(CUISINES.find(k=>k[0]===c)||[c,c])[1]+" "+c).join(" ")+" "+(x.why||"")).toLowerCase().includes(q);
     return [...PLACES.filter(p=>inArea(p)&&m(p)).sort((a,b)=>(b.hot||0)-(a.hot||0)),...evs.filter(m)]; }
@@ -426,14 +434,14 @@ function viewSetup(){
   if(f.day<today) f.day=today;
   if(f.group&&!S.groups.some(g=>g.id===f.group)) f.group="";
   if(!f.group&&S.groups.length&&!f.linkOnly) f.group=S.groups[0].id;
-  const tom=addDays(today,1), picked=f.day!==today&&f.day!==tom, ftxt=pick?"":viewDecideFilters(f,unit,"text");
+  const tom=addDays(today,1), picked=f.day!==today&&f.day!==tom, ftxt=viewDecideFilters(f,unit,"text");
   const row=(k,v,body="")=>`<div class="srow"><span class="k">${k}</span><div class="v">${v}</div></div>${body?`<div class="sbody">${body}</div>`:""}`;
   const rows=[
     row("When",`<div class="seg" role="group" aria-label="When"><button data-act="day" data-v="${today}" aria-pressed="${f.day===today}">Tonight</button><button data-act="day" data-v="${tom}" aria-pressed="${f.day===tom}">Tomorrow</button><button data-act="cal" aria-pressed="${picked}" aria-expanded="${!!S.calOpen}">${picked?short(f.day):"Other"}</button></div>`,S.calOpen?calendar(f.day):""),
     ev?"":row("Time",`<input type="text" class="tin" id="meetTime" inputmode="numeric" maxlength="5" autocomplete="off" placeholder="Any time" value="${esc(f.time||"")}" aria-label="Meet time, 24-hour, for example 19:30">`),
     S.mapFail?row("Where",`<select id="area" data-change="area" aria-label="Area"><option value="">Anywhere in Milan</option>${AREAS.map(z=>`<option value="${z}" ${f.area===z?"selected":""}>${esc(zname(z))}</option>`).join("")}</select>`)
       :row("Where",`<button class="sval${f.pin?" on":""}" data-act="pickOpen" data-v="form" aria-expanded="${S.pickOpen===true}">${f.pin?esc(pinText(f.pin,f.radius)):"Anywhere in Milan"}</button>${f.pin?`<button class="pillx" data-act="pinClear" data-v="form" aria-label="Remove pin">×</button>`:""}`,S.pickOpen===true?viewPinPicker():""),
-    pick?"":row("Filters",`<button class="sval${ftxt?" on":""}" data-act="dfltOpen" aria-expanded="${!!S.dfltOpen}">${ftxt?esc(ftxt):"None"}</button>`,S.dfltOpen?viewDecideFilters(f,unit):""),
+    row("Filters",`<button class="sval${ftxt?" on":""}" data-act="dfltOpen" aria-expanded="${!!S.dfltOpen}">${ftxt?esc(ftxt):"None"}</button>`,S.dfltOpen?viewDecideFilters(f,unit):""),
     S.groups.length?row("Send to",`<select id="sendTo" data-change="sendTo" aria-label="Send to">${S.groups.map(g=>`<option value="${esc(g.id)}" ${f.group===g.id?"selected":""}>${esc(g.name)}</option>`).join("")}<option value="" ${f.group?"":"selected"}>Share by link</option></select>`):""
   ].join("");
   return `<div data-hero><h1>Where to?</h1></div>
@@ -887,7 +895,7 @@ const FLT0={price:0,rating:0,open:false,metro:false,sort:"top",area:"",pin:null,
 const areaOpts=()=>[["","All areas"],...[...new Set(PLACES.map(p=>p.zone).filter(Boolean))].sort((a,b)=>zname(a).localeCompare(zname(b))).map(z=>[z,zname(z)])];
 const flt=()=>S.flt||(S.flt={...FLT0});
 const fltCount=()=>{const f=flt(); return (f.price?1:0)+(f.rating?1:0)+(f.open?1:0)+(f.metro?1:0)+(f.area||f.pin?1:0)+(f.sort!=="top"?1:0);};
-const priceOptsFor=u=>u==="ticket"?[[0,"Any"],[-1,"Free"],[2,"Up to €15"],[3,"Up to €25"]]:[[0,"Any"],...[1,2,3].map(i=>[i,u?`Up to €${BAND[u][i-1]}`:"€".repeat(i)])];
+const priceOptsFor=u=>u==="ticket"?[[0,"Any"],[-1,"Free"],[2,"Up to €15"],[3,"Up to €25"]]:[[0,"Any"],...[1,2,3].map(i=>[i,u?`Up to €${BAND[u][i-1]}`:`Up to ${"€".repeat(i)}`])];
 const priceOpts=()=>priceOptsFor(hotUnit());
 const maxFromPrice=(u,v)=>v<0?0:v?BAND[u][v-1]:null;
 function hotMatch(p){ if(!hotType(p)) return false; const f=flt(), u=hotUnit();
@@ -906,7 +914,7 @@ function viewFilters(){
   return `<div class="where evwhen"><button class="wherebtn" data-act="fltOpen" aria-expanded="${!!S.fltOpen}"><span class="wpin">${FILTER_ICON}</span><span>${n?`Filters · ${n} on`:"Filters"}</span><small>${S.fltOpen?"Done":"Sort & filter"}</small></button>
     ${n?`<button class="wclear" data-act="fltReset" aria-label="Clear filters">×</button>`:""}</div>
   ${S.fltOpen?`<div class="fpanel">
-    ${row("Price","fltPrice",priceOpts(),f.price)}
+    ${priceSlider("fltPrice",priceOpts(),f.price)}
     ${S.mapFail?row("Area","fltArea",areaOpts(),f.area):`<div class="fsec"><span class="label">Area</span>${S.pickOpen==="hot"?viewPinPicker():pinButton(f,"hot")}</div>`}
     ${row("Rating","fltRating",[[0,"Any"],[2,"★★ Popular"],[3,"★★★ Top picks"]],f.rating)}
     ${row("Show only","fltToggle",[["open","Open today"],["metro","Near a metro"]].map(([k,l])=>[k,l]),"")
@@ -1164,6 +1172,8 @@ function refreshPicks(){ const box=document.getElementById("pickBox"), b=documen
   const sl=box.querySelector(".pickareas")?.scrollLeft||0; box.innerHTML=pickBoxHtml(S.form); const ar=box.querySelector(".pickareas"); if(ar) ar.scrollLeft=sl; if(b){ b.textContent=pickStartLabel(S.form); b.hidden=!(S.form.picks||[]).filter(byId).length; } }
 document.addEventListener("keydown",e=>{ if(e.key==="Enter"&&e.target.id==="pickQ"){ e.preventDefault(); e.target.blur(); H.pickSearch(); } });
 document.addEventListener("input",e=>{ if(e.target.dataset.search==="pick"){ S.pickQ=e.target.value; refreshPicks(); } });
+document.addEventListener("input",e=>{ const el=e.target; if(!el.dataset.ps) return; const o=JSON.parse(el.dataset.opts)[+el.value]; el.parentNode.querySelector(".psval").textContent=o[1]; el.setAttribute("aria-valuetext",o[1]); });
+document.addEventListener("change",e=>{ const el=e.target; if(!el.dataset.ps) return; const o=JSON.parse(el.dataset.opts)[+el.value]; H[el.dataset.ps]({dataset:{v:String(o[0])}}); });
 document.addEventListener("input",e=>{const u=e.target.dataset.slider; if(!u) return; const i=Number(e.target.value);
   if(e.target.id==="budget") S.form.idx[u]=i; else S.hotIdx[u]=i;
   document.getElementById(e.target.id+"Val").textContent=stepText(u,i);});

@@ -441,3 +441,5 @@ nav::before{content:"";position:absolute;top:0;bottom:0;left:50%;width:min(520px
 .srow input.tin.bad{color:#c4314b}
 .brandbtn{display:block;background:none;border:0;padding:0;margin:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .brandbtn:active{opacity:.7}
+.sliderhead b.psval{font-size:15px}
+.fclear{float:none;display:block;margin:0 0 2px auto;padding:2px 0;font-size:14px}
