@@ -194,3 +194,7 @@ body.noauth #me{display:none}
 .chips.wrap{flex-wrap:wrap;overflow:visible;margin:0;padding:0;gap:6px}
 .chips.wrap .chip{font-size:14px;padding:7px 12px}
 .star{color:#c98a00;font-weight:700}
+.picked{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 4px}
+.picked .chip span{margin-left:4px;font-weight:700}
+.picklist{margin-top:10px;max-height:440px;overflow-y:auto;padding:1px}
+.person[aria-pressed="true"]{background:var(--tint);border-color:var(--link)}

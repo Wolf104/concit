@@ -344,6 +344,31 @@ function viewDecideFilters(f,unit){
     <div class="fsec"><span class="label">Show only</span><div class="chips wrap"><button class="chip" data-act="dMetro" aria-pressed="${!!metro}">Near a metro</button></div></div>`}
   </div>`:""}`;
 }
+/* Choosing your own places: up to 8, searched by name, area or type. */
+const PICK_MAX=8;
+function pickPool(f){
+  const q=(S.pickQ||"").trim().toLowerCase();
+  const evs=EVENTS.filter(e=>!e.sold&&e.end>=f.day);
+  if(q){ const m=x=>(x.name+" "+(x.zone?zname(x.zone):"")+" "+(x.venue||"")+" "+(x.kind?KIND[x.kind]:"")).toLowerCase().includes(q);
+    return [...PLACES.filter(m).sort((a,b)=>(b.hot||0)-(a.hot||0)),...evs.filter(m)].slice(0,40); }
+  if(f.what==="event") return evs.sort((a,b)=>a.start.localeCompare(b.start)).slice(0,40);
+  const occ={eat:["dinner","cheap"],coffee:["coffee"],drinks:["drinks"]}[f.what];
+  const want=f.what==="clubs"?p=>p.occ.includes("night"):f.what==="culture"?p=>p.kind==="culture":p=>p.occ.some(o=>occ.includes(o))&&(f.what!=="eat"||hasCuisine(p,f.cuisine));
+  return PLACES.filter(want).sort((a,b)=>(b.hot||0)-(a.hot||0)||a.name.localeCompare(b.name)).slice(0,40);
+}
+function pickBoxHtml(f){
+  const picks=(f.picks||[]).filter(byId), pool=pickPool(f);
+  const sub=x=>x.cat?`${eventWhen(x)} · ${x.venue}`:`${KIND[x.kind]} · ${zname(x.zone)}${x.cat||open(x,f.day)?"":" · closed that day"}`;
+  return `${picks.length?`<div class="picked">${picks.map(id=>`<button class="chip" data-act="pickToggle" data-id="${esc(id)}" aria-pressed="true" aria-label="Remove ${esc(byId(id).name)}">${esc(byId(id).name)} <span aria-hidden="true">×</span></button>`).join("")}</div>`:""}
+  <div class="stack picklist">${pool.map(x=>{ const on=picks.includes(x.id);
+    return `<button class="person" data-act="pickToggle" data-id="${esc(x.id)}" aria-pressed="${on}" ${!on&&picks.length>=PICK_MAX?"disabled":""}><span>${esc(x.name)}<small class="sub">${esc(sub(x))}</small></span><small>${on?"Added ✓":"Add"}</small></button>`; }).join("")||`<p class="empty">No places match “${esc(S.pickQ||"")}”.</p>`}</div>`;
+}
+const pickStartLabel=f=>{ const n=(f.picks||[]).filter(byId).length; return n<2?"Choose at least 2 places":(f.group?"Send to the group":"Start the vote")+` (${n})`; };
+function viewPicker(f){
+  return `<div class="group"><span class="label">Your places · up to ${PICK_MAX}</span>
+  <input type="text" id="pickQ" data-search="pick" value="${esc(S.pickQ||"")}" placeholder="Search any place or area" autocomplete="off" aria-label="Search places">
+  <div id="pickBox">${pickBoxHtml(f)}</div></div>`;
+}
 function viewSetup(){
   const f=S.form, unit=WHAT_UNIT[f.what], todo=toVote();
   if(f.day<today) f.day=today;
@@ -353,11 +378,11 @@ function viewSetup(){
   ${todo.length?`<div class="group"><span class="label">Waiting for your vote</span><div class="stack">${todo.map(p=>`<button class="person" data-act="openPlan" data-code="${esc(p.code)}"><span>${esc(planTitle(p))}<small class="sub">${esc(p.by||"Someone")} in ${esc(p.group)}</small></span><small>Vote</small></button>`).join("")}</div></div>`:""}
   <div class="group">${seg("what",f.what,[["coffee","Coffee"],["eat","Restaurants"],["drinks","Bars"],["clubs","Clubs"],["culture","Culture"],["event","Event"]],"What").replace('class="seg"','class="seg grid"')}
   ${f.what==="eat"?cuisineChips("cuisine",f.cuisine):""}</div>
+  <div class="group">${seg("mode",f.mode==="pick"?"pick":"auto",[["auto","Suggest 5 for me"],["pick","I'll choose"]],"How to choose")}</div>
   ${viewWhen(f)}
-  ${viewDecideFilters(f,unit)}
-  ${viewWhere(f)}
+  ${f.mode==="pick"?viewPicker(f):viewDecideFilters(f,unit)+viewWhere(f)}
   ${S.groups.length?`<div class="group"><span class="label">Send to</span><select id="sendTo" data-change="sendTo" aria-label="Send to">${S.groups.map(g=>`<option value="${esc(g.id)}" ${f.group===g.id?"selected":""}>${esc(g.name)}</option>`).join("")}<option value="" ${f.group?"":"selected"}>Share by link</option></select></div>`:""}
-  <button class="btn" data-act="start">${f.group?"Send to the group":"Find places"}</button>`;
+  <button class="btn" data-act="start" id="startBtn" ${f.mode==="pick"&&(f.picks||[]).filter(byId).length<2?"disabled":""}>${f.mode==="pick"?pickStartLabel(f):f.group?"Send to the group":"Find places"}</button>`;
 }
 function viewWaiting(p){
   const done=p.people.filter(n=>votedAll(p,n)).length, solo=p.people.length===1;
@@ -563,7 +588,7 @@ function viewFilters(){
 function placeRow(p){
   return `<details><summary><div><b>${esc(p.name)}</b><small>${esc(zname(p.zone))} · ${esc(costText(p))}${p.hot>=3?' · <span class="star">★ Top pick</span>':""}</small></div></summary>
   <div class="more"><p>${esc(p.why)}. ${esc(p.detail)}</p><p class="dim">${esc(p.addr)}${p.metro[0]?" · "+esc(metroText(p.metro)):""}</p>
-  <div class="actions"><a href="${mapsUrl(p.name+" "+p.addr)}" target="_blank" rel="noopener">Directions</a><a href="${esc(srcUrl(p.src))}" target="_blank" rel="noopener">Source</a></div></div></details>`;
+  <div class="actions"><a href="${mapsUrl(p.name+" "+p.addr)}" target="_blank" rel="noopener">Directions</a><a href="${esc(srcUrl(p.src))}" target="_blank" rel="noopener">Source</a><button class="link" data-act="pickToggle" data-id="${esc(p.id)}">${(S.form.picks||[]).includes(p.id)?"In your plan ✓":"Add to a plan"}</button></div></div></details>`;
 }
 const MAP_SPOTS={bicocca:[270,30],isola:[175,88],lambrate:[320,80],sarpi:[64,140],garibaldi:[178,140],centrale:[300,130],cittastudi:[318,178],brera:[100,192],venezia:[240,212],duomo:[190,265],tortona:[66,305],navigli:[135,345],romana:[285,320],lodi:[270,375]};
 /* An illustrated rooftop view: Milan's ring-and-spoke street plan, filled with courtyard blocks. */
@@ -709,7 +734,15 @@ const H={
   cal(){ S.calOpen=!S.calOpen; S.calMonth=S.form.day.slice(0,7); render(); },
   calMove(el){ const [y,m]=S.calMonth.split("-").map(Number); S.calMonth=iso(new Date(y,m-1+Number(el.dataset.v),1)).slice(0,7); render(); },
   pickDay(el){ S.form.day=el.dataset.v; S.calOpen=false; render(); },
+  mode(el){ S.form.mode=el.dataset.v; S.pickOpen=false; render(); },
+  pickToggle(el){ const f=S.form, id=el.dataset.id, l=(f.picks||[]).filter(byId);
+    f.picks=l.includes(id)?l.filter(x=>x!==id):l.length<PICK_MAX?[...l,id]:l;
+    f.mode="pick";
+    if(!document.getElementById("pickBox")){ render(); if(f.picks.includes(id)) toast(`Added to your plan (${f.picks.length}). Send it from Decide.`); return; }
+    refreshPicks(); },
   start(){ const f=S.form, unit=WHAT_UNIT[f.what], ev=f.what==="event", max=maxFromPrice(unit,f.price||0), {group,idx,linkOnly,...rest}=f, q={...rest,max,rating:ev?0:f.rating||0,metro:!ev&&!!f.metro}, options=shortlist(q);
+    if(f.mode==="pick"){ const picks=(f.picks||[]).filter(byId); if(picks.length<2) return;
+      newPlan({...q,what:f.what,options:picks,seen:picks,picked:true,finished:false},group); f.picks=[]; S.pickQ=""; return; }
     if(!options.length){ toast(f.what==="event"?"No events listed around that date yet. Try another date or price.":"Nothing matches. Try fewer filters or another day."); return; }
     newPlan({...q,options,seen:options,finished:false},group); },
   share(){ shareOut(`Help choose where we go: ${shareUrl()}`,"Link copied"); },
@@ -748,6 +781,9 @@ const H={
 };
 document.addEventListener("click",e=>{const el=e.target.closest("[data-act]");if(el){ hideToast(); H[el.dataset.act]?.(el); }});
 document.addEventListener("submit",hideToast,true);
+function refreshPicks(){ const box=document.getElementById("pickBox"), b=document.getElementById("startBtn"); if(!box){ render(); return; }
+  box.innerHTML=pickBoxHtml(S.form); if(b){ b.textContent=pickStartLabel(S.form); b.disabled=(S.form.picks||[]).filter(byId).length<2; } }
+document.addEventListener("input",e=>{ if(e.target.dataset.search==="pick"){ S.pickQ=e.target.value; refreshPicks(); } });
 document.addEventListener("input",e=>{const u=e.target.dataset.slider; if(!u) return; const i=Number(e.target.value);
   if(e.target.id==="budget") S.form.idx[u]=i; else S.hotIdx[u]=i;
   document.getElementById(e.target.id+"Val").textContent=stepText(u,i);});
