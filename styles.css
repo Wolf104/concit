@@ -351,3 +351,14 @@ select::-ms-expand{display:none}
 .evtile.hasph .evic svg{width:22px;height:22px}
 .credits{margin-top:4px;font-size:12px}
 .credits a{color:inherit}
+#splash{position:fixed;inset:0;z-index:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;background:var(--accent);transition:opacity .6s ease,visibility .6s}
+#splash.out{opacity:0;visibility:hidden;pointer-events:none}
+.splashlogo{height:64px;width:auto;animation:splashIn .7s cubic-bezier(.2,.8,.2,1) both}
+.splashlogo path{fill:#fff}
+.splashlogo .pin{transform-box:fill-box;transform-origin:50% 100%;animation:splashPin .9s .25s cubic-bezier(.3,1.6,.5,1) both}
+.splashbar{width:72px;height:4px;border-radius:4px;background:rgba(255,255,255,.3);overflow:hidden;animation:splashIn .5s .3s both}
+.splashbar i{display:block;width:40%;height:100%;border-radius:4px;background:#fff;animation:splashLoad 1s ease-in-out infinite}
+@keyframes splashIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
+@keyframes splashPin{0%{transform:translateY(-14px)}60%{transform:translateY(0)}80%{transform:translateY(-4px)}100%{transform:none}}
+@keyframes splashLoad{0%{transform:translateX(-100%)}100%{transform:translateX(250%)}}
+@media (prefers-reduced-motion:reduce){.splashlogo,.splashlogo .pin,.splashbar,.splashbar i{animation:none}#splash{transition-duration:.2s}}
