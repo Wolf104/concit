@@ -256,36 +256,3 @@ const EVENTS = [
 /* Coordinates from OpenStreetMap, used if the database cannot be reached. */
 const COORDS={"testina":[45.48983,9.195899],"treno":[45.481204,9.201219],"trippa":[45.452202,9.205517],"vela":[45.461534,9.194945],"alless":[45.483039,9.223803],"aperol":[45.463472,9.191462],"bartolini":[45.452046,9.161319],"basso":[45.476775,9.217579],"brunello":[45.479486,9.185567],"calabiana":[45.443876,9.208894],"camparino":[45.464857,9.189427],"ceresio":[45.483517,9.180311],"dry":[45.479,9.188426],"forest":[45.468721,9.206707],"hangar":[45.520986,9.21927],"isola":[45.481491,9.176233],"lambrate":[45.485705,9.231515],"luini":[45.465847,9.19142],"mag":[45.451297,9.173367],"moebius":[45.48186,9.201775],"nombra":[45.475181,9.187795],"prada":[45.444374,9.205331],"r142":[45.454439,9.17127],"ravioleria":[45.481329,9.175974],"reale":[45.463207,9.191488],"sincera":[45.486019,9.231797],"spontini":[45.481988,9.21313],"backdoor":[45.451297,9.173367],"mudec":[45.452046,9.161319]};
 for(const p of PLACES){ const c=COORDS[p.id.slice(2)]; if(c){ p.lat=c[0]; p.lng=c[1]; } }
-
-/* Photos from Wikimedia Commons (all freely licensed; photographer and licence are on each file page, linked under the photo).
-   PHOTO_REAL: photos of the place itself or the building it is in. PHOTO_TYPE: example photos for each kind of place. */
-const PHOTO_REAL = {
-  "p:castello":["Castello_sforzesco,_milano.JPG"],
-  "p:brera":["Pinacoteca_di_Brera_-_Milano_-_il_cortile_interno.JPG"],
-  "p:triennale":["Triennale_Palazzo_dell'Arte.jpg"],
-  "p:prada":["Milano_-_Fondazione_Prada.jpg"],
-  "p:torre":["Milano_-_Fondazione_Prada.jpg","Fondazione Prada"],
-  "p:bar-luce":["Fondazione_PRADA,_Via_Ripamonti_-_Largo_Isarco_area,_Bar_Luce,_50s_lifestyle_Milano_design_by_Wes_Anderson.jpg"],
-  "p:reale":["Palazzo_Reale_di_Milano.jpg"],
-  "p:mudec":["Mudec_(Museo_delle_Culture),_Milan,_May_2018_(06).jpg"],
-  "p:bartolini":["Mudec_(Museo_delle_Culture),_Milan,_May_2018_(06).jpg","the Mudec building"],
-  "p:gam":["Galleria_d'arte_moderna_(Milano).JPG"],
-  "p:novecento":["Palazzo_dell'Arengario_-_Museo_del_Novecento_-_Milano.jpg"],
-  "p:gallerie":["Veduta_del_Palazzo_della_Banca_Commerciale_Italiana,_piazza_della_Scala,_Milano,_tre_quarti_da_sinistra.jpg"],
-  "p:diocesano":["Museo_Diocesano_Milano.jpg"],
-  "p:camparino":["Galleria_Vittorio_Emanuele_II.jpg","Galleria Vittorio Emanuele II"],
-  "p:cracco":["Galleria_Vittorio_Emanuele_II.jpg","Galleria Vittorio Emanuele II"],
-  "p:aperol":["Galleria_Vittorio_Emanuele_II.jpg","Galleria Vittorio Emanuele II, next door"],
-  "p:mercato":["Stazione_Centrale_Main_Hall,_Milano_2.jpg","Milano Centrale station"],
-  "p:luini":["Panzerotti_Luini_Milano,_Italy_-_Shop_sign.jpg"],
-  "p:alcatraz":["Destrage_-_The_Last_Dance,_Alcatraz,_Milan_(October_20,_2024)_-_3609_02.jpg"],
-  "p:adulis":["Ethiopian_fasting_platter.jpg",null,true]
-};
-const PHOTO_TYPE = {
-  cafe:"Cups_of_cappuccino_(40564762745).jpg", pastry:"Cornetto_alla_crema.jpg",
-  pizza:"Eq_it-na_pizza-margherita_sep2005_sml.jpg", pasta:"Tagliatelle_al_ragu_Bolognese.jpg", milanese:"Ossobuco_con_risotto_alla_milanese.jpg",
-  seafood:"Spaghetti_alle_vongole.jpg", sushi:"Sushi_platter.jpg", asian:"Jiaozi.jpg", meat:"Bistecca_alla_Fiorentina.jpg",
-  street:"Panino_con_porchetta_di_Ariccia.jpg", world:"Set_dinner_table.jpg", veggie:"Vegetarian_Meal_(13913960918).jpg", fine:"Fine_Dining.jpg",
-  drink:"Negroni_with_ingredients.jpg", wine:"Glass_of_Red_Wine_with_a_bottle_of_Red_Wine_-_Evan_Swigart.jpg", beer:"Beer_taps.jpg",
-  club:"Club_Tigerheat_on_the_Dance_Floor_with_Laser_Lights.jpg", culture:"Pinacoteca_di_Brera_-_Milano_-_il_cortile_interno.JPG"
-};
