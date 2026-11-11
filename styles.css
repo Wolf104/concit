@@ -201,3 +201,18 @@ body.noauth #me{display:none}
 .btn.stick{position:sticky;bottom:calc(92px + env(safe-area-inset-bottom,0px));z-index:4;margin-top:14px}
 .btn.stick:disabled{opacity:1;background:var(--tint);color:var(--muted);box-shadow:none}
 .pickareas{margin:12px -4px 0}
+/* Group chat */
+.pill{display:inline-block;background:var(--accent);color:var(--on);border-radius:99px;padding:2px 9px;font-size:13px;font-weight:800}
+.chat{display:flex;flex-direction:column;justify-content:flex-end;gap:2px;padding-bottom:8px;min-height:calc(100vh - 330px);min-height:calc(100dvh - 330px)}
+.msg{max-width:80%;align-self:flex-start;margin-top:10px}
+.msg.cont{margin-top:2px}
+.msg.mine{align-self:flex-end;text-align:right}
+.msg .who{display:block;font-size:13px;font-weight:700;color:var(--muted);margin:0 0 3px 12px}
+.msg p{display:inline-block;text-align:left;margin:0;background:var(--card);border:1px solid var(--line);border-radius:18px 18px 18px 6px;padding:9px 13px;font-size:16px;line-height:1.35;white-space:pre-wrap;overflow-wrap:anywhere}
+.msg.mine p{background:var(--accent);color:var(--on);border-color:transparent;border-radius:18px 18px 6px 18px}
+.msg.mine p a{color:inherit}
+.msg p a{color:var(--link);text-decoration:underline}
+.msg time{display:block;font-size:12px;color:var(--muted);margin:3px 12px 0}
+.chatbar{position:sticky;bottom:calc(92px + env(safe-area-inset-bottom,0px));z-index:4;display:flex;gap:8px;align-items:flex-end;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:6px 6px 6px 14px;box-shadow:0 6px 20px rgba(15,42,68,.10);margin-top:10px}
+.chatbar textarea{flex:1;min-width:0;border:0;background:transparent;resize:none;font:inherit;font-size:16px;color:var(--fg);padding:9px 0;max-height:140px;outline:none}
+.chatbar .btn{flex:none}
