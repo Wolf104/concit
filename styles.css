@@ -187,3 +187,10 @@ body.noauth #me{display:none}
 /* Tidy-up */
 .chips.sub+.group{margin-top:12px}
 .actions{gap:22px}
+/* Hotspots filters */
+.fpanel{border:1px solid var(--line);border-radius:16px;padding:12px 14px 4px;margin:-4px 0 14px;background:var(--card)}
+.fsec{margin-bottom:10px}
+.fsec .label{display:block;margin-bottom:6px}
+.chips.wrap{flex-wrap:wrap;overflow:visible;margin:0;padding:0;gap:6px}
+.chips.wrap .chip{font-size:14px;padding:7px 12px}
+.star{color:#c98a00;font-weight:700}

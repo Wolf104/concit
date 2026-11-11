@@ -520,10 +520,34 @@ async function mountMap(){
 }
 const hotType=p=>({all:true,cafe:p.kind==="cafe",eat:["eat","cheap"].includes(p.kind)&&hasCuisine(p,S.hotCuisine),drink:["drink","wine","beer"].includes(p.kind),club:p.kind==="club",culture:p.kind==="culture"})[S.hot];
 const hotUnit=()=>HOT_UNIT[S.hot];
-function hotMatch(p){ if(!hotType(p)) return false; const u=hotUnit(); if(!u) return true; const m=maxFor(u,S.hotIdx[u]); return m===null||costOf(p,u)<=m; }
-const byHot=(a,b)=>b.hot-a.hot||a.price-b.price;
+/* Hotspots filters: price, rating, open today, near a metro, and sort order. */
+const FLT0={price:0,rating:0,open:false,metro:false,sort:"top"};
+const flt=()=>S.flt||(S.flt={...FLT0});
+const fltCount=()=>{const f=flt(); return (f.price?1:0)+(f.rating?1:0)+(f.open?1:0)+(f.metro?1:0)+(f.sort!=="top"?1:0);};
+const priceOpts=()=>{const u=hotUnit(); return [[0,"Any"],...[1,2,3].map(i=>[i,u?`Up to €${BAND[u][i-1]}`:"€".repeat(i)])];};
+function hotMatch(p){ if(!hotType(p)) return false; const f=flt(), u=hotUnit();
+  if(f.price&&(u?costOf(p,u)>BAND[u][f.price-1]:p.price>f.price)) return false;
+  if(f.rating&&(p.hot||0)<f.rating) return false;
+  if(f.open&&(p.closed||[]).includes(new Date().getDay())) return false;
+  if(f.metro&&!(p.metro||[]).length) return false;
+  return true; }
+const priceOf=p=>{const u=KIND_UNIT[p.kind]; return u?costOf(p,u):p.price*10;};
+const byHot=(a,b)=>{const s=flt().sort; return s==="cheap"?priceOf(a)-priceOf(b)||b.hot-a.hot:s==="dear"?priceOf(b)-priceOf(a)||b.hot-a.hot:s==="az"?a.name.localeCompare(b.name):b.hot-a.hot||a.price-b.price;};
+const FILTER_ICON='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v2H3zm3 6h12v2H6zm4 6h4v2h-4z"/></svg>';
+function viewFilters(){
+  const f=flt(), n=fltCount(), row=(label,act,opts,val)=>`<div class="fsec"><span class="label">${label}</span><div class="chips wrap">${opts.map(([k,l])=>`<button class="chip" data-act="${act}" data-v="${k}" aria-pressed="${String(val)===String(k)}">${l}</button>`).join("")}</div></div>`;
+  return `<div class="where evwhen"><button class="wherebtn" data-act="fltOpen" aria-expanded="${!!S.fltOpen}"><span class="wpin">${FILTER_ICON}</span><span>${n?`Filters · ${n} on`:"Filters"}</span><small>${S.fltOpen?"Done":"Sort & filter"}</small></button>
+    ${n?`<button class="wclear" data-act="fltReset" aria-label="Clear filters">×</button>`:""}</div>
+  ${S.fltOpen?`<div class="fpanel">
+    ${row("Price","fltPrice",priceOpts(),f.price)}
+    ${row("Rating","fltRating",[[0,"Any"],[2,"★★ Popular"],[3,"★★★ Top picks"]],f.rating)}
+    ${row("Show only","fltToggle",[["open","Open today"],["metro","Near a metro"]].map(([k,l])=>[k,l]),"")
+      .replace(/data-v="open" aria-pressed="false"/,`data-v="open" aria-pressed="${f.open}"`).replace(/data-v="metro" aria-pressed="false"/,`data-v="metro" aria-pressed="${f.metro}"`)}
+    ${row("Sort by","fltSort",[["top","Top rated"],["cheap","Cheapest"],["dear","Priciest"],["az","A–Z"]],f.sort)}
+  </div>`:""}`;
+}
 function placeRow(p){
-  return `<details><summary><div><b>${esc(p.name)}</b><small>${esc(zname(p.zone))} · ${esc(costText(p))}</small></div></summary>
+  return `<details><summary><div><b>${esc(p.name)}</b><small>${esc(zname(p.zone))} · ${esc(costText(p))}${p.hot>=3?' · <span class="star">★ Top pick</span>':""}</small></div></summary>
   <div class="more"><p>${esc(p.why)}. ${esc(p.detail)}</p><p class="dim">${esc(p.addr)}${p.metro[0]?" · "+esc(metroText(p.metro)):""}</p>
   <div class="actions"><a href="${mapsUrl(p.name+" "+p.addr)}" target="_blank" rel="noopener">Directions</a><a href="${esc(srcUrl(p.src))}" target="_blank" rel="noopener">Source</a></div></div></details>`;
 }
@@ -588,8 +612,8 @@ function viewHot(){
   <div class="group">${seg("hotView",S.hotView,[["list","List"],["map","Map"]],"View")}</div>
   <div class="chips">${HOT_TYPES.map(([k,l])=>`<button class="chip" data-act="hot" data-v="${k}" aria-pressed="${S.hot===k}">${l}</button>`).join("")}</div>
   ${S.hot==="eat"?cuisineChips("hotCuisine",S.hotCuisine):""}
-  ${hotUnit()?slider("hotBudget",hotUnit(),S.hotIdx[hotUnit()]):""}
-  ${body||`<p class="empty">Nothing at that price. Try raising it.</p>`}
+  ${viewFilters()}
+  ${body||`<p class="empty">Nothing matches these filters.</p>${fltCount()?`<button class="link center" data-act="fltReset">Clear filters</button>`:""}`}
   <p class="foot">Prices are typical estimates. Checked ${CHECKED}, so confirm before you go.${S.hotView==="map"?" Map data © OpenStreetMap contributors.":""}</p>`;
 }
 function evRow(e){
@@ -650,6 +674,12 @@ const H={
   cuisine(el){ S.form.cuisine=el.dataset.v; render(); },
   hotCuisine(el){ S.hotCuisine=el.dataset.v; render(); },
   evPick(el){ const v=el.dataset.v||null; S.evDate=S.evDate===v?null:v; if(v) S.evCalOpen=false; render(); },
+  fltOpen(){ S.fltOpen=!S.fltOpen; render(); },
+  fltReset(){ S.flt={...FLT0}; render(); },
+  fltPrice(el){ flt().price=+el.dataset.v; FIT=null; render(); },
+  fltRating(el){ flt().rating=+el.dataset.v; FIT=null; render(); },
+  fltToggle(el){ const f=flt(), k=el.dataset.v; f[k]=!f[k]; FIT=null; render(); },
+  fltSort(el){ flt().sort=el.dataset.v; render(); },
   evCal(){ S.evCalOpen=!S.evCalOpen; if(S.evCalOpen&&S.evDate) S.evMonth=S.evDate.slice(0,7); render(); },
   evMove(el){ const [y,m]=(S.evMonth||today.slice(0,7)).split("-").map(Number); S.evMonth=iso(new Date(y,m-1+Number(el.dataset.v),1)).slice(0,7); render(); },
   day(el){ S.form.day=el.dataset.v; S.calOpen=false; render(); },
