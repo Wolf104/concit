@@ -88,7 +88,7 @@ input[type=email],input[type=password]{width:100%;background:var(--card);border:
 .btn.small{width:auto;flex:none;padding:0 18px;font-size:15px;box-shadow:none}
 .code{color:var(--fg);letter-spacing:.04em}
 nav button{position:relative}
-#badge{position:absolute;top:3px;margin-left:3px;background:var(--accent);color:#fff;font-style:normal;font-size:11px;font-weight:700;line-height:17px;min-width:17px;border-radius:99px;padding:0 4px}
+#badge{position:absolute;top:2px;left:calc(50% + 8px);background:var(--accent);color:#fff;font-style:normal;font-size:11px;font-weight:700;line-height:17px;min-width:17px;border-radius:99px;padding:0 4px}
 #badge[hidden]{display:none}
 .mapslot{height:min(52vh,390px);border:1px solid var(--line);border-radius:20px;overflow:hidden;background:var(--tint)}
 #realmap{width:100%;height:100%}
@@ -110,7 +110,8 @@ nav button{position:relative}
 .foot{color:var(--muted);font-size:13px;margin-top:20px}
 nav{position:fixed;left:0;right:0;bottom:calc(14px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));z-index:5;pointer-events:none}
 nav div{display:flex;gap:2px;width:100%;max-width:420px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:6px;box-shadow:0 8px 28px rgba(15,42,68,.14);pointer-events:auto}
-nav button{flex:1;border:0;background:none;border-radius:14px;padding:10px 0;font-size:15px;font-weight:600;color:var(--muted);cursor:pointer}
+nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;border:0;background:none;border-radius:14px;padding:7px 0 6px;font-size:12.5px;font-weight:700;color:var(--muted);cursor:pointer;line-height:1.2}
+nav .ti{width:23px;height:23px;display:block}
 nav button[aria-current="page"]{background:var(--tint);color:var(--link);font-weight:700;box-shadow:inset 0 0 0 1px var(--line)}
 #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(88px + env(safe-area-inset-bottom,0px));background:var(--fg);color:#fff;padding:9px 14px;border-radius:12px;font-size:14px;max-width:calc(100vw - 40px);z-index:9}
 a.person{text-decoration:none}
@@ -293,3 +294,8 @@ body.inchat .app{min-height:0;padding-bottom:0;box-shadow:0 60vh 0 0 var(--card)
 .sendbtn svg{width:24px;height:24px;display:block}
 .sendbtn:hover{background:var(--tint)}
 .sendbtn:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+/* Dropdowns: our own chevron, set in from the edge and centred */
+select{-webkit-appearance:none;-moz-appearance:none;appearance:none;padding-right:46px;cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236a8096' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 16px center;background-size:18px 18px}
+select::-ms-expand{display:none}
