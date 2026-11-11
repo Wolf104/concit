@@ -398,6 +398,7 @@ function pickBoxHtml(f){
   const far=x=>{ const d=f.pin&&f.radius?pinDist(f,x):null; return d==null?"":` · ${d<0.975?Math.round(d*1000/50)*50+" m":d.toFixed(1)+" km"}`; };
   const sub=x=>x.cat?`${eventWhen(x)} · ${x.venue}${far(x)}`:`${KIND[x.kind]} · ${zname(x.zone)}${far(x)}${open(x,f.day)?"":" · closed that day"}`;
   const areas=S.mapFail?`<div class="chips pickareas" role="group" aria-label="Area">${areaOpts().map(([k,l])=>`<button class="chip" data-act="pickArea" data-v="${k}" aria-pressed="${(S.pickArea||"")===k}">${esc(l)}</button>`).join("")}</div>`:"";
+  if(!S.pickSearched) return `${areas}<div id="pickChips">${pickChipsHtml(picks)}</div><p class="hint pickhint">Set your area, pick a category or type a name, then tap Search.</p>`;
   return `${areas}<div id="pickChips">${pickChipsHtml(picks)}</div>${pickListHtml(f,picks,pool,sub)}`;
 }
 const pickChipsHtml=picks=>picks.length?`<div class="picked">${picks.map(id=>`<button class="chip" data-act="pickToggle" data-id="${esc(id)}" aria-pressed="true" aria-label="Remove ${esc(byId(id).name)}">${esc(byId(id).name)} <span aria-hidden="true">×</span></button>`).join("")}</div>`:"";
@@ -410,6 +411,7 @@ function viewPicker(f){
   return `<div class="group"><span class="label">Your places · up to ${PICK_MAX}</span>
   <input type="text" id="pickQ" data-search="pick" value="${esc(S.pickQ||"")}" placeholder="Search any place or area" autocomplete="off" aria-label="Search places">
   ${S.mapFail?"":S.pickOpen===true?`<div class="pickwhere">${viewPinPicker()}</div>`:pinButton(f,"form")}
+  ${S.pickOpen===true||S.pickSearched?"":`<button class="btn pickgo" data-act="pickSearch">Search</button>`}
   <div id="pickBox">${pickBoxHtml(f)}</div></div>`;
 }
 function viewSetup(){
@@ -1048,6 +1050,7 @@ const H={
   fltRating(el){ flt().rating=+el.dataset.v; FIT=null; render(); },
   fltToggle(el){ const f=flt(), k=el.dataset.v; f[k]=!f[k]; FIT=null; render(); },
   fltArea(el){ flt().area=el.dataset.v; FIT=null; render(); },
+  pickSearch(){ S.pickSearched=true; document.activeElement?.blur?.(); render(); document.getElementById("pickBox")?.scrollIntoView({block:"start",behavior:"smooth"}); },
   pickArea(el){ S.pickArea=el.dataset.v; refreshPicks(); },
   fltSort(el){ flt().sort=el.dataset.v; render(); },
   evCal(){ S.evCalOpen=!S.evCalOpen; if(S.evCalOpen&&S.evDate) S.evMonth=S.evDate.slice(0,7); render(); },
@@ -1068,7 +1071,7 @@ const H={
     updatePicks(); },
   start(){ const f=S.form, unit=WHAT_UNIT[f.what], ev=f.what==="event", max=maxFromPrice(unit,f.price||0), {group,idx,linkOnly,...rest}=f, q={...rest,max,rating:ev?0:f.rating||0,metro:!ev&&!!f.metro,time:ev?"":(f.time||"")}, options=shortlist(q);
     if(f.mode==="pick"){ const picks=(f.picks||[]).filter(byId); if(!picks.length) return;
-      newPlan({...q,what:f.what,options:picks,seen:picks,picked:true,finished:false},group); f.picks=[]; S.pickQ=""; return; }
+      newPlan({...q,what:f.what,options:picks,seen:picks,picked:true,finished:false},group); f.picks=[]; S.pickQ=""; S.pickSearched=false; return; }
     if(!options.length){ toast(f.pin&&f.radius&&shortlist({...q,radius:null}).length?`Nothing within ${radText(f.radius)} of the pin. Try a bigger radius.`:f.what==="event"?"No events listed around that date yet. Try another date or price.":"Nothing matches. Try fewer filters or another day."); return; }
     newPlan({...q,options,seen:options,finished:false},group); },
   attend(el){ const go=el.dataset.v==="1"; setAttending(go); },
@@ -1122,6 +1125,7 @@ function updatePicks(){ const f=S.form, picks=(f.picks||[]).filter(byId), list=d
   if(b){ b.textContent=pickStartLabel(f); b.hidden=!picks.length; } }
 function refreshPicks(){ const box=document.getElementById("pickBox"), b=document.getElementById("startBtn"); if(!box){ render(); return; }
   const sl=box.querySelector(".pickareas")?.scrollLeft||0; box.innerHTML=pickBoxHtml(S.form); const ar=box.querySelector(".pickareas"); if(ar) ar.scrollLeft=sl; if(b){ b.textContent=pickStartLabel(S.form); b.hidden=!(S.form.picks||[]).filter(byId).length; } }
+document.addEventListener("keydown",e=>{ if(e.key==="Enter"&&e.target.id==="pickQ"){ e.preventDefault(); e.target.blur(); H.pickSearch(); } });
 document.addEventListener("input",e=>{ if(e.target.dataset.search==="pick"){ S.pickQ=e.target.value; refreshPicks(); } });
 document.addEventListener("input",e=>{const u=e.target.dataset.slider; if(!u) return; const i=Number(e.target.value);
   if(e.target.id==="budget") S.form.idx[u]=i; else S.hotIdx[u]=i;

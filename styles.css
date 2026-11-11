@@ -374,3 +374,5 @@ nav::before{content:"";position:absolute;top:0;bottom:0;left:50%;width:min(520px
 .radrow b{min-width:52px;text-align:right;color:var(--link)}
 .fpanel .pickslot{height:min(40vh,280px)}
 .pickwhere{margin-top:2px}
+.pickhint{margin:6px 0 4px;font-size:14px}
+.pickgo{margin-top:2px}
