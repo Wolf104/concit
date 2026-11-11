@@ -381,31 +381,35 @@ function viewDecideFilters(f,unit){
 /* Choosing your own places: up to 8, searched by name, area or type. */
 const PICK_MAX=8;
 function pickPool(f){
-  const q=(S.pickQ||"").trim().toLowerCase(), z=S.pickArea||"";
-  const evs=EVENTS.filter(e=>!e.sold&&e.end>=f.day&&(!z||e.zone===z));
-  const inArea=p=>!z||p.zone===z;
+  const q=(S.pickQ||"").trim().toLowerCase(), z=S.mapFail?S.pickArea||"":"", R=f.pin&&f.radius?f.radius:0;
+  const inArea=p=>(!z||p.zone===z)&&(!R||(pinDist(f,p)??99)<=R);
+  const evs=EVENTS.filter(e=>!e.sold&&e.end>=f.day&&inArea(e));
   if(q){ const m=x=>(x.name+" "+(x.zone?zname(x.zone):"")+" "+(x.venue||"")+" "+(x.kind?KIND[x.kind]:"")+" "+(x.cuisine||[]).map(c=>(CUISINES.find(k=>k[0]===c)||[c,c])[1]+" "+c).join(" ")+" "+(x.why||"")).toLowerCase().includes(q);
     return [...PLACES.filter(p=>inArea(p)&&m(p)).sort((a,b)=>(b.hot||0)-(a.hot||0)),...evs.filter(m)]; }
   if(f.what==="event") return evs.sort((a,b)=>a.start.localeCompare(b.start));
   const occ={eat:["dinner","cheap"],coffee:["coffee"],drinks:["drinks"]}[f.what];
   const want=f.what==="clubs"?p=>p.occ.includes("night"):f.what==="culture"?p=>p.kind==="culture":p=>p.occ.some(o=>occ.includes(o))&&(f.what!=="eat"||hasCuisine(p,f.cuisine));
-  return PLACES.filter(p=>inArea(p)&&want(p)).sort((a,b)=>(b.hot||0)-(a.hot||0)||a.name.localeCompare(b.name));
+  return PLACES.filter(p=>inArea(p)&&want(p)).sort((a,b)=>(R?pinDist(f,a)-pinDist(f,b):0)||(b.hot||0)-(a.hot||0)||a.name.localeCompare(b.name));
 }
+/* Distance from the plan's pin, in km (null if we don't know where it is). */
+const pinDist=(f,x)=>!f.pin?null:x.lat?km([null,f.pin[0],f.pin[1]],[null,x.lat,x.lng]):ZONES[x.zone]?km([null,f.pin[0],f.pin[1]],ZONES[x.zone]):null;
 function pickBoxHtml(f){
   const picks=(f.picks||[]).filter(byId), pool=pickPool(f);
-  const sub=x=>x.cat?`${eventWhen(x)} · ${x.venue}`:`${KIND[x.kind]} · ${zname(x.zone)}${x.cat||open(x,f.day)?"":" · closed that day"}`;
-  return `<div class="chips pickareas" role="group" aria-label="Area">${areaOpts().map(([k,l])=>`<button class="chip" data-act="pickArea" data-v="${k}" aria-pressed="${(S.pickArea||"")===k}">${esc(l)}</button>`).join("")}</div>
-  <div id="pickChips">${pickChipsHtml(picks)}</div>${pickListHtml(f,picks,pool,sub)}`;
+  const far=x=>{ const d=f.pin&&f.radius?pinDist(f,x):null; return d==null?"":` · ${d<0.975?Math.round(d*1000/50)*50+" m":d.toFixed(1)+" km"}`; };
+  const sub=x=>x.cat?`${eventWhen(x)} · ${x.venue}${far(x)}`:`${KIND[x.kind]} · ${zname(x.zone)}${far(x)}${open(x,f.day)?"":" · closed that day"}`;
+  const areas=S.mapFail?`<div class="chips pickareas" role="group" aria-label="Area">${areaOpts().map(([k,l])=>`<button class="chip" data-act="pickArea" data-v="${k}" aria-pressed="${(S.pickArea||"")===k}">${esc(l)}</button>`).join("")}</div>`:"";
+  return `${areas}<div id="pickChips">${pickChipsHtml(picks)}</div>${pickListHtml(f,picks,pool,sub)}`;
 }
 const pickChipsHtml=picks=>picks.length?`<div class="picked">${picks.map(id=>`<button class="chip" data-act="pickToggle" data-id="${esc(id)}" aria-pressed="true" aria-label="Remove ${esc(byId(id).name)}">${esc(byId(id).name)} <span aria-hidden="true">×</span></button>`).join("")}</div>`:"";
 function pickListHtml(f,picks,pool,sub){
   return `<div class="stack picklist">${pool.map(x=>{ const on=picks.includes(x.id);
-    return `<button class="person" data-act="pickToggle" data-id="${esc(x.id)}" aria-pressed="${on}" ${!on&&picks.length>=PICK_MAX?"disabled":""}><span>${esc(x.name)}<small class="sub">${esc(sub(x))}</small></span><small>${on?"Added ✓":"Add"}</small></button>`; }).join("")||`<p class="empty">${S.pickQ?`No places match “${esc(S.pickQ)}”`:"Nothing here"}${S.pickArea?` in ${esc(zname(S.pickArea))}`:""}.</p>`}</div>`;
+    return `<button class="person" data-act="pickToggle" data-id="${esc(x.id)}" aria-pressed="${on}" ${!on&&picks.length>=PICK_MAX?"disabled":""}><span>${esc(x.name)}<small class="sub">${esc(sub(x))}</small></span><small>${on?"Added ✓":"Add"}</small></button>`; }).join("")||`<p class="empty">${S.pickQ?`No places match “${esc(S.pickQ)}”`:"Nothing here"}${S.mapFail&&S.pickArea?` in ${esc(zname(S.pickArea))}`:f.pin&&f.radius?` within ${radText(f.radius)} of the pin. Try a bigger radius`:""}.</p>`}</div>`;
 }
 const pickStartLabel=f=>{ const n=(f.picks||[]).filter(byId).length; return (f.group?"Send to the group":"Start the vote")+` (${n})`; };
 function viewPicker(f){
   return `<div class="group"><span class="label">Your places · up to ${PICK_MAX}</span>
   <input type="text" id="pickQ" data-search="pick" value="${esc(S.pickQ||"")}" placeholder="Search any place or area" autocomplete="off" aria-label="Search places">
+  ${S.mapFail?"":S.pickOpen===true?`<div class="pickwhere">${viewPinPicker()}</div>`:pinButton(f,"form")}
   <div id="pickBox">${pickBoxHtml(f)}</div></div>`;
 }
 function viewSetup(){
