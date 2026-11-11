@@ -476,3 +476,32 @@ button.grow{cursor:pointer}
 .gcode .code{color:var(--fg);letter-spacing:.03em}
 .gcode span{margin-left:auto;color:var(--link);font-weight:700}
 .gmain small.live .dot{margin:0}
+/* Hotspots + Events lists in the card style */
+.hotbar{display:flex;align-items:center;gap:8px;margin:0 0 16px}
+.hotbar .seg{flex:none;border-radius:99px;padding:3px}
+.hotbar .seg button{padding:6px 16px;border-radius:99px;font-size:14px}
+.grow1{flex:1}
+.hotbar .count{font-size:13px;color:var(--muted);font-weight:600}
+.hottypes{margin-bottom:10px}
+.hottypes .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on)}
+.fpanel.fcard{border-radius:18px;margin:-6px 0 18px;padding:14px 14px 6px}
+.sheet.dlist{margin:0 0 22px}
+.dlist details{border:0}
+.dlist details:not(:first-child){border-top:1px solid var(--line)}
+.dlist summary{padding:12px 14px;align-items:center;gap:12px}
+.dlist summary>div{flex:1}
+.dlist summary b{font-size:16px;font-weight:600}
+.dlist summary small{font-size:13.5px}
+.dlist summary::after{content:"›";flex:none;color:var(--muted);font-size:20px;line-height:1;transition:transform .15s}
+.dlist details[open]>summary::after{transform:rotate(90deg)}
+.dlist details[open]>summary b{color:var(--link)}
+.dlist .more{padding:0 14px 14px}
+.dlist .actions{gap:8px;margin-top:6px}
+.dlist .actions a,.dlist .actions button{padding:8px 14px;border:1px solid var(--line);border-radius:99px;background:var(--card);font-size:14px}
+.dlist .actions a:first-child,.dlist .actions button:first-child{background:var(--accent);border-color:var(--accent);color:var(--on)}
+.toptag{flex:none;font-size:12px;font-weight:700;color:#a86f00;background:#fff4d6;border-radius:99px;padding:4px 9px;white-space:nowrap}
+.showall{display:block;width:100%;border:0;border-top:1px solid var(--line);background:none;padding:13px;font:inherit;font-size:14px;font-weight:700;color:var(--link);cursor:pointer}
+.dbadge{flex:none;width:46px;min-height:46px;border-radius:12px;background:var(--tint);color:var(--link);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05;padding:4px 0}
+.dbadge b{display:block;font-size:18px;font-weight:800}
+.dbadge i{font-style:normal;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.list>.glabel:first-child{margin-top:0}

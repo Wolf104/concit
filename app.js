@@ -914,11 +914,11 @@ function hotMatch(p){ if(!hotType(p)) return false; const f=flt(), u=hotUnit();
 const priceOf=p=>{const u=KIND_UNIT[p.kind]; return u?costOf(p,u):p.price*10;};
 const byHot=(a,b)=>{const s=flt().sort; return s==="cheap"?priceOf(a)-priceOf(b)||b.hot-a.hot:s==="dear"?priceOf(b)-priceOf(a)||b.hot-a.hot:s==="az"?a.name.localeCompare(b.name):b.hot-a.hot||a.price-b.price;};
 const FILTER_ICON='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v2H3zm3 6h12v2H6zm4 6h4v2h-4z"/></svg>';
-function viewFilters(){
-  const f=flt(), n=fltCount(), row=(label,act,opts,val)=>`<div class="fsec"><span class="label">${label}</span><div class="chips wrap">${opts.map(([k,l])=>`<button class="chip" data-act="${act}" data-v="${k}" aria-pressed="${String(val)===String(k)}">${l}</button>`).join("")}</div></div>`;
-  return `<div class="where evwhen"><button class="wherebtn" data-act="fltOpen" aria-expanded="${!!S.fltOpen}"><span class="wpin">${FILTER_ICON}</span><span>${n?`Filters · ${n} on`:"Filters"}</span><small>${S.fltOpen?"Done":"Sort & filter"}</small></button>
-    ${n?`<button class="wclear" data-act="fltReset" aria-label="Clear filters">×</button>`:""}</div>
-  ${S.fltOpen?`<div class="fpanel">
+function viewFilters(part){
+  const f=flt(), n=fltCount();
+  if(part==="pill") return `<button class="pill${n?" on":""}" data-act="fltOpen" aria-expanded="${!!S.fltOpen}">${FILTER_ICON}<span>${n?`Filters · ${n}`:"Filters"}</span></button>${n?`<button class="pillx" data-act="fltReset" aria-label="Clear filters">×</button>`:""}`;
+  const row=(label,act,opts,val)=>`<div class="fsec"><span class="label">${label}</span><div class="chips wrap">${opts.map(([k,l])=>`<button class="chip" data-act="${act}" data-v="${k}" aria-pressed="${String(val)===String(k)}">${l}</button>`).join("")}</div></div>`;
+  return `${S.fltOpen?`<div class="fpanel fcard">
     ${priceSlider("fltPrice",priceOpts(),f.price)}
     ${S.mapFail?row("Area","fltArea",areaOpts(),f.area):`<div class="fsec"><span class="label">Area</span>${S.pickOpen==="hot"?viewPinPicker():pinButton(f,"hot")}</div>`}
     ${row("Rating","fltRating",[[0,"Any"],[2,"★★ Popular"],[3,"★★★ Top picks"]],f.rating)}
@@ -928,7 +928,7 @@ function viewFilters(){
   </div>`:""}`;
 }
 function placeRow(p){
-  return `<details><summary><div><b>${esc(p.name)}</b><small>${esc(zname(p.zone))} · ${esc(costText(p))}${p.hot>=3?' · <span class="star">★ Top pick</span>':""}</small></div></summary>
+  return `<details><summary><div><b>${esc(p.name)}</b><small>${esc(zname(p.zone))} · ${esc(costText(p))}</small></div>${p.hot>=3?'<span class="toptag">★ Top pick</span>':""}</summary>
   <div class="more"><p>${esc(p.why)}. ${esc(p.detail)}</p><p class="dim">${esc(p.addr)}${p.metro[0]?" · "+esc(metroText(p.metro)):""}</p>
   <div class="actions"><a href="${mapsUrl(p.name+" "+p.addr)}" target="_blank" rel="noopener">Directions</a>${/^https?:\/\//.test(p.web||"")?`<a href="${esc(p.web)}" target="_blank" rel="noopener">${/instagram\.com/.test(p.web)?"Instagram":/facebook\.com/.test(p.web)?"Facebook":"Website"}</a>`:""}<button class="link addplan" data-act="pickToggle" data-id="${esc(p.id)}">${(S.form.picks||[]).includes(p.id)?"In your plan ✓":"Add to a plan"}</button></div></div></details>`;
 }
@@ -982,24 +982,25 @@ function viewHot(){
     const zones=[...new Set(list.map(p=>p.zone))].filter(z=>MAP_SPOTS[z]);
     if(!zones.includes(S.zone)) S.zone=zones.includes("duomo")?"duomo":zones[0];
     const here=list.filter(p=>p.zone===S.zone);
-    if(S.mapFail) body=`<p class="head" style="margin-top:0">Tap an area to see what's there</p><div class="mapwrap">${hotMap(list)}</div><p class="head">${esc(zname(S.zone))}</p><div class="list">${here.map(placeRow).join("")}</div>`;
+    if(S.mapFail) body=`<p class="head" style="margin-top:0">Tap an area to see what's there</p><div class="mapwrap">${hotMap(list)}</div><p class="glabel">${esc(zname(S.zone))}</p><div class="list sheet dlist">${here.map(placeRow).join("")}</div>`;
     else { const sel=list.find(p=>p.id===S.sel);
-      body=`<div id="mapSlot" class="mapslot"></div>${sel?`<div class="list picked">${placeRow(sel).replace("<details>","<details open>")}</div>`:`<p class="hint">Tap a pin to see the place.</p>`}`; }
+      body=`<div id="mapSlot" class="mapslot"></div>${sel?`<div class="list picked sheet dlist">${placeRow(sel).replace("<details>","<details open>")}</div>`:`<p class="hint">Tap a pin to see the place.</p>`}`; }
   } else {
     body=HOT_GROUPS.map(([t,f])=>{const g=list.filter(f), full=S.hot!=="all"||S.open.has(t), rows=full?g:g.slice(0,6);
-      return g.length?`<p class="head">${t}</p>${rows.map(placeRow).join("")}${rows.length<g.length?`<button class="link" data-act="showGroup" data-v="${t}">Show all ${g.length}</button>`:""}`:""}).join("");
+      return g.length?`<p class="glabel">${t}</p><div class="sheet dlist">${rows.map(placeRow).join("")}${rows.length<g.length?`<button class="showall" data-act="showGroup" data-v="${t}">Show all ${g.length}</button>`:""}</div>`:""}).join("");
   }
   return `<div data-hero><h1>Hotspots</h1></div>
-  <div class="group">${seg("hotView",S.hotView,[["list","List"],["map","Map"]],"View")}</div>
   <div class="chips hottypes">${HOT_TYPES.map(([k,l])=>`<button class="chip" data-act="hot" data-v="${k}" aria-pressed="${S.hot===k}">${l}</button>`).join("")}</div>
   ${S.hot==="eat"?cuisineChips("hotCuisine",S.hotCuisine):""}
+  <div class="hotbar">${seg("hotView",S.hotView,[["list","List"],["map","Map"]],"View")}<span class="grow1"></span>${viewFilters("pill")}</div>
   ${viewFilters()}
   ${body||`<p class="empty">Nothing matches these filters.</p>${fltCount()?`<button class="link center" data-act="fltReset">Clear filters</button>`:""}`}
   <p class="foot">Prices are typical estimates. Checked ${CHECKED}, so confirm before you go.${S.hotView==="map"?" Map data © OpenStreetMap contributors.":""}</p>`;
 }
 function evRow(e){
   const on=S.saved.has(e.id), info=[e.venue,e.sold?"Sold out":e.priceText].filter(Boolean).join(" · ");
-  return `<details><summary><div><b>${esc(e.name)}</b><small>${esc(info)}</small></div><span class="when">${esc(eventWhen(e))}</span></summary>
+  const run=e.start!==e.end, until=run&&e.start<=today, d=parse(until?e.end:e.start);
+  return `<details><summary><span class="dbadge">${until?"<i>until</i>":""}<b>${d.getDate()}</b><i>${d.toLocaleDateString("en-GB",{month:"short"})}</i></span><div><b>${esc(e.name)}</b><small>${esc([run&&!until?eventWhen(e):"",info].filter(Boolean).join(" · "))}</small></div></summary>
   <div class="more">${e.time?`<p class="dim">Starts ${esc(e.time)}</p>`:""}<div class="actions"><button data-act="save" data-id="${e.id}">${on?"Saved ✓":"Save"}</button><a href="${esc(srcUrl(e.src))}" target="_blank" rel="noopener">Source</a></div></div></details>`;
 }
 /* Events calendar: days with events get a dot; tapping a day shows what's on. */
@@ -1050,10 +1051,9 @@ function viewEvents(){
   const dated=list.filter(e=>!isRun(e)).sort((a,b)=>a.start.localeCompare(b.start));
   const runs=list.filter(isRun).sort((a,b)=>a.end.localeCompare(b.end));
   const wk=addDays(today,7), groups=d?[[parse(d).toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"}),()=>true]]:[["Today",e=>e.start<=today],["This week",e=>e.start>today&&e.start<=wk],["Later",e=>e.start>wk]];
-  const body=groups.map(([t,f])=>{const g=dated.filter(f);return g.length?`<p class="head">${t}</p>${g.map(evRow).join("")}`:""}).join("")+(runs.length?`<p class="head">${d?"Also on that day":"Running for a while"}</p>${runs.map(evRow).join("")}`:"");
+  const body=groups.map(([t,f])=>{const g=dated.filter(f);return g.length?`<p class="glabel">${t}</p><div class="sheet dlist">${g.map(evRow).join("")}</div>`:""}).join("")+(runs.length?`<p class="glabel">${d?"Also on that day":"Running for a while"}</p><div class="sheet dlist">${runs.map(evRow).join("")}</div>`:"");
   return `<div data-hero><button class="back" data-act="ev" data-v="">‹ Events</button><span>${esc(cat[2])}</span><h1>${cat[1]}</h1></div>
-  <div class="where evwhen"><button class="wherebtn" data-act="evCal" aria-expanded="${!!S.evCalOpen}"><span class="wpin">${CAL_ICON}</span><span>${d?esc(parse(d).toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"})):"All dates"}</span><small>${S.evCalOpen?"Hide calendar":"Calendar"}</small></button>
-    ${d?`<button class="wclear" data-act="evPick" data-v="" aria-label="Show all dates">×</button>`:""}</div>
+  <div class="hotbar"><button class="pill${d?" on":""}" data-act="evCal" aria-expanded="${!!S.evCalOpen}">${CAL_ICON}<span>${d?esc(parse(d).toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"})):"All dates"}</span></button>${d?`<button class="pillx" data-act="evPick" data-v="" aria-label="Show all dates">×</button>`:""}<span class="grow1"></span><span class="count">${list.length} ${list.length===1?"event":"events"}</span></div>
   ${S.evCalOpen?evCalendar(all):""}
   <div class="list">${body||`<p class="empty">${S.ev==="saved"?"Open an event and tap Save to keep it here.":d?"Nothing on that day. Try another date.":"Nothing here right now."}</p>`}</div>
   <p class="foot">Checked ${S.evChecked||CHECKED}. Confirm dates before you go.</p>`;
