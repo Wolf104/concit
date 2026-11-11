@@ -106,7 +106,9 @@ async function refreshSession(){
 function logout(expired){
   const t=S.session?.access_token;
   if(t&&!expired) authCall("logout",{}, "POST",t).catch(()=>{});
-  S.session=null; S.plan=null; S.code=null; S.groups=[]; S.gid=null; S.acct=false; S.deleting=false; S.authView="login"; S.authNote=expired?"Please log in again.":""; S.tab="decide";
+  S.session=null; S.plan=null; S.code=null; S.groups=[]; S.gid=null; S.acct=false; S.deleting=false; S.authView="login"; S.authNote=expired?"Please log in again.":""; S.tab="decide"; S.chatOpen=false;
+  if(typeof CHAT!=="undefined"){ CHAT.gid=null; CHAT.msgs=[]; }
+  if(!expired){ for(const k in AV) delete AV[k]; try{localStorage.removeItem("concit.av")}catch{} }
   saveSession(); history.replaceState(null,"",location.pathname); render();
 }
 const redirectTo=()=>encodeURIComponent(location.origin+location.pathname);
@@ -164,7 +166,7 @@ async function loadGroups(){
   if(!S.session||document.hidden) return;
   try{
     rpc("heartbeat").catch(()=>{});
-    const g=await rpc("my_groups");
+    const g=await rpc("my_groups"); needAv((g||[]).flatMap(x=>x.members||[]));
     if(JSON.stringify(g)!==JSON.stringify(S.groups)){ S.groups=g||[]; if(!(S.chatOpen&&S.tab==="groups"&&!S.acct)) render(); }
   }catch{}
 }
@@ -450,6 +452,60 @@ function planRow(p){
   const status=p.finished||p.done>=p.people?"See result":p.mine<p.options?"Vote":`${p.done} of ${p.people} voted`;
   return `<button class="person" data-act="openPlan" data-code="${esc(p.code)}"><span>${esc(planTitle(p))}<small class="sub">Started by ${esc(p.by||"someone")}</small></span><small>${status}</small></button>`;
 }
+/* ---------- Profile pictures ---------- */
+/* Pictures are small JPEGs fetched once per version and cached on this device. */
+const AV=(()=>{try{return JSON.parse(localStorage.getItem("concit.av"))||{}}catch{return {}}})();
+const saveAv=()=>{try{localStorage.setItem("concit.av",JSON.stringify(AV))}catch{}};
+let AV_BUSY=false;
+async function needAv(people){
+  const want=[]; let dropped=false;
+  for(const p of people||[]){ if(!p||!p.id) continue;
+    if(p.av==null){ if(AV[p.id]){ delete AV[p.id]; dropped=true; } }
+    else if(!AV[p.id]||AV[p.id].v!==p.av) want.push(p.id); }
+  if(dropped){ saveAv(); repaintAv(); }
+  if(!want.length||AV_BUSY) return;
+  AV_BUSY=true;
+  try{ const got=await rpc("get_avatars",{p_ids:[...new Set(want)]}); for(const [id,x] of Object.entries(got||{})) AV[id]={v:x.v,img:x.img}; saveAv(); repaintAv(); }
+  catch{} finally{ AV_BUSY=false; }
+}
+function repaintAv(){ if(S.chatOpen&&document.getElementById("chatList")) paintChat(false); else render(); }
+const AV_COLORS=["#2f9bff","#7a5af8","#ef6a5b","#16a37f","#e8912d","#d6418f","#3d8d4f","#5b6cf0"];
+function avatarHtml(id,name,cls=""){
+  const a=AV[id];
+  if(a&&a.img) return `<img class="av ${cls}" src="${a.img}" alt="" draggable="false">`;
+  let h=0; for(const c of String(id||name)) h=(h*31+c.charCodeAt(0))>>>0;
+  return `<span class="av ${cls}" style="background:${AV_COLORS[h%AV_COLORS.length]}" aria-hidden="true">${esc((name||"?").trim().charAt(0).toUpperCase()||"?")}</span>`;
+}
+/* Centre-crop to a square and shrink, so a phone photo becomes a ~15 KB JPEG. */
+async function shrinkPhoto(file){
+  const url=URL.createObjectURL(file);
+  try{
+    const img=await new Promise((ok,no)=>{const i=new Image(); i.onload=()=>ok(i); i.onerror=no; i.src=url;});
+    const side=Math.min(img.naturalWidth,img.naturalHeight); if(!side) throw new Error("empty");
+    const c=document.createElement("canvas"); c.width=c.height=192;
+    const g=c.getContext("2d"); g.fillStyle="#fff"; g.fillRect(0,0,192,192);
+    g.drawImage(img,(img.naturalWidth-side)/2,(img.naturalHeight-side)/2,side,side,0,0,192,192);
+    for(const q of [.85,.72,.6,.45]){ const d=c.toDataURL("image/jpeg",q); if(d.length<=110000) return d; }
+    throw new Error("too big");
+  } finally { URL.revokeObjectURL(url); }
+}
+async function uploadAvatar(file){
+  if(!file) return;
+  if(!/^image\//.test(file.type||"image/")){ toast("Choose a photo (JPEG or PNG)."); return; }
+  S.avBusy=true; render();
+  try{
+    const data=await shrinkPhoto(file);
+    const v=await rpc("set_avatar",{p_data:data});
+    AV[uid()]={v,img:data}; saveAv(); toast("Profile picture saved");
+  }catch(e){ toast(e&&e.message==="empty"||e instanceof Event?"That photo couldn't be opened. Try a JPEG or PNG.":"Couldn't save your picture. Check your connection and try again."); }
+  finally{ S.avBusy=false; render(); loadGroups(); }
+}
+async function removeAvatar(){
+  try{ await rpc("set_avatar",{p_data:null}); delete AV[uid()]; saveAv(); toast("Profile picture removed"); }catch{ toast("Couldn't remove your picture. Try again."); }
+  render(); loadGroups();
+}
+async function loadMyAvatar(){ try{ const v=await rpc("my_avatar"); await needAv([{id:uid(),av:v}]); }catch{} }
+
 /* ---------- Group chat ---------- */
 const CHAT={gid:null,msgs:[],last:0,busy:false,loaded:false,people:[],typingSent:0};
 const nameList=a=>a.length<=2?a.join(" and "):a.slice(0,-1).join(", ")+" and "+a[a.length-1];
@@ -492,7 +548,7 @@ function chatListHtml(){
   const joined=(a,b)=>a&&b&&a.by===b.by&&Math.abs(new Date(b.at)-new Date(a.at))<60e3, L=CHAT.msgs;
   const lastMine=[...L].reverse().find(m=>m.by===uid());
   return L.map((m,i)=>{ const mine=m.by===uid(), cont=joined(L[i-1],m), more=joined(m,L[i+1]), seen=mine&&(m===lastMine||CHAT.seenOpen===m.id);
-    return `<div class="msg${mine?" mine":""}${cont?" cont":""}">${!mine&&!cont?`<span class="who">${esc(m.name||"Former member")}</span>`:""}<p${mine&&!m.pending?` data-act="seen" data-id="${m.id}" title="Tap to see who has read this"`:""}>${linkify(m.body)}</p>${more?(seen?`<span class="seen">${esc(seenText(m))}</span>`:""):`<time>${esc(chatTime(m.at))}${seen?" · "+esc(seenText(m)):""}</time>`}</div>`; }).join("");
+    return `<div class="msg${mine?" mine":" theirs"}${cont?" cont":""}">${!mine&&!more?avatarHtml(m.by,m.name,"msgav"):""}${!mine&&!cont?`<span class="who">${esc(m.name||"Former member")}</span>`:""}<p${mine&&!m.pending?` data-act="seen" data-id="${m.id}" title="Tap to see who has read this"`:""}>${linkify(m.body)}</p>${more?(seen?`<span class="seen">${esc(seenText(m))}</span>`:""):`<time>${esc(chatTime(m.at))}${seen?" · "+esc(seenText(m)):""}</time>`}</div>`; }).join("");
 }
 function paintChat(stick){
   const el=document.getElementById("chatList"); if(!el) return;
@@ -507,7 +563,7 @@ async function loadChat(first){
     const gid=CHAT.gid, r=await rpc("chat_poll",{p_group:gid,p_after:CHAT.last});
     if(gid!==CHAT.gid) return;
     const rows=r?r.messages:null, readKey=r?JSON.stringify((r.people||[]).map(p=>[p.id,p.read])):"";
-    if(r){ const changed=readKey!==CHAT.readKey; CHAT.readKey=readKey; CHAT.people=r.people||[]; paintPresence(); if(changed&&CHAT.loaded) paintChat(false); }
+    if(r){ const changed=readKey!==CHAT.readKey; CHAT.readKey=readKey; CHAT.people=r.people||[]; paintPresence(); needAv(CHAT.people); if(changed&&CHAT.loaded) paintChat(false); }
     if(rows===null){ closeChat(); toast("You're no longer in that group."); return; }
     const fresh=rows.filter(m=>!CHAT.msgs.some(x=>x.id===m.id));
     if(fresh.length||!CHAT.loaded){ CHAT.msgs.push(...fresh); CHAT.msgs.sort((a,b)=>a.id-b.id); CHAT.last=CHAT.msgs.length?CHAT.msgs[CHAT.msgs.length-1].id:0; CHAT.loaded=true; paintChat(first); }
@@ -538,7 +594,7 @@ function viewGroup(g){
   <button class="person chatrow" data-act="openChat" data-id="${esc(g.id)}"><span>Group chat<small class="sub">${g.last?esc((g.last.mine?"You":g.last.name||"Someone")+": "+g.last.body):"No messages yet"}</small></span><small>${g.unread?`<b class="pill">${g.unread} new</b>`:"Open"}</small></button>
   <button class="btn" data-act="newGroupPlan" data-id="${esc(g.id)}" style="margin-top:12px">Start a plan</button>
   ${g.plans.length?`<div class="group" style="margin-top:24px"><span class="label">Plans</span><div class="stack">${g.plans.map(planRow).join("")}</div></div>`:""}
-  <div class="group" style="margin-top:24px"><span class="label">Members · ${n}</span><div class="rows">${g.members.map(m=>`<div class="rowstat"><span>${m.id!==uid()&&m.online?'<span class="dot" aria-hidden="true"></span>':""}${esc(m.name)}${m.id===uid()?" (you)":""}</span>${m.id!==uid()&&m.online?'<span class="ok">Online</span>':""}</div>`).join("")}</div>
+  <div class="group" style="margin-top:24px"><span class="label">Members · ${n}</span><div class="rows">${g.members.map(m=>`<div class="rowstat"><span class="mem">${avatarHtml(m.id,m.name,"small")}${m.id!==uid()&&m.online?'<span class="dot" aria-hidden="true"></span>':""}${esc(m.name)}${m.id===uid()?" (you)":""}</span>${m.id!==uid()&&m.online?'<span class="ok">Online</span>':""}</div>`).join("")}</div>
   <button class="link" data-act="invite" data-id="${esc(g.id)}">+ Invite people</button><p class="fine">Or share the code <b class="code">${esc(g.invite_code)}</b></p></div>
   <button class="link quiet center danger" data-act="leave" data-id="${esc(g.id)}">${S.leaving?"Tap again to leave this group":"Leave group"}</button>`;
 }
@@ -556,6 +612,10 @@ function viewAccount(){
   const u=S.session?.user||{}, name=u.user_metadata?.name||"";
   return `<div data-hero><button class="back" data-act="closeAccount">‹ Back</button><h1>Your account</h1></div>
   <p class="fine" style="margin:0 0 16px">Logged in as ${esc(u.email||"")}</p>
+  <div class="group avpick"><span class="label">Profile picture</span><div class="avrow">${avatarHtml(uid(),name,"big")}<div class="avbtns">
+    <label class="btn small plain${S.avBusy?" busy":""}">${S.avBusy?"Saving…":AV[uid()]?"Change photo":"Add a photo"}<input type="file" id="avFile" accept="image/*" hidden ${S.avBusy?"disabled":""}></label>
+    ${AV[uid()]&&!S.avBusy?`<button class="link quiet" data-act="removeAvatar">Remove</button>`:""}</div></div>
+    <p class="fine">Shown next to your messages and in your groups. Only people in your groups can see it.</p></div>
   <form id="nameForm" class="group" novalidate><span class="label">Your name</span><div class="inline"><input type="text" id="myName" value="${esc(name)}" maxlength="30" autocomplete="name"><button class="btn small" type="submit">Save</button></div></form>
   <div class="group"><span class="label">Your data</span><a class="person" href="privacy.html"><span>Privacy notice<small class="sub">What Concit keeps and why</small></span><small>Read</small></a></div>
   <button class="btn plain" data-act="logout">Log out</button>
@@ -797,7 +857,7 @@ function render(){
   if(authed&&S.tab==="hotspots"&&S.hotView==="map"&&!S.mapFail) mountMap();
   if(authed&&S.pickOpen&&!S.acct&&S.tab==="decide") mountPick();
   const badge=document.getElementById("badge"), c=toVote().length; if(badge){ badge.textContent=c; badge.hidden=!c; }
-  const me=document.getElementById("me"); if(me){ me.textContent=(S.session?.user?.user_metadata?.name||"?").trim().charAt(0).toUpperCase(); me.toggleAttribute("aria-current",!!S.acct); }
+  const me=document.getElementById("me"); if(me){ const mine=S.session&&AV[uid()]; me.innerHTML=mine?`<img src="${mine.img}" alt="">`:esc((S.session?.user?.user_metadata?.name||"?").trim().charAt(0).toUpperCase()); me.classList.toggle("hasav",!!mine); me.toggleAttribute("aria-current",!!S.acct); }
   document.querySelectorAll("nav button").forEach(b=>b.dataset.tab===S.tab&&!S.acct?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current"));
 }
 const H={
@@ -848,6 +908,7 @@ const H={
   openChat(el){ openChat(el.dataset.id); },
   seen(el){ if(getSelection&&String(getSelection()).length) return; const id=Number(el.dataset.id); CHAT.seenOpen=CHAT.seenOpen===id?null:id; paintChat(false); },
   closeChat(){ closeChat(); },
+  removeAvatar(){ removeAvatar(); },
   allGroups(){ S.chatOpen=false; CHAT.gid=null; S.gid=null; S.acct=false; S.deleting=false; S.leaving=false; render(); scrollTo(0,0); },
   account(){ S.acct=true; S.deleting=false; render(); scrollTo(0,0); },
   closeAccount(){ S.acct=false; S.deleting=false; render(); scrollTo(0,0); },
@@ -891,7 +952,7 @@ document.addEventListener("input",e=>{ if(e.target.dataset.search==="pick"){ S.p
 document.addEventListener("input",e=>{const u=e.target.dataset.slider; if(!u) return; const i=Number(e.target.value);
   if(e.target.id==="budget") S.form.idx[u]=i; else S.hotIdx[u]=i;
   document.getElementById(e.target.id+"Val").textContent=stepText(u,i);});
-document.addEventListener("change",e=>{ if(e.target.id==="hotBudget") render(); const c=e.target.dataset.change; if(c==="area"){S.form.area=e.target.value} if(c==="sendTo"){S.form.group=e.target.value;S.form.linkOnly=!e.target.value;persist();render()}});
+document.addEventListener("change",e=>{ if(e.target.id==="avFile"){ uploadAvatar(e.target.files&&e.target.files[0]); e.target.value=""; return; } if(e.target.id==="hotBudget") render(); const c=e.target.dataset.change; if(c==="area"){S.form.area=e.target.value} if(c==="sendTo"){S.form.group=e.target.value;S.form.linkOnly=!e.target.value;persist();render()}});
 document.addEventListener("submit",async e=>{ e.preventDefault();
   if(e.target.id==="authForm") authSubmit();
   if(e.target.id==="groupForm"){ const i=document.getElementById("groupName"), n=i.value.trim(); if(!n) return; i.value=""; i.blur(); try{ S.gid=await rpc("create_group",{p_name:n}); await loadGroups(); render(); }catch{ toast("Couldn't create the group. Try again."); } }
@@ -935,7 +996,7 @@ function linkFromUrl(){
 }
 async function afterLogin(){
   render();
-  await Promise.all([loadPlaces(),loadEvents(),loadGroups()]);
+  await Promise.all([loadPlaces(),loadEvents(),loadGroups(),loadMyAvatar()]);
   const p=S.pending; S.pending=null; persist();
   if(p?.join){ setUrl(null); await joinByCode(p.join); }
   else if(p?.plan) await openPlan(p.plan);
