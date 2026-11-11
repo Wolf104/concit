@@ -278,3 +278,11 @@ body.cropping{overflow:hidden}
 @media (prefers-reduced-motion:reduce){.photoview{animation:none}}
 .photoview.lowres figure{max-width:240px}
 .pvnote{color:rgba(255,255,255,.85);font-size:14px;text-align:center;margin:0;max-width:300px;line-height:1.4}
+/* Compact header in chat, so the conversation gets the space */
+body.inchat .hero{padding-block:14px 44px}
+body.inchat #heroText h1{font-size:24px}
+body.inchat .back{margin-bottom:4px}
+body.inchat .app{padding-top:14px}
+#heroText .who-online{margin:4px 0 0;font-size:14px;color:var(--on);opacity:.9;min-height:18px;font-weight:600}
+#heroText .who-online .dot{box-shadow:0 0 0 2px var(--accent)}
+#heroText .who-online .dot{display:inline-block;margin-bottom:0}

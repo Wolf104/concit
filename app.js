@@ -666,8 +666,7 @@ async function sendChat(){
   catch{ CHAT.msgs=CHAT.msgs.filter(x=>x!==temp); paintChat(); if(i&&!i.value) i.value=body; toast("Message not sent. Check your connection and try again."); }
 }
 function viewChat(g){
-  return `<div data-hero><button class="back" data-act="closeChat">‹ ${esc(g.name)}</button><h1>Chat</h1></div>
-  <p id="chatWho" class="who-online">${whoHtml()}</p>
+  return `<div data-hero><button class="back" data-act="closeChat">‹ Back</button><h1>${esc(g.name)}</h1><p id="chatWho" class="who-online">${whoHtml()}</p></div>
   <div id="chatScroll" class="chatscroll"><div id="chatList" class="chat" aria-live="polite">${chatListHtml()}</div>
   <div id="chatTyping" aria-live="polite">${typingHtml()}</div></div>
   <form id="chatForm" class="chatbar" novalidate><textarea id="chatText" rows="1" maxlength="1000" placeholder="Message ${esc(g.name)}" aria-label="Message"></textarea><button class="btn small" type="submit" aria-label="Send">Send</button></form>`;
@@ -940,6 +939,7 @@ function render(){
   document.querySelectorAll("details").forEach(d=>{ if(open.includes(d.querySelector("b").textContent)) d.open=true; });
   if(authed&&S.tab==="hotspots"&&S.hotView==="map"&&!S.mapFail) mountMap();
   if(authed&&S.pickOpen&&!S.acct&&S.tab==="decide") mountPick();
+  document.body.classList.toggle("inchat",!!(authed&&S.chatOpen&&S.tab==="groups"&&!S.acct));
   if(authed&&S.chatOpen&&S.tab==="groups") sizeChat();
   const badge=document.getElementById("badge"), c=toVote().length; if(badge){ badge.textContent=c; badge.hidden=!c; }
   const me=document.getElementById("me"); if(me){ const mine=S.session&&AV[uid()]; me.innerHTML=mine?`<img src="${mine.img}" alt="">`:esc((S.session?.user?.user_metadata?.name||"?").trim().charAt(0).toUpperCase()); me.classList.toggle("hasav",!!mine); me.toggleAttribute("aria-current",!!S.acct); }
