@@ -410,6 +410,9 @@ function viewPicker(f){
   ${S.pickSearched?"":`<button class="btn searchgo" data-act="pickSearch">Search</button>`}</div>
   <div id="pickBox">${pickBoxHtml(f)}</div></section>`;
 }
+/* Meet times to pick from: every half hour from 07:00 through to 03:00. */
+const TIMES=[...Array(41)].map((_,i)=>{ const m=420+i*30; return `${String(Math.floor(m/60)%24).padStart(2,"0")}:${m%60?"30":"00"}`; });
+const TIME_HINT={coffee:"10:00",eat:"20:00",drinks:"19:00",clubs:"23:00",culture:"15:00"};
 const WHATS=[
   ["eat","Restaurants",'<path d="M7 3v8M4.5 3v4.5a2.5 2.5 0 0 0 5 0V3M7 11v10M17 3c-1.7 1.2-2.5 3.5-2.5 6v4H17zM17 13v8"/>'],
   ["drinks","Bars",'<path d="M4 4h16l-8 9zM12 13v7M8 20h8"/>'],
@@ -427,7 +430,8 @@ function viewSetup(){
   const row=(k,v,body="")=>`<div class="srow"><span class="k">${k}</span><div class="v">${v}</div></div>${body?`<div class="sbody">${body}</div>`:""}`;
   const rows=[
     row("When",`<div class="seg" role="group" aria-label="When"><button data-act="day" data-v="${today}" aria-pressed="${f.day===today}">Tonight</button><button data-act="day" data-v="${tom}" aria-pressed="${f.day===tom}">Tomorrow</button><button data-act="cal" aria-pressed="${picked}" aria-expanded="${!!S.calOpen}">${picked?short(f.day):"Other"}</button></div>`,S.calOpen?calendar(f.day):""),
-    ev?"":row("Time",f.time||S.timeOpen?`<input type="time" class="tin" id="meetTime" data-change="time" step="900" value="${esc(f.time||"")}" aria-label="Meet time"><button type="button" class="pillx" data-act="clearTime" aria-label="Remove the time">×</button>`:`<button class="sval" data-act="addTime">Any time</button>`),
+    ev?"":row("Time",`<button class="sval${f.time?" on":""}" data-act="addTime" aria-expanded="${!!S.timeOpen}">${f.time?esc(f.time):"Any time"}</button>${f.time?`<button type="button" class="pillx" data-act="clearTime" aria-label="Remove the time">×</button>`:""}`,
+      S.timeOpen?`<div class="chips times" id="timeStrip" role="group" aria-label="Meet time">${TIMES.map(t=>`<button class="chip" data-act="setTime" data-v="${t}" aria-pressed="${f.time===t}">${t}</button>`).join("")}</div>`:""),
     S.mapFail?row("Where",`<select id="area" data-change="area" aria-label="Area"><option value="">Anywhere in Milan</option>${AREAS.map(z=>`<option value="${z}" ${f.area===z?"selected":""}>${esc(zname(z))}</option>`).join("")}</select>`)
       :row("Where",`<button class="sval${f.pin?" on":""}" data-act="pickOpen" data-v="form" aria-expanded="${S.pickOpen===true}">${f.pin?esc(pinText(f.pin,f.radius)):"Anywhere in Milan"}</button>${f.pin?`<button class="pillx" data-act="pinClear" data-v="form" aria-label="Remove pin">×</button>`:""}`,S.pickOpen===true?viewPinPicker():""),
     pick?"":row("Filters",`<button class="sval${ftxt?" on":""}" data-act="dfltOpen" aria-expanded="${!!S.dfltOpen}">${ftxt?esc(ftxt):"None"}</button>`,S.dfltOpen?viewDecideFilters(f,unit):""),
@@ -1092,7 +1096,8 @@ const H={
   calMove(el){ const [y,m]=S.calMonth.split("-").map(Number); S.calMonth=iso(new Date(y,m-1+Number(el.dataset.v),1)).slice(0,7); render(); },
   pickDay(el){ S.form.day=el.dataset.v; S.calOpen=false; render(); },
   mode(el){ S.form.mode=el.dataset.v; S.pickOpen=false; S.dfltOpen=false; render(); scrollTo(0,0); },
-  addTime(){ S.timeOpen=true; render(); setTimeout(()=>{ const t=document.getElementById("meetTime"); t?.focus(); try{ t?.showPicker?.(); }catch{} },50); },
+  addTime(){ S.timeOpen=!S.timeOpen; S.calOpen=false; render(); const strip=document.getElementById("timeStrip"), c=strip?.querySelector(`[data-v="${S.form.time||TIME_HINT[S.form.what]||"19:00"}"]`); if(c) strip.scrollLeft=c.offsetLeft-strip.offsetLeft-(strip.clientWidth-c.offsetWidth)/2; },
+  setTime(el){ S.form.time=el.dataset.v; S.timeOpen=false; render(); },
   pickToggle(el){ const f=S.form, id=el.dataset.id, l=(f.picks||[]).filter(byId);
     f.picks=l.includes(id)?l.filter(x=>x!==id):l.length<PICK_MAX?[...l,id]:l;
     f.mode="pick";
