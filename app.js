@@ -247,15 +247,6 @@ const planTitle=p=>`${p.what==="eat"&&p.cuisine?CUISINE_TEXT[p.cuisine]:WHAT_TEX
 const toVote=()=>S.groups.flatMap(g=>g.plans.filter(p=>!p.finished&&!p.me_out&&p.mine<p.options).map(p=>({...p,group:g.name})));
 /* When: two quick picks, or any date up to six months ahead from a calendar. */
 const MAX_AHEAD=180;
-function viewWhen(f){
-  const tom=addDays(today,1), picked=f.day!==today&&f.day!==tom, showTime=f.what!=="event"&&(f.time||S.timeOpen);
-  const chip=(act,v,on,label,extra="")=>`<button class="chip" data-act="${act}" ${v?`data-v="${v}"`:""} aria-pressed="${on}" ${extra}>${label}</button>`;
-  return `<section class="dsec"><span class="label">When</span><div class="chips wrap" role="group" aria-label="When">
-    ${chip("day",today,f.day===today,"Tonight")}${chip("day",tom,f.day===tom,"Tomorrow")}${chip("cal","",picked,picked?`${wday(f.day)} ${short(f.day)}`:"Pick a date",`aria-expanded="${!!S.calOpen}"`)}
-    ${f.what==="event"||showTime?"":`<button class="chip addtime" data-act="addTime" aria-label="Add a meet time">+ Time</button>`}</div>
-    ${S.calOpen?calendar(f.day):""}
-    ${showTime?`<label class="meetat"><span class="label">Meet at</span><input type="time" id="meetTime" data-change="time" step="900" value="${esc(f.time||"")}" aria-label="Meet time"><button type="button" class="wclear" data-act="clearTime" aria-label="Remove the time">×</button></label>`:""}</section>`;
-}
 function calendar(sel){
   const base=S.calMonth||sel.slice(0,7), [y,m]=base.split("-").map(Number);
   const first=new Date(y,m-1,1), days=new Date(y,m,0).getDate(), lead=(first.getDay()+6)%7;
@@ -376,6 +367,7 @@ function viewDecideFilters(f,unit,part){
   const ev=f.what==="event", price=f.price||0, rating=ev?0:f.rating||0, metro=!ev&&f.metro;
   const parts=[price?priceOptsFor(unit).find(o=>o[0]===price)?.[1]:"", rating===3?"Top picks":rating===2?"Popular":"", metro?"Near a metro":""].filter(Boolean);
   const chips=(act,opts,val)=>`<div class="chips wrap">${opts.map(([k,l])=>`<button class="chip" data-act="${act}" data-v="${k}" aria-pressed="${String(val)===String(k)}">${l}</button>`).join("")}</div>`;
+  if(part==="text") return parts.join(" · ");
   if(part==="pill") return `<button class="pill${parts.length?" on":""}" data-act="dfltOpen" aria-expanded="${!!S.dfltOpen}">${FILTER_ICON}<span>${parts.length?esc(parts.join(" · ")):"Filters"}</span></button>`;
   return `${S.dfltOpen?`<div class="fpanel">${parts.length?`<button class="link quiet fclear" data-act="dfltReset">Clear filters</button>`:""}
     <div class="fsec"><span class="label">Price</span>${chips("dPrice",priceOptsFor(unit),price)}</div>
@@ -418,23 +410,35 @@ function viewPicker(f){
   ${S.pickSearched?"":`<button class="btn searchgo" data-act="pickSearch">Search</button>`}</div>
   <div id="pickBox">${pickBoxHtml(f)}</div></section>`;
 }
-const WHATS=[["eat","Restaurants"],["drinks","Bars"],["coffee","Coffee"],["clubs","Clubs"],["culture","Culture"],["event","Event"]];
+const WHATS=[
+  ["eat","Restaurants",'<path d="M7 3v8M4.5 3v4.5a2.5 2.5 0 0 0 5 0V3M7 11v10M17 3c-1.7 1.2-2.5 3.5-2.5 6v4H17zM17 13v8"/>'],
+  ["drinks","Bars",'<path d="M4 4h16l-8 9zM12 13v7M8 20h8"/>'],
+  ["coffee","Coffee",'<path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5zM17 10h1.5a2.5 2.5 0 0 1 0 5H17M8 3v2M12 3v2"/>'],
+  ["clubs","Clubs",'<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>'],
+  ["culture","Culture",'<path d="M3 21h18M4 10h16M12 3 3 8h18zM6 10v8M10 10v8M14 10v8M18 10v8"/>'],
+  ["event","Events",'<path d="M3 9V6h18v3a3 3 0 0 0 0 6v3H3v-3a3 3 0 0 0 0-6zM14 6v2.5M14 11v2M14 15.5V18"/>']];
+/* Setup: big category tiles, then one tidy list of settings (when, time, where, filters, who). */
 function viewSetup(){
-  const f=S.form, unit=WHAT_UNIT[f.what], todo=toVote(), pick=f.mode==="pick";
+  const f=S.form, unit=WHAT_UNIT[f.what], todo=toVote(), pick=f.mode==="pick", ev=f.what==="event";
   if(f.day<today) f.day=today;
   if(f.group&&!S.groups.some(g=>g.id===f.group)) f.group="";
   if(!f.group&&S.groups.length&&!f.linkOnly) f.group=S.groups[0].id;
-  const where=S.mapFail?viewWhere(f):`<div class="duo">${S.pickOpen===true?"":`<button class="pill${f.pin?" on":""}" data-act="pickOpen" data-v="form">${PIN}<span>${f.pin?esc(pinText(f.pin,f.radius)):"Anywhere in Milan"}</span></button>${f.pin?`<button class="pillx" data-act="pinClear" data-v="form" aria-label="Remove pin">×</button>`:""}`}
-      ${pick?"":viewDecideFilters(f,unit,"pill")}</div>
-    ${S.pickOpen===true?viewPinPicker():""}${pick?"":viewDecideFilters(f,unit)}`;
+  const tom=addDays(today,1), picked=f.day!==today&&f.day!==tom, ftxt=pick?"":viewDecideFilters(f,unit,"text");
+  const row=(k,v,body="")=>`<div class="srow"><span class="k">${k}</span><div class="v">${v}</div></div>${body?`<div class="sbody">${body}</div>`:""}`;
+  const rows=[
+    row("When",`<div class="seg" role="group" aria-label="When"><button data-act="day" data-v="${today}" aria-pressed="${f.day===today}">Tonight</button><button data-act="day" data-v="${tom}" aria-pressed="${f.day===tom}">Tomorrow</button><button data-act="cal" aria-pressed="${picked}" aria-expanded="${!!S.calOpen}">${picked?short(f.day):"Other"}</button></div>`,S.calOpen?calendar(f.day):""),
+    ev?"":row("Time",f.time||S.timeOpen?`<input type="time" class="tin" id="meetTime" data-change="time" step="900" value="${esc(f.time||"")}" aria-label="Meet time"><button type="button" class="pillx" data-act="clearTime" aria-label="Remove the time">×</button>`:`<button class="sval" data-act="addTime">Any time</button>`),
+    S.mapFail?row("Where",`<select id="area" data-change="area" aria-label="Area"><option value="">Anywhere in Milan</option>${AREAS.map(z=>`<option value="${z}" ${f.area===z?"selected":""}>${esc(zname(z))}</option>`).join("")}</select>`)
+      :row("Where",`<button class="sval${f.pin?" on":""}" data-act="pickOpen" data-v="form" aria-expanded="${S.pickOpen===true}">${f.pin?esc(pinText(f.pin,f.radius)):"Anywhere in Milan"}</button>${f.pin?`<button class="pillx" data-act="pinClear" data-v="form" aria-label="Remove pin">×</button>`:""}`,S.pickOpen===true?viewPinPicker():""),
+    pick?"":row("Filters",`<button class="sval${ftxt?" on":""}" data-act="dfltOpen" aria-expanded="${!!S.dfltOpen}">${ftxt?esc(ftxt):"None"}</button>`,S.dfltOpen?viewDecideFilters(f,unit):""),
+    S.groups.length?row("Send to",`<select id="sendTo" data-change="sendTo" aria-label="Send to">${S.groups.map(g=>`<option value="${esc(g.id)}" ${f.group===g.id?"selected":""}>${esc(g.name)}</option>`).join("")}<option value="" ${f.group?"":"selected"}>Share by link</option></select>`):""
+  ].join("");
   return `<div data-hero><h1>Where to?</h1></div>
   ${todo.length?`<div class="group"><span class="label">Waiting for your vote</span><div class="stack">${todo.map(p=>`<button class="person" data-act="openPlan" data-code="${esc(p.code)}"><span>${esc(planTitle(p))}<small class="sub">${esc(p.by||"Someone")} in ${esc(p.group)}</small></span><small>Vote</small></button>`).join("")}</div></div>`:""}
-  <section class="dsec"><span class="label">What</span><div class="chips wrap" role="group" aria-label="What">${WHATS.map(([k,l])=>`<button class="chip" data-act="what" data-v="${k}" aria-pressed="${f.what===k}">${l}</button>`).join("")}</div>
-    ${f.what==="eat"?cuisineChips("cuisine",f.cuisine):""}</section>
-  ${viewWhen(f)}
-  <section class="dsec"><span class="label">Where</span>${where}</section>
+  <div class="tiles" role="group" aria-label="What">${WHATS.map(([k,l,ic])=>`<button class="tile" data-act="what" data-v="${k}" aria-pressed="${f.what===k}">${evIcon(ic)}<span>${l}</span></button>`).join("")}</div>
+  ${f.what==="eat"?cuisineChips("cuisine",f.cuisine):""}
+  <div class="sheet">${rows}</div>
   ${pick?viewPicker(f):""}
-  ${S.groups.length?`<label class="sendto"><span class="label">Send to</span><select id="sendTo" data-change="sendTo" aria-label="Send to">${S.groups.map(g=>`<option value="${esc(g.id)}" ${f.group===g.id?"selected":""}>${esc(g.name)}</option>`).join("")}<option value="" ${f.group?"":"selected"}>Share by link</option></select></label>`:""}
   ${pick?`<button class="btn stick" data-act="start" id="startBtn" ${(f.picks||[]).filter(byId).length?"":"hidden"}>${pickStartLabel(f)}</button>
     <button class="link quiet center" data-act="mode" data-v="auto">Suggest 5 for me instead</button>`
   :`<div class="ctas"><button class="btn" data-act="start" id="startBtn">Suggest 5 for me</button>
