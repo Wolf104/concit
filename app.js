@@ -406,7 +406,7 @@ function pickBoxHtml(f){
   if(!S.pickSearched) return `${areas}<div id="pickChips">${pickChipsHtml(picks)}</div><p class="hint pickhint">Pick a category, set your area or type a name, then tap Search.</p>`;
   return `${areas}<div id="pickChips">${pickChipsHtml(picks)}</div>${pickListHtml(f,picks,pool,sub)}`;
 }
-const pickChipsHtml=picks=>picks.length?`<div class="picked">${picks.map(id=>`<button class="chip" data-act="pickToggle" data-id="${esc(id)}" aria-pressed="true" aria-label="Remove ${esc(byId(id).name)}">${esc(byId(id).name)} <span aria-hidden="true">×</span></button>`).join("")}</div>`:"";
+const pickChipsHtml=picks=>picks.length?`<div class="picked">${picks.map(id=>`<button class="chip" data-act="pickToggle" data-id="${esc(id)}" aria-pressed="true" aria-label="Remove ${esc(byId(id).name)}">${esc(byId(id).name)} <span aria-hidden="true">×</span></button>`).join("")}</div><button class="link danger pickcancel" data-act="pickCancelAll">Cancel my selection</button>`:"";
 function pickListHtml(f,picks,pool,sub){
   return `<div class="stack picklist">${pool.map(x=>{ const on=picks.includes(x.id);
     return `<button class="person" data-act="pickToggle" data-id="${esc(x.id)}" aria-pressed="${on}" ${!on&&picks.length>=PICK_MAX?"disabled":""}><span>${esc(x.name)}<small class="sub">${esc(sub(x))}</small></span><small>${on?"Added ✓":"Add"}</small></button>`; }).join("")||`<p class="empty">${S.pickQ?`No places match “${esc(S.pickQ)}”`:"Nothing here"}${S.mapFail&&S.pickArea?` in ${esc(zname(S.pickArea))}`:f.pin&&f.radius?` within ${radText(f.radius)} of the pin. Try a bigger radius`:""}.</p>`}</div>`;
@@ -1106,6 +1106,7 @@ const H={
   mode(el){ S.form.mode=el.dataset.v; S.pickOpen=false; S.dfltOpen=false; render(); scrollTo(0,0); },
   addTime(){ S.timeOpen=!S.timeOpen; S.calOpen=false; render(); const strip=document.getElementById("timeStrip"), c=strip?.querySelector(`[data-v="${S.form.time||TIME_HINT[S.form.what]||"19:00"}"]`); if(c) strip.scrollLeft=c.offsetLeft-strip.offsetLeft-(strip.clientWidth-c.offsetWidth)/2; },
   setTime(el){ S.form.time=el.dataset.v; S.timeOpen=false; render(); },
+  pickCancelAll(){ S.form.picks=[]; updatePicks(); toast("Selection cleared."); },
   pickToggle(el){ const f=S.form, id=el.dataset.id, l=(f.picks||[]).filter(byId);
     f.picks=l.includes(id)?l.filter(x=>x!==id):l.length<PICK_MAX?[...l,id]:l;
     f.mode="pick";
