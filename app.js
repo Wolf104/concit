@@ -108,7 +108,7 @@ function logout(expired){
   if(t&&!expired) authCall("logout",{}, "POST",t).catch(()=>{});
   S.session=null; S.plan=null; S.code=null; S.groups=[]; S.gid=null; S.acct=false; S.deleting=false; S.authView="login"; S.authNote=expired?"Please log in again.":""; S.tab="decide"; S.chatOpen=false;
   if(typeof CHAT!=="undefined"){ CHAT.gid=null; CHAT.msgs=[]; }
-  if(!expired){ for(const k in AV) delete AV[k]; try{localStorage.removeItem("concit.av")}catch{} }
+  if(!expired){ for(const k in AV) delete AV[k]; if(typeof AV_LARGE!=="undefined") for(const k in AV_LARGE) delete AV_LARGE[k]; try{localStorage.removeItem("concit.av")}catch{} }
   saveSession(); history.replaceState(null,"",location.pathname); render();
 }
 const redirectTo=()=>encodeURIComponent(location.origin+location.pathname);
@@ -470,9 +470,9 @@ async function needAv(people){
 }
 function repaintAv(){ if(S.chatOpen&&document.getElementById("chatList")) paintChat(false); else render(); }
 const AV_COLORS=["#2f9bff","#7a5af8","#ef6a5b","#16a37f","#e8912d","#d6418f","#3d8d4f","#5b6cf0"];
-function avatarHtml(id,name,cls=""){
+function avatarHtml(id,name,cls="",open=true){
   const a=AV[id];
-  if(a&&a.img) return `<img class="av ${cls}" src="${a.img}" alt="" draggable="false">`;
+  if(a&&a.img) return open?`<img class="av tap ${cls}" src="${a.img}" alt="${esc(name||"")}" draggable="false" data-act="viewAv" data-id="${esc(id)}" data-name="${esc(name||"")}" role="button" tabindex="0" aria-label="View ${esc(name||"their")} photo">`:`<img class="av ${cls}" src="${a.img}" alt="" draggable="false">`;
   let h=0; for(const c of String(id||name)) h=(h*31+c.charCodeAt(0))>>>0;
   return `<span class="av ${cls}" style="background:${AV_COLORS[h%AV_COLORS.length]}" aria-hidden="true">${esc((name||"?").trim().charAt(0).toUpperCase()||"?")}</span>`;
 }
@@ -521,9 +521,13 @@ function openCropper(img){
       e.preventDefault(); clamp(); draw(); };
     document.addEventListener("keydown",key,true); addEventListener("resize",layout);
     wrap.addEventListener("click",e=>{ const c=e.target.closest("[data-c]")?.dataset.c; if(c==="cancel"||e.target===wrap) close(null);
-      if(c==="save"){ const out=document.createElement("canvas"); out.width=out.height=CROP_OUT; const o=out.getContext("2d"), k=CROP_OUT/V;
-        o.fillStyle="#fff"; o.fillRect(0,0,CROP_OUT,CROP_OUT); o.imageSmoothingQuality="high"; o.drawImage(img,ox*k,oy*k,W()*k,H()*k);
-        for(const q of [.86,.74,.6,.45]){ const d=out.toDataURL("image/jpeg",q); if(d.length<=110000){ close(d); return; } } close(null); toast("That photo is too detailed to save. Try another."); } });
+      if(c==="save"){
+        const render=(size,limit)=>{ const out=document.createElement("canvas"); out.width=out.height=size; const o=out.getContext("2d"), k=size/V;
+          o.fillStyle="#fff"; o.fillRect(0,0,size,size); o.imageSmoothingQuality="high"; o.drawImage(img,ox*k,oy*k,W()*k,H()*k);
+          for(const q of [.86,.74,.6,.45]){ const d=out.toDataURL("image/jpeg",q); if(d.length<=limit) return d; } return null; };
+        const small=render(CROP_OUT,110000), large=render(640,380000)||render(480,380000);
+        if(!small){ close(null); toast("That photo is too detailed to save. Try another."); return; }
+        close({small,large}); } });
     requestAnimationFrame(()=>{ layout(); stage.focus({preventScroll:true}); });
   });
 }
@@ -531,15 +535,29 @@ async function uploadAvatar(file){
   if(!file) return;
   if(!/^image\//.test(file.type||"image/")){ toast("Choose a photo (JPEG or PNG)."); return; }
   let img; try{ img=await loadImage(file); }catch{ toast("That photo couldn't be opened. Try a JPEG or PNG."); return; }
-  const data=await openCropper(img); if(!data) return;
+  const pic=await openCropper(img); if(!pic) return;
   S.avBusy=true; render();
-  try{ const v=await rpc("set_avatar",{p_data:data}); AV[uid()]={v,img:data}; saveAv(); toast("Profile picture saved"); }
+  try{ const v=await rpc("set_avatar",{p_data:pic.small,p_large:pic.large}); AV[uid()]={v,img:pic.small}; if(pic.large) AV_LARGE[uid()]=pic.large; else delete AV_LARGE[uid()]; saveAv(); toast("Profile picture saved"); }
   catch{ toast("Couldn't save your picture. Check your connection and try again."); }
   finally{ S.avBusy=false; render(); loadGroups(); }
 }
 async function removeAvatar(){
-  try{ await rpc("set_avatar",{p_data:null}); delete AV[uid()]; saveAv(); toast("Profile picture removed"); }catch{ toast("Couldn't remove your picture. Try again."); }
+  try{ await rpc("set_avatar",{p_data:null,p_large:null}); delete AV[uid()]; delete AV_LARGE[uid()]; saveAv(); toast("Profile picture removed"); }catch{ toast("Couldn't remove your picture. Try again."); }
   render(); loadGroups();
+}
+/* Full-size view of a profile picture. Shows the small copy at once, then swaps in the sharp one. */
+const AV_LARGE={};
+async function openPhoto(id,name){
+  const small=AV[id]?.img; if(!small) return;
+  const wrap=document.createElement("div"); wrap.className="photoview"; wrap.setAttribute("role","dialog"); wrap.setAttribute("aria-modal","true"); wrap.setAttribute("aria-label",(name||"Profile")+" photo");
+  wrap.innerHTML=`<figure><img src="${AV_LARGE[id]||small}" alt="${esc(name||"Profile picture")}"><figcaption>${esc(name||"")}</figcaption></figure><button class="photoclose" aria-label="Close">×</button>`;
+  document.body.appendChild(wrap); document.body.classList.add("cropping");
+  const back=document.activeElement, btn=wrap.querySelector(".photoclose"); btn.focus({preventScroll:true});
+  const close=()=>{ document.removeEventListener("keydown",key,true); document.body.classList.remove("cropping"); wrap.remove(); back?.focus?.({preventScroll:true}); };
+  const key=e=>{ if(e.key==="Escape"||e.key==="Tab"){ e.preventDefault(); if(e.key==="Escape") close(); } };
+  document.addEventListener("keydown",key,true);
+  wrap.addEventListener("click",e=>{ if(e.target.tagName!=="IMG") close(); });
+  if(!AV_LARGE[id]){ try{ const big=await rpc("get_avatar_large",{p_id:id}); if(big&&wrap.isConnected){ AV_LARGE[id]=big; wrap.querySelector("img").src=big; } }catch{} }
 }
 async function loadMyAvatar(){ try{ const v=await rpc("my_avatar"); await needAv([{id:uid(),av:v}]); }catch{} }
 
@@ -955,6 +973,7 @@ const H={
   seen(el){ if(getSelection&&String(getSelection()).length) return; const id=Number(el.dataset.id); CHAT.seenOpen=CHAT.seenOpen===id?null:id; paintChat(false); },
   closeChat(){ closeChat(); },
   removeAvatar(){ removeAvatar(); },
+  viewAv(el){ openPhoto(el.dataset.id,el.dataset.name); },
   allGroups(){ S.chatOpen=false; CHAT.gid=null; S.gid=null; S.acct=false; S.deleting=false; S.leaving=false; render(); scrollTo(0,0); },
   account(){ S.acct=true; S.deleting=false; render(); scrollTo(0,0); },
   closeAccount(){ S.acct=false; S.deleting=false; render(); scrollTo(0,0); },
@@ -1009,7 +1028,8 @@ document.addEventListener("submit",async e=>{ e.preventDefault();
   if(e.target.id==="chatForm"){ sendChat(); return; }
   if(e.target.id==="codeForm"){ const i=document.getElementById("joinCode"), c=i.value.trim(); if(!c) return; i.value=""; i.blur(); joinByCode(c); }
 });
-document.addEventListener("keydown",e=>{ if((e.key==="Enter"||e.key===" ")&&e.target.matches?.("g[data-act]")){e.preventDefault();H.zoneMap(e.target)} });
+document.addEventListener("keydown",e=>{ if((e.key==="Enter"||e.key===" ")&&e.target.matches?.("g[data-act]")){e.preventDefault();H.zoneMap(e.target)}
+  if((e.key==="Enter"||e.key===" ")&&e.target.matches?.("img[data-act=viewAv]")){e.preventDefault();H.viewAv(e.target)} });
 document.addEventListener("focusout",()=>setTimeout(()=>{if(render.later)render()},0));
 addEventListener("hashchange",()=>{const t=location.hash.slice(1);if(["decide","hotspots","events","groups"].includes(t)&&t!==S.tab){S.tab=t;render()}});
 {const t=location.hash.slice(1);if(["decide","hotspots","events","groups"].includes(t))S.tab=t}
