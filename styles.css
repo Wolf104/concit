@@ -364,3 +364,7 @@ select::-ms-expand{display:none}
 @media (prefers-reduced-motion:reduce){.splashlogo,.splashlogo .pin,.splashbar,.splashbar i{animation:none}#splash{transition-duration:.2s}}
 nav::before{content:"";position:absolute;top:0;bottom:0;left:50%;width:min(520px,100%);transform:translateX(-50%);background:var(--card);border-inline:1px solid var(--line);box-shadow:0 -1px 0 var(--line),0 -10px 24px rgba(15,42,68,.06);z-index:-1;box-sizing:border-box}
 @media (max-width:520px){nav::before{border-inline:0}}
+.hottypes{gap:4px;overflow:visible;margin-inline:0;padding-inline:0}
+.hottypes .chip{flex:1 1 auto;min-width:0;padding:6px 6px;font-size:13px;text-align:center;white-space:nowrap}
+@media (max-width:380px){.hottypes{gap:3px}.hottypes .chip{font-size:12px;padding:6px 3px}}
+@media (max-width:340px){.hottypes .chip{font-size:11px;padding:5px 2px}}

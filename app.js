@@ -920,7 +920,7 @@ function viewHot(){
   }
   return `<div data-hero><h1>Hotspots</h1></div>
   <div class="group">${seg("hotView",S.hotView,[["list","List"],["map","Map"]],"View")}</div>
-  <div class="chips">${HOT_TYPES.map(([k,l])=>`<button class="chip" data-act="hot" data-v="${k}" aria-pressed="${S.hot===k}">${l}</button>`).join("")}</div>
+  <div class="chips hottypes">${HOT_TYPES.map(([k,l])=>`<button class="chip" data-act="hot" data-v="${k}" aria-pressed="${S.hot===k}">${l}</button>`).join("")}</div>
   ${S.hot==="eat"?cuisineChips("hotCuisine",S.hotCuisine):""}
   ${viewFilters()}
   ${body||`<p class="empty">Nothing matches these filters.</p>${fltCount()?`<button class="link center" data-act="fltReset">Clear filters</button>`:""}`}
