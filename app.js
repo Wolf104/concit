@@ -36,8 +36,8 @@ function shortlist(s,seen=[]){
   const pin=s.pin?[null,s.pin[0],s.pin[1]]:null;
   const near=(z,x)=>pin?(x&&x.lat?km(pin,[null,x.lat,x.lng]):ZONES[z]?km(pin,ZONES[z]):6):s.area&&z&&ZONES[z]?km(ZONES[s.area],ZONES[z]):(s.area?6:0);
   const local=pin||s.area;
-  const unit=WHAT_UNIT[s.what], fits=x=>s.max==null||(x.cat?x.priceNum==null||x.priceNum<=s.max:costOf(x,unit)<=s.max);
-  const places=want=>PLACES.filter(p=>want(p)&&open(p,s.day)&&!seen.includes(p.id));
+  const unit=WHAT_UNIT[s.what], fits=x=>s.max==null||(x.cat?(s.max===0?x.priceNum===0:x.priceNum==null||x.priceNum<=s.max):costOf(x,unit)<=s.max);
+  const places=want=>PLACES.filter(p=>want(p)&&open(p,s.day)&&!seen.includes(p.id)&&(!s.rating||(p.hot||0)>=s.rating)&&(!s.metro||(p.metro||[]).length));
   let pool=[];
   if(s.what==="event"){
     pool=EVENTS.filter(e=>!e.sold&&e.cat!=="art"&&!isRun(e)&&e.end>=s.day&&e.start<=addDays(s.day,6)&&!seen.includes(e.id)&&fits(e));
@@ -332,6 +332,18 @@ async function mountPick(){
     S.pickFresh=false; PICK.resize();
   }catch{ S.pickOpen=false; mapFailed(); }
 }
+function viewDecideFilters(f,unit){
+  const ev=f.what==="event", price=f.price||0, rating=ev?0:f.rating||0, metro=!ev&&f.metro;
+  const parts=[price?priceOptsFor(unit).find(o=>o[0]===price)?.[1]:"", rating===3?"Top picks":rating===2?"Popular":"", metro?"Near a metro":""].filter(Boolean);
+  const chips=(act,opts,val)=>`<div class="chips wrap">${opts.map(([k,l])=>`<button class="chip" data-act="${act}" data-v="${k}" aria-pressed="${String(val)===String(k)}">${l}</button>`).join("")}</div>`;
+  return `<div class="where evwhen"><button class="wherebtn" data-act="dfltOpen" aria-expanded="${!!S.dfltOpen}"><span class="wpin">${FILTER_ICON}</span><span>${parts.length?esc(parts.join(" · ")):"Any price"}</span><small>${S.dfltOpen?"Done":"Filters"}</small></button>
+    ${parts.length?`<button class="wclear" data-act="dfltReset" aria-label="Clear filters">×</button>`:""}</div>
+  ${S.dfltOpen?`<div class="fpanel">
+    <div class="fsec"><span class="label">Price</span>${chips("dPrice",priceOptsFor(unit),price)}</div>
+    ${ev?"":`<div class="fsec"><span class="label">Rating</span>${chips("dRating",[[0,"Any"],[2,"★★ Popular"],[3,"★★★ Top picks"]],rating)}</div>
+    <div class="fsec"><span class="label">Show only</span><div class="chips wrap"><button class="chip" data-act="dMetro" aria-pressed="${!!metro}">Near a metro</button></div></div>`}
+  </div>`:""}`;
+}
 function viewSetup(){
   const f=S.form, unit=WHAT_UNIT[f.what], todo=toVote();
   if(f.day<today) f.day=today;
@@ -342,7 +354,7 @@ function viewSetup(){
   <div class="group">${seg("what",f.what,[["coffee","Coffee"],["eat","Restaurants"],["drinks","Bars"],["clubs","Clubs"],["culture","Culture"],["event","Event"]],"What").replace('class="seg"','class="seg grid"')}
   ${f.what==="eat"?cuisineChips("cuisine",f.cuisine):""}</div>
   ${viewWhen(f)}
-  ${slider("budget",unit,f.idx[unit])}
+  ${viewDecideFilters(f,unit)}
   ${viewWhere(f)}
   ${S.groups.length?`<div class="group"><span class="label">Send to</span><select id="sendTo" data-change="sendTo" aria-label="Send to">${S.groups.map(g=>`<option value="${esc(g.id)}" ${f.group===g.id?"selected":""}>${esc(g.name)}</option>`).join("")}<option value="" ${f.group?"":"selected"}>Share by link</option></select></div>`:""}
   <button class="btn" data-act="start">${f.group?"Send to the group":"Find places"}</button>`;
@@ -524,7 +536,9 @@ const hotUnit=()=>HOT_UNIT[S.hot];
 const FLT0={price:0,rating:0,open:false,metro:false,sort:"top"};
 const flt=()=>S.flt||(S.flt={...FLT0});
 const fltCount=()=>{const f=flt(); return (f.price?1:0)+(f.rating?1:0)+(f.open?1:0)+(f.metro?1:0)+(f.sort!=="top"?1:0);};
-const priceOpts=()=>{const u=hotUnit(); return [[0,"Any"],...[1,2,3].map(i=>[i,u?`Up to €${BAND[u][i-1]}`:"€".repeat(i)])];};
+const priceOptsFor=u=>u==="ticket"?[[0,"Any"],[-1,"Free"],[2,"Up to €15"],[3,"Up to €25"]]:[[0,"Any"],...[1,2,3].map(i=>[i,u?`Up to €${BAND[u][i-1]}`:"€".repeat(i)])];
+const priceOpts=()=>priceOptsFor(hotUnit());
+const maxFromPrice=(u,v)=>v<0?0:v?BAND[u][v-1]:null;
 function hotMatch(p){ if(!hotType(p)) return false; const f=flt(), u=hotUnit();
   if(f.price&&(u?costOf(p,u)>BAND[u][f.price-1]:p.price>f.price)) return false;
   if(f.rating&&(p.hot||0)<f.rating) return false;
@@ -670,10 +684,15 @@ function render(){
 }
 const H={
   tab(el){ S.acct=false; S.deleting=false; S.tab=el.dataset.tab; try{location.hash=S.tab}catch{} render(); scrollTo(0,0); },
-  what(el){ S.form.what=el.dataset.v; render(); },
+  what(el){ const was=S.form.what; S.form.what=el.dataset.v; if((was==="event")!==(el.dataset.v==="event")) S.form.price=0; render(); },
   cuisine(el){ S.form.cuisine=el.dataset.v; render(); },
   hotCuisine(el){ S.hotCuisine=el.dataset.v; render(); },
   evPick(el){ const v=el.dataset.v||null; S.evDate=S.evDate===v?null:v; if(v) S.evCalOpen=false; render(); },
+  dfltOpen(){ S.dfltOpen=!S.dfltOpen; render(); },
+  dfltReset(){ Object.assign(S.form,{price:0,rating:0,metro:false}); render(); },
+  dPrice(el){ S.form.price=+el.dataset.v; render(); },
+  dRating(el){ S.form.rating=+el.dataset.v; render(); },
+  dMetro(){ S.form.metro=!S.form.metro; render(); },
   fltOpen(){ S.fltOpen=!S.fltOpen; render(); },
   fltReset(){ S.flt={...FLT0}; render(); },
   fltPrice(el){ flt().price=+el.dataset.v; FIT=null; render(); },
@@ -690,8 +709,8 @@ const H={
   cal(){ S.calOpen=!S.calOpen; S.calMonth=S.form.day.slice(0,7); render(); },
   calMove(el){ const [y,m]=S.calMonth.split("-").map(Number); S.calMonth=iso(new Date(y,m-1+Number(el.dataset.v),1)).slice(0,7); render(); },
   pickDay(el){ S.form.day=el.dataset.v; S.calOpen=false; render(); },
-  start(){ const f=S.form, unit=WHAT_UNIT[f.what], max=maxFor(unit,f.idx[unit]), {group,idx,linkOnly,...rest}=f, q={...rest,max}, options=shortlist(q);
-    if(!options.length){ toast(f.what==="event"?"No events listed around that date yet. Try another date or budget.":"Nothing fits that budget. Try raising it or choosing another day."); return; }
+  start(){ const f=S.form, unit=WHAT_UNIT[f.what], ev=f.what==="event", max=maxFromPrice(unit,f.price||0), {group,idx,linkOnly,...rest}=f, q={...rest,max,rating:ev?0:f.rating||0,metro:!ev&&!!f.metro}, options=shortlist(q);
+    if(!options.length){ toast(f.what==="event"?"No events listed around that date yet. Try another date or price.":"Nothing matches. Try fewer filters or another day."); return; }
     newPlan({...q,options,seen:options,finished:false},group); },
   share(){ shareOut(`Help choose where we go: ${shareUrl()}`,"Link copied"); },
   authView(el){ S.email=document.getElementById("email")?.value||S.email; S.authView=el.dataset.v; S.authNote=""; render(); },
