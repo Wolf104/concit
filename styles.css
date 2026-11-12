@@ -537,7 +537,6 @@ html[data-theme=dark] .seg button[aria-pressed="true"]{background:var(--tint);bo
 html[data-theme=dark] .seg{background:#0e1a27}
 html[data-theme=dark] .calday:disabled{color:#4b5b6c}
 html[data-theme=dark] .prbar i{background:#2f6fae}
-html[data-theme=dark] .zl{background:rgba(20,33,48,.92);color:var(--fg)}
 html[data-theme=dark] .ev-culture{background:#3a2614}
 html[data-theme=dark] .ev-culture .evic,html[data-theme=dark] .ev-culture i{color:#ffa45c}
 html[data-theme=dark] .ev-sport{background:#12301f}
@@ -549,10 +548,6 @@ html[data-theme=dark] .star{color:#f5c04a}
 html[data-theme=dark] .btn{box-shadow:none}
 html[data-theme=dark] nav div,html[data-theme=dark] .chatbar,html[data-theme=dark] .poll{box-shadow:0 8px 28px rgba(0,0,0,.45)}
 html[data-theme=dark] .cropstage,html[data-theme=dark] .photoview img{background:#142130}
-html[data-theme=dark] .maplibregl-canvas,html[data-theme=dark] .mapwrap canvas{filter:invert(.92) hue-rotate(180deg) brightness(.9) contrast(.95)}
-html[data-theme=dark] .maplibregl-ctrl-attrib{background:rgba(20,33,48,.8);color:var(--muted)}
-html[data-theme=dark] .maplibregl-ctrl-attrib a{color:var(--muted)}
-html[data-theme=dark] .maplibregl-ctrl-group{background:var(--card)}
-html[data-theme=dark] .maplibregl-ctrl-group button .maplibregl-ctrl-icon{filter:invert(1)}
 html[data-theme=dark] #splash{background:#145fae}
 .themeseg{max-width:340px}
+html[data-theme=dark] .mapwrap,html[data-theme=dark] #mapSlot,html[data-theme=dark] #pickSlot{--card:#ffffff;--tint:#e6f3ff;--fg:#0f2a44;--muted:#6a8096;--line:rgba(0,0,0,.13);--link:#1272cc;color-scheme:light}
