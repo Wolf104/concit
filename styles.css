@@ -621,3 +621,14 @@ html[data-theme=dark] .vstamp.yes{color:var(--ok);border-color:var(--ok)}
 
 /* Opening hours tile spans the full width so long hours fit */
 .vfact.vhours b{font-variant-numeric:tabular-nums;white-space:pre-line}
+
+/* Undo last vote */
+.vtop{display:flex;align-items:center;gap:12px;margin:0 0 14px}
+.vtop .vprog{flex:1;margin:0}
+.vundo{flex:none;display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:var(--card);color:var(--link);border-radius:99px;padding:6px 12px 6px 9px;font:inherit;font-size:13.5px;font-weight:700;cursor:pointer}
+.vundo svg{width:16px;height:16px}
+.vundo:active{transform:scale(.96)}
+.vchange{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:16px}
+.vchange svg{width:18px;height:18px}
+.vcard.backin{animation:vBack .38s cubic-bezier(.2,.8,.3,1)}
+@keyframes vBack{from{transform:translateX(calc(var(--bx,1)*135%)) translateY(30px) rotate(calc(var(--bx,1)*16deg));opacity:0}to{transform:none;opacity:1}}

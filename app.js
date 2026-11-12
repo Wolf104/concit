@@ -261,7 +261,8 @@ function setupDeck(){
   sizeDeck();
   const card=document.querySelector(".vcard:not(.under)"), under=document.querySelector(".vcard.under"); if(!card) return;
   const grow=f=>{ if(under) under.style.transform=`translateY(${12*(1-f)}px) scale(${.95+.05*f})`; };
-  if(card.dataset.id!==LAST_CARD&&!calmMotion()&&LAST_CARD!=="dealt:"+card.dataset.id){ card.classList.add("enter"); }
+  if(RETURNING&&RETURNING.id===card.dataset.id){ if(!calmMotion()){ card.style.setProperty("--bx",RETURNING.v?1:-1); card.classList.add("backin"); } RETURNING=null; }
+  else if(card.dataset.id!==LAST_CARD&&!calmMotion()&&LAST_CARD!=="dealt:"+card.dataset.id){ card.classList.add("enter"); }
   LAST_CARD=card.dataset.id;
   let x0=null,y0=0,dx=0,drag=false;
   card.addEventListener("pointerdown",e=>{ if(DEALING||e.button>0||e.target.closest("a,button")) return; x0=e.clientX; y0=e.clientY; dx=0; drag=false; });
@@ -273,6 +274,19 @@ function setupDeck(){
     if(Math.abs(dx)>90){ dealVote(card.dataset.id,dx>0?1:0); }
     else { card.style.transform=""; card.style.setProperty("--sy",0); card.style.setProperty("--sn",0); if(under){ under.style.transition="transform .25s ease"; grow(0); } } };
   card.addEventListener("pointerup",end); card.addEventListener("pointercancel",end);
+}
+/* Undo: take back your most recent vote and bring that card back to the top of the deck. */
+const lastVoted=p=>{ const v=p.votes?.[uid()]||{}; return [...p.options].reverse().find(id=>v[id]!==undefined); };
+let RETURNING=null;
+async function undoVote(){
+  const p=S.plan, id=p&&lastVoted(p); if(!id||DEALING) return;
+  const was=p.votes[uid()][id], mine={...p.votes[uid()]}; delete mine[id];
+  S.ver++; S.plan={...p,votes:{...p.votes,[uid()]:mine}};
+  RETURNING={id,v:was}; render(); scrollTo(0,0);
+  S.inflight++;
+  try{ await rpc("undo_vote",{p_code:S.code,p_place:id}); }
+  catch{ toast("Couldn't undo that vote. Try again."); S.plan=merge(S.plan,{votes:{[uid()]:{[id]:was}}}); render(); }
+  S.inflight--; S.ver++; loadGroups();
 }
 async function vote(id,v){
   S.ver++;
@@ -538,10 +552,12 @@ function viewWaiting(p){
   ${meOut?`<p class="note">You said you can't make it, so you won't be asked to vote.</p>`:""}
   ${p.group_id?"":`<div class="group"><button class="btn" data-act="share">Share link</button></div>`}
   <div class="rows">${[...g,...p.people.filter(n=>isOut(p,n))].map(n=>`<div class="rowstat"><span>${esc(nameOf(n))}</span>${status(n)}</div>`).join("")}</div>
+  ${!meOut&&!p.finished&&lastVoted(p)?`<button class="btn plain vchange" data-act="undoVote">${UNDO_ICON}<span>Change my last vote</span></button>`:""}
   ${Object.keys(p.votes||{}).length?`<button class="link center" data-act="finish">See the result now</button>`:""}
   ${solo&&!p.group_id?"":meOut?`<button class="btn plain" style="margin-top:18px" data-act="attend" data-v="1">I can make it after all</button>`:`<button class="link quiet center" data-act="attend" data-v="0">I can't make it</button>`}`;
 }
 const cap=t=>t.charAt(0).toUpperCase()+t.slice(1);
+const UNDO_ICON='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>';
 /* The voting card: a coloured header for the type of place, the rating, why it's on the list, key facts and links. */
 const VI={
   price:'<path d="M17 6.5A6.5 6.5 0 1 0 17 17.5M4 10.5h9M4 13.5h9"/>',
@@ -597,7 +613,7 @@ function cardHtml(p,id,under){
 function viewCard(p){
   const left=p.options.filter(o=>(p.votes?.[uid()]||{})[o]===undefined), id=left[0], i=p.options.indexOf(id), n=p.options.length;
   return `<div data-hero><button class="back" data-act="reset">‹ ${esc(p.group_name||"New plan")}</button><span>${esc(cap(planTitle(p)))}</span><h1>${i+1} of ${n}</h1></div>
-  <div class="vprog" aria-hidden="true">${p.options.map((o,j)=>`<i class="${j<i?"done":j===i?"now":""}"></i>`).join("")}</div>
+  <div class="vtop"><div class="vprog" aria-hidden="true">${p.options.map((o,j)=>`<i class="${j<i?"done":j===i?"now":""}"></i>`).join("")}</div>${lastVoted(p)?`<button class="vundo" data-act="undoVote" aria-label="Undo your last vote">${UNDO_ICON}<span>Undo</span></button>`:""}</div>
   <div class="vdeck" data-left="${Math.min(3,left.length-1)}">${left[1]?cardHtml(p,left[1],true):""}${cardHtml(p,id,false)}</div>
   <div class="vvote"><button class="vno" data-act="vote" data-id="${esc(id)}" data-v="0">${vi("no","vic")}<span>Not this one</span></button><button class="vyes" data-act="vote" data-id="${esc(id)}" data-v="1">${vi("yes","vic")}<span>I'm in</span></button></div>
   ${p.people.length>1||p.group_id?`<button class="link quiet center" data-act="attend" data-v="0">I can't make it</button>`:""}`;
@@ -1299,6 +1315,7 @@ const H={
   invite(el){ const g=S.groups.find(x=>x.id===el.dataset.id); if(g) shareOut(`Join ${g.name} on Concit: ${inviteUrl(g)}`,"Invite link copied"); },
   async leave(el){ if(!S.leaving){ S.leaving=true; render(); return; } S.leaving=false; try{ await rpc("leave_group",{p_group:el.dataset.id}); S.gid=null; await loadGroups(); render(); }catch{ toast("Couldn't leave the group. Try again."); } },
   vote(el){ dealVote(el.dataset.id,Number(el.dataset.v)); },
+  undoVote(){ undoVote(); },
   finish(){ changePlan({...S.plan,finished:true}); },
   reset(){ const g=S.plan?.group_id; clearPlan(); if(g){ S.gid=g; S.tab="groups"; render(); } },
   again(){ const p=S.plan, options=shortlist(p,p.seen||p.options); if(!options.length){ toast("That's everything for these choices."); return; }
