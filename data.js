@@ -1,6 +1,7 @@
 /* Milan listings. A new city is a new copy of this file. */
 "use strict";
 const CHECKED = "10 Nov 2026";
+const STARS_CHECKED = "12 Nov 2026";
 const SRC = {
   mostre:["MilanoFree","https://www.milanofree.it/eventi/mostre/mostre-a-milano.html"],
   conc:["Lifestyleblog","https://www.lifestyleblog.it/blog/2026/10/concerti-novembre-2026-da-non-perdere/"],
