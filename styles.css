@@ -1,15 +1,15 @@
-/* Layout concept: a bright blue header carrying the white logo and the screen's one headline, with a white sheet rising over it. A single light look, so the brand blue always sits on white and never on dark. */
+/* Layout concept: a bright blue header carrying the white logo and the screen's one headline, with a white sheet rising over it. Dark mode (html[data-theme=dark]) swaps the colour tokens below and deepens the header blue. */
 @font-face{font-family:"Nunito";font-style:normal;font-weight:400;font-display:swap;src:url(fonts/nunito-latin-400.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
 @font-face{font-family:"Nunito";font-style:normal;font-weight:400;font-display:swap;src:url(fonts/nunito-latin-ext-400.woff2) format("woff2");unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
 @font-face{font-family:"Nunito";font-style:normal;font-weight:600;font-display:swap;src:url(fonts/nunito-latin-600.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
 @font-face{font-family:"Nunito";font-style:normal;font-weight:600;font-display:swap;src:url(fonts/nunito-latin-ext-600.woff2) format("woff2");unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
 @font-face{font-family:"Nunito";font-style:normal;font-weight:700;font-display:swap;src:url(fonts/nunito-latin-700.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
 @font-face{font-family:"Nunito";font-style:normal;font-weight:700;font-display:swap;src:url(fonts/nunito-latin-ext-700.woff2) format("woff2");unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
-:root{--page:#f4f9ff;--card:#ffffff;--tint:#e6f3ff;--fg:#0f2a44;--muted:#6a8096;--line:rgba(0,0,0,.13);--accent:#2f9bff;--on:#ffffff;--link:#1272cc;--font:"Nunito",-apple-system,"Segoe UI",system-ui,sans-serif;color-scheme:light}
+:root{--page:#f4f9ff;--card:#ffffff;--tint:#e6f3ff;--fg:#0f2a44;--muted:#6a8096;--line:rgba(0,0,0,.13);--accent:#2f9bff;--on:#ffffff;--link:#1272cc;--hero:#2f9bff;--danger:var(--danger);--ok:#1d8a4a;--star0:#d9dce3;--shade:rgba(15,42,68,.14);--font:"Nunito",-apple-system,"Segoe UI",system-ui,sans-serif;color-scheme:light}
 *{box-sizing:border-box}
 html{background:var(--page)}
 body{margin:0;min-height:100vh;background:var(--page);color:var(--fg);font:400 16px/1.5 var(--font);-webkit-font-smoothing:antialiased}
-.hero{background:var(--accent);color:var(--on);padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px));padding-block:20px 56px}
+.hero{background:var(--hero);color:var(--on);padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px));padding-block:20px 56px}
 .heroin{max-width:472px;margin:0 auto;position:relative}
 .brand{display:block;height:34px;width:auto;margin:0 0 26px -3px}
 .brand path{fill:#fff}
@@ -113,14 +113,14 @@ nav div{display:flex;gap:2px;width:100%;max-width:420px;background:var(--card);b
 nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;border:0;background:none;border-radius:14px;padding:7px 0 6px;font-size:12.5px;font-weight:700;color:var(--muted);cursor:pointer;line-height:1.2}
 nav .ti{width:23px;height:23px;display:block}
 nav button[aria-current="page"]{background:var(--tint);color:var(--link);font-weight:700;box-shadow:inset 0 0 0 1px var(--line)}
-#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(88px + env(safe-area-inset-bottom,0px));background:var(--fg);color:#fff;padding:9px 14px;border-radius:12px;font-size:14px;max-width:calc(100vw - 40px);z-index:9}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(88px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--page);padding:9px 14px;border-radius:12px;font-size:14px;max-width:calc(100vw - 40px);z-index:9}
 a.person{text-decoration:none}
-.text.danger{color:#c4314b}
+.text.danger{color:var(--danger)}
 .hint a{color:var(--link);font-weight:700}
 /* Cleanup: secondary actions are quiet text links, and back sits in the header. */
 .link{background:none;border:0;padding:6px 0;color:var(--link);font-size:15px;font-weight:700;cursor:pointer;text-align:left}
 .link.quiet{color:var(--muted);font-weight:600}
-.link.danger{color:#c4314b}
+.link.danger{color:var(--danger)}
 .link.center,.fine.center{display:block;margin:18px auto 0;text-align:center}
 .links{margin-top:18px;text-align:center}
 .links p{margin:0 0 6px;font-size:15px;color:var(--muted)}
@@ -290,7 +290,7 @@ body.inchat .app{padding-top:14px}
 /* In chat only the messages scroll; the page itself stays put */
 html:has(body.inchat),body.inchat{overflow:hidden;overscroll-behavior:none}
 body.inchat .app{min-height:0;padding-bottom:0;box-shadow:0 60vh 0 0 var(--card)}
-.sendbtn{flex:none;display:flex;align-items:center;justify-content:center;width:42px;height:42px;border:0;border-radius:50%;background:transparent;color:#000;cursor:pointer;padding:0}
+.sendbtn{flex:none;display:flex;align-items:center;justify-content:center;width:42px;height:42px;border:0;border-radius:50%;background:transparent;color:var(--fg);cursor:pointer;padding:0}
 .sendbtn svg{width:24px;height:24px;display:block}
 .sendbtn:hover{background:var(--tint)}
 .sendbtn:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
@@ -324,7 +324,7 @@ select::-ms-expand{display:none}
 .meetat input[type=time]{flex:1;min-width:0;border:0;background:transparent;font:inherit;font-size:17px;font-weight:700;color:var(--fg);padding:8px 0;min-height:36px}
 .meetat small{color:var(--muted);font-size:13px;flex:none;padding-right:6px}
 .meetat .wclear{position:static;transform:none;flex:none}
-.rowstat .out{color:#c4314b;font-weight:700}
+.rowstat .out{color:var(--danger);font-weight:700}
 .btn[hidden]{display:none}
 .evintro{margin:0 0 12px;color:var(--muted);font-weight:600}
 .evtiles{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -377,7 +377,7 @@ nav::before{content:"";position:absolute;top:0;bottom:0;left:50%;width:min(520px
 .pickhint{margin:6px 0 4px;font-size:14px}
 .pickgo{margin-top:2px}
 .manage{margin-top:22px;padding-top:6px;border-top:1px solid var(--line)}
-.link.danger{color:#c4314b;font-weight:700}
+.link.danger{color:var(--danger);font-weight:700}
 /* Decide setup: three plain sections, no boxes */
 .dsec{display:flex;flex-direction:column;gap:8px;margin-bottom:22px}
 .dsec>.label{font-size:13px;letter-spacing:.04em;text-transform:uppercase;font-weight:700}
@@ -435,10 +435,10 @@ nav::before{content:"";position:absolute;top:0;bottom:0;left:50%;width:min(520px
 .tin{text-align:right;width:110px;border-radius:8px}
 .tin::placeholder{color:var(--muted);font-weight:600;opacity:1}
 .tin:focus{outline:none;background:var(--tint);padding-inline:8px}
-.tin.bad{color:#c4314b}
+.tin.bad{color:var(--danger)}
 .srow input.tin{width:104px;flex:none;border:0;background:transparent;padding:8px 0;font-size:15px;font-weight:700;color:var(--link);text-align:right;border-radius:10px}
 .srow input.tin:focus{background:var(--tint);padding:8px 10px;outline:none}
-.srow input.tin.bad{color:#c4314b}
+.srow input.tin.bad{color:var(--danger)}
 .brandbtn{display:block;background:none;border:0;padding:0;margin:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .brandbtn:active{opacity:.7}
 .sliderhead b.psval{font-size:15px}
@@ -464,11 +464,11 @@ button.grow{cursor:pointer}
 .gmain{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
 .gmain b{font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .gmain small{font-size:13px;color:var(--muted)}
-.gmain small.live{color:#1d8a4a;font-weight:600;display:flex;align-items:center;gap:5px}
+.gmain small.live{color:var(--ok);font-weight:600;display:flex;align-items:center;gap:5px}
 .gstat{flex:none;font-size:13px;font-weight:700;color:var(--muted);padding:5px 11px;border-radius:99px;background:var(--page)}
 .gstat.todo{background:var(--accent);color:var(--on)}
 .gstat.done{background:var(--tint);color:var(--link)}
-.gstat.out{color:#c4314b}
+.gstat.out{color:var(--danger)}
 .av.mid{width:38px;height:38px;font-size:15px;margin:0}
 .gplus{flex:none;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--tint);color:var(--link);font-size:22px;font-weight:600;line-height:1}
 .ginvite .gmain b{color:var(--link);font-weight:700}
@@ -523,10 +523,36 @@ button.grow{cursor:pointer}
 .rate b{color:var(--fg);font-weight:700}
 .rate small{font-size:12px;color:var(--muted)}
 .rate.none{font-size:12px}
-.st5{font-size:13px;letter-spacing:1px;background:linear-gradient(90deg,#f5a623 var(--p),#d9dce3 var(--p));-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+.st5{font-size:13px;letter-spacing:1px;background:linear-gradient(90deg,#f5a623 var(--p),var(--star0) var(--p));-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
 .rate.big{font-size:15px;margin:2px 0 8px}
 .rate.big .st5{font-size:18px}
 .rate.big small{font-size:13px}
 .person .rate{margin-top:4px}
 
 .psends{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:2px}
+
+/* Dark mode */
+html[data-theme=dark]{--page:#0b1520;--card:#142130;--tint:#1a3550;--fg:#e7eef6;--muted:#93a6b9;--line:rgba(255,255,255,.12);--accent:#2f9bff;--on:#ffffff;--link:#72b9ff;--hero:#145fae;--danger:#ff7088;--ok:#4cd685;--star0:#3a4859;--shade:rgba(0,0,0,.4);color-scheme:dark}
+html[data-theme=dark] .seg button[aria-pressed="true"]{background:var(--tint);box-shadow:0 0 0 1px var(--line)}
+html[data-theme=dark] .seg{background:#0e1a27}
+html[data-theme=dark] .calday:disabled{color:#4b5b6c}
+html[data-theme=dark] .prbar i{background:#2f6fae}
+html[data-theme=dark] .zl{background:rgba(20,33,48,.92);color:var(--fg)}
+html[data-theme=dark] .ev-culture{background:#3a2614}
+html[data-theme=dark] .ev-culture .evic,html[data-theme=dark] .ev-culture i{color:#ffa45c}
+html[data-theme=dark] .ev-sport{background:#12301f}
+html[data-theme=dark] .ev-sport .evic,html[data-theme=dark] .ev-sport i{color:#4cd685}
+html[data-theme=dark] .ev-activities{background:#3a1629}
+html[data-theme=dark] .ev-activities .evic,html[data-theme=dark] .ev-activities i{color:#ff7ab8}
+html[data-theme=dark] .toptag{background:#3a2e10;color:#f5c04a}
+html[data-theme=dark] .star{color:#f5c04a}
+html[data-theme=dark] .btn{box-shadow:none}
+html[data-theme=dark] nav div,html[data-theme=dark] .chatbar,html[data-theme=dark] .poll{box-shadow:0 8px 28px rgba(0,0,0,.45)}
+html[data-theme=dark] .cropstage,html[data-theme=dark] .photoview img{background:#142130}
+html[data-theme=dark] .maplibregl-canvas,html[data-theme=dark] .mapwrap canvas{filter:invert(.92) hue-rotate(180deg) brightness(.9) contrast(.95)}
+html[data-theme=dark] .maplibregl-ctrl-attrib{background:rgba(20,33,48,.8);color:var(--muted)}
+html[data-theme=dark] .maplibregl-ctrl-attrib a{color:var(--muted)}
+html[data-theme=dark] .maplibregl-ctrl-group{background:var(--card)}
+html[data-theme=dark] .maplibregl-ctrl-group button .maplibregl-ctrl-icon{filter:invert(1)}
+html[data-theme=dark] #splash{background:#145fae}
+.themeseg{max-width:340px}

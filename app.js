@@ -820,6 +820,14 @@ function viewGroups(){
   <button class="link joinswap" data-act="joinMode" data-v="1">Have an invite code?</button>`}
   ${S.groups.length?`<p class="head">Your groups</p><div class="stack">${S.groups.map(x=>{const v=x.plans.filter(p=>!p.finished&&p.mine<p.options).length;return `<button class="person" data-act="openGroup" data-id="${esc(x.id)}"><span>${esc(x.name)}<small class="sub">${x.last?esc((x.last.mine?"You":x.last.name||"Someone")+": "+x.last.body):`${x.members.length} ${x.members.length===1?"member":"members"}`}</small></span><small>${x.unread?`<b class="pill">${x.unread} new</b>`:v?`${v} to vote on`:(()=>{const o=x.members.filter(m=>m.online&&m.id!==uid()).length;return o?`<span class="dot" aria-hidden="true"></span>${o} online`:"Open"})()}</small></button>`}).join("")}</div>`:`<p class="hint left">Create a group for your friends or family, then invite them. Plans you send there appear for everyone.</p>`}`;
 }
+/* Light or dark look. The choice is kept on this device; "auto" follows the phone or computer setting. */
+const themePref=()=>{ try{ return localStorage.getItem("concit.theme")||"light"; }catch{ return "light"; } };
+const THEME_MQ=window.matchMedia?matchMedia("(prefers-color-scheme: dark)"):null;
+function applyTheme(){ const p=themePref(), dark=p==="dark"||(p==="auto"&&THEME_MQ&&THEME_MQ.matches);
+  document.documentElement.dataset.theme=dark?"dark":"light";
+  const m=document.querySelector('meta[name="theme-color"]'); if(m) m.content=dark?"#145fae":"#2f9bff"; }
+function setTheme(v){ try{ localStorage.setItem("concit.theme",v); }catch{} applyTheme(); }
+applyTheme(); THEME_MQ&&THEME_MQ.addEventListener&&THEME_MQ.addEventListener("change",()=>themePref()==="auto"&&applyTheme());
 function viewAccount(){
   const u=S.session?.user||{}, name=u.user_metadata?.name||"";
   return `<div data-hero><button class="back" data-act="closeAccount">‹ Back</button><h1>Your account</h1></div>
@@ -829,6 +837,7 @@ function viewAccount(){
     ${AV[uid()]&&!S.avBusy?`<button class="link quiet" data-act="removeAvatar">Remove</button>`:""}</div></div>
     <p class="fine">Shown next to your messages and in your groups. Only people in your groups can see it.</p></div>
   <form id="nameForm" class="group" novalidate><span class="label">Your name</span><div class="inline"><input type="text" id="myName" value="${esc(name)}" maxlength="30" autocomplete="name"><button class="btn small" type="submit">Save</button></div></form>
+  <div class="group"><span class="label">Appearance</span><div class="themeseg">${seg("setTheme",themePref(),[["light","Light"],["dark","Dark"],["auto","Match device"]],"Appearance")}</div><p class="fine">Saved on this device.</p></div>
   <div class="group"><span class="label">Your data</span><a class="person" href="privacy.html"><span>Privacy notice<small class="sub">What Concit keeps and why</small></span><small>Read</small></a></div>
   <button class="btn plain" data-act="logout">Log out</button>
   <button class="link quiet center danger" data-act="deleteAccount">${S.deleting?"Tap again to delete for good":"Delete my account"}</button>
@@ -1161,6 +1170,7 @@ const H={
   viewAv(el){ openPhoto(el.dataset.id,el.dataset.name); },
   allGroups(){ S.chatOpen=false; CHAT.gid=null; S.gid=null; S.acct=false; S.deleting=false; S.leaving=false; render(); scrollTo(0,0); },
   account(){ S.acct=true; S.deleting=false; render(); scrollTo(0,0); },
+  setTheme(el){ setTheme(el.dataset.v); render(); },
   closeAccount(){ S.acct=false; S.deleting=false; render(); scrollTo(0,0); },
   joinMode(el){ S.joinMode=el.dataset.v==="1"; render(); document.getElementById(S.joinMode?"joinCode":"groupName")?.focus(); },
   async deleteAccount(el){ if(!S.deleting){ S.deleting=true; render(); return; }
