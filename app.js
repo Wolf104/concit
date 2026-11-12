@@ -245,12 +245,20 @@ const hideToast=()=>{const el=document.getElementById("toast"); if(el) el.hidden
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const seg=(act,val,opts,label)=>`<div class="seg" role="group" aria-label="${label}">${opts.map(([v,l])=>`<button data-act="${act}" data-v="${v}" aria-pressed="${String(v)===String(val)}">${l}</button>`).join("")}</div>`;
 const zname=z=>ZONES[z]?ZONES[z][0]:"";
-/* Price as a slider: tightest limit on the left, "Any price" at the far right. */
-function priceSlider(act,opts,val){
-  const o=[...opts.slice(1),[0,"Any price"]], i=Math.max(0,o.findIndex(x=>String(x[0])===String(val)));
-  return `<div class="fsec"><div class="sliderhead"><span class="label">Price</span><b class="psval">${o[i][1]}</b></div>
-    <input type="range" class="pslider" data-ps="${act}" data-opts='${esc(JSON.stringify(o))}' min="0" max="${o.length-1}" step="1" value="${i}" aria-label="Price" aria-valuetext="${o[i][1]}"></div>`;
+/* Price as a free slider: any euro limit from the cheapest to the dearest, "Any price" at the far right.
+   State: 0 = any price, -1 = free only, otherwise the most you'd pay in euros. */
+const PRANGE={coffee:[2,12,.5],meal:[5,150,5],drink:[3,25,1],entry:[5,50,5],ticket:[0,50,1],all:[1,150,1]};
+const prange=u=>PRANGE[u]||PRANGE.all;
+const priceLabel=(u,v)=>!v?"Any price":v<0?(u==="entry"?"Free entry":"Free"):`Up to €${String(v).replace(".",",")}${u?" "+UNIT_TEXT[u]:" each"}`;
+function priceSlider(act,unit,val){
+  const [lo,hi,st]=prange(unit), any=+(hi+st).toFixed(2);
+  const pos=!val?any:val<0?0:Math.min(hi,Math.max(lo,val));
+  const lbl=priceLabel(unit,val);
+  return `<div class="fsec"><div class="sliderhead"><span class="label">Price</span><b class="psval">${esc(lbl)}</b></div>
+    <input type="range" class="pslider" data-ps="${act}" data-unit="${unit||""}" min="${lo}" max="${any}" step="${st}" value="${pos}" aria-label="Most you'd pay" aria-valuetext="${esc(lbl)}">
+    <div class="psends" aria-hidden="true"><span>${lo===0?"Free":"€"+String(lo).replace(".",",")}</span><span>Any</span></div></div>`;
 }
+const psValue=el=>{ const [ ,hi]=prange(el.dataset.unit), v=+el.value; return v>hi?0:v===0?-1:v; };
 function slider(id,unit,i){
   return `<div class="group"><div class="sliderhead"><span class="label">${LABEL[unit]}</span><b id="${id}Val">${stepText(unit,i)}</b></div><input type="range" id="${id}" data-slider="${unit}" min="0" max="${STEPS[unit].length}" step="1" value="${i}" aria-label="${LABEL[unit]}"></div>`;
 }
@@ -384,12 +392,12 @@ async function mountPick(){
 }
 function viewDecideFilters(f,unit,part){
   const ev=f.what==="event", price=f.price||0, rating=ev?0:rateMin(f.rating), metro=!ev&&f.metro;
-  const parts=[price?priceOptsFor(unit).find(o=>o[0]===price)?.[1]:"", rating?rating+"+ stars":"", metro?"Near a metro":""].filter(Boolean);
+  const parts=[price?priceLabel(unit,price):"", rating?rating+"+ stars":"", metro?"Near a metro":""].filter(Boolean);
   const chips=(act,opts,val)=>`<div class="chips wrap">${opts.map(([k,l])=>`<button class="chip" data-act="${act}" data-v="${k}" aria-pressed="${String(val)===String(k)}">${l}</button>`).join("")}</div>`;
   if(part==="text") return parts.join(" · ");
   if(part==="pill") return `<button class="pill${parts.length?" on":""}" data-act="dfltOpen" aria-expanded="${!!S.dfltOpen}">${FILTER_ICON}<span>${parts.length?esc(parts.join(" · ")):"Filters"}</span></button>`;
   return `${S.dfltOpen?`<div class="fpanel">${parts.length?`<button class="link quiet fclear" data-act="dfltReset">Clear filters</button>`:""}
-    ${priceSlider("dPrice",priceOptsFor(unit),price)}
+    ${priceSlider("dPrice",unit,price)}
     ${ev?"":`<div class="fsec"><span class="label">Rating</span>${chips("dRating",[[0,"Any"],[4,"4+ ★"],[4.5,"4.5+ ★"]],rating)}</div>
     <div class="fsec"><span class="label">Show only</span><div class="chips wrap"><button class="chip" data-act="dMetro" aria-pressed="${!!metro}">Near a metro</button></div></div>`}
   </div>`:""}`;
@@ -913,11 +921,9 @@ const FLT0={price:0,rating:0,open:false,metro:false,sort:"top",area:"",pin:null,
 const areaOpts=()=>[["","All areas"],...[...new Set(PLACES.map(p=>p.zone).filter(Boolean))].sort((a,b)=>zname(a).localeCompare(zname(b))).map(z=>[z,zname(z)])];
 const flt=()=>S.flt||(S.flt={...FLT0});
 const fltCount=()=>{const f=flt(); return (f.price?1:0)+(rateMin(f.rating)?1:0)+(f.open?1:0)+(f.metro?1:0)+(f.area||f.pin?1:0)+(f.sort!=="top"?1:0);};
-const priceOptsFor=u=>u==="ticket"?[[0,"Any"],[-1,"Free"],[2,"Up to €15"],[3,"Up to €25"]]:[[0,"Any"],...[1,2,3].map(i=>[i,u?`Up to €${BAND[u][i-1]}`:`Up to ${"€".repeat(i)}`])];
-const priceOpts=()=>priceOptsFor(hotUnit());
-const maxFromPrice=(u,v)=>v<0?0:v?BAND[u][v-1]:null;
+const maxFromPrice=(u,v)=>v<0?0:v>0?v:null;
 function hotMatch(p){ if(!hotType(p)) return false; const f=flt(), u=hotUnit();
-  if(f.price&&(u?costOf(p,u)>BAND[u][f.price-1]:p.price>f.price)) return false;
+  if(f.price&&costOf(p,u||KIND_UNIT[p.kind])>maxFromPrice(u,f.price)) return false;
   if(rateMin(f.rating)&&(p.stars||0)<rateMin(f.rating)) return false;
   if(f.open&&(p.closed||[]).includes(new Date().getDay())) return false;
   if(f.metro&&!(p.metro||[]).length) return false;
@@ -932,7 +938,7 @@ function viewFilters(part){
   if(part==="pill") return `<button class="pill${n?" on":""}" data-act="fltOpen" aria-expanded="${!!S.fltOpen}">${FILTER_ICON}<span>${n?`Filters · ${n}`:"Filters"}</span></button>${n?`<button class="pillx" data-act="fltReset" aria-label="Clear filters">×</button>`:""}`;
   const row=(label,act,opts,val)=>`<div class="fsec"><span class="label">${label}</span><div class="chips wrap">${opts.map(([k,l])=>`<button class="chip" data-act="${act}" data-v="${k}" aria-pressed="${String(val)===String(k)}">${l}</button>`).join("")}</div></div>`;
   return `${S.fltOpen?`<div class="fpanel fcard">
-    ${priceSlider("fltPrice",priceOpts(),f.price)}
+    ${priceSlider("fltPrice",hotUnit(),f.price)}
     ${S.mapFail?row("Area","fltArea",areaOpts(),f.area):`<div class="fsec"><span class="label">Area</span>${S.pickOpen==="hot"?viewPinPicker():pinButton(f,"hot")}</div>`}
     ${row("Rating","fltRating",[[0,"Any"],[4,"4+ ★"],[4.5,"4.5+ ★"]],rateMin(f.rating))}
     ${row("Show only","fltToggle",[["open","Open today"],["metro","Near a metro"]].map(([k,l])=>[k,l]),"")
@@ -1092,7 +1098,7 @@ function render(){
 const H={
   home(){ if(!S.session) return; S.acct=false; S.deleting=false; S.pickOpen=false; if(S.plan||S.code) clearPlan(); S.tab="decide"; try{location.hash="decide"}catch{} render(); scrollTo(0,0); },
   tab(el){ S.acct=false; S.deleting=false; S.tab=el.dataset.tab; try{location.hash=S.tab}catch{} render(); scrollTo(0,0); },
-  what(el){ const was=S.form.what; S.form.what=el.dataset.v; if((was==="event")!==(el.dataset.v==="event")) S.form.price=0; render(); },
+  what(el){ const was=S.form.what; S.form.what=el.dataset.v; if(WHAT_UNIT[was]!==WHAT_UNIT[el.dataset.v]) S.form.price=0; render(); },
   cuisine(el){ S.form.cuisine=el.dataset.v; render(); },
   hotCuisine(el){ S.hotCuisine=el.dataset.v; render(); },
   evPick(el){ const v=el.dataset.v||null; S.evDate=S.evDate===v?null:v; if(v) S.evCalOpen=false; render(); },
@@ -1170,7 +1176,7 @@ const H={
   copy(){ const it=results(S.plan)[0].item, where=it.cat?it.venue:it.addr, when=parse(S.plan.day).toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"});
     const t=`${it.name}, ${where}. ${when}${S.plan.time?` at ${S.plan.time}`:""}.`;
     (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast("Copied"),()=>toast(t)); },
-  hot(el){ S.hot=el.dataset.v; render(); },
+  hot(el){ if(HOT_UNIT[S.hot]!==HOT_UNIT[el.dataset.v]) flt().price=0; S.hot=el.dataset.v; FIT=null; render(); },
   hotView(el){ S.hotView=el.dataset.v; render(); },
   zoneMap(el){ S.zone=el.dataset.z; render(); },
   pin(el){ S.sel=el.dataset.id; render(); },
@@ -1191,8 +1197,8 @@ function refreshPicks(){ const box=document.getElementById("pickBox"), b=documen
   const sl=box.querySelector(".pickareas")?.scrollLeft||0; box.innerHTML=pickBoxHtml(S.form); const ar=box.querySelector(".pickareas"); if(ar) ar.scrollLeft=sl; if(b){ b.textContent=pickStartLabel(S.form); b.hidden=!(S.form.picks||[]).filter(byId).length; } }
 document.addEventListener("keydown",e=>{ if(e.key==="Enter"&&e.target.id==="pickQ"){ e.preventDefault(); e.target.blur(); H.pickSearch(); } });
 document.addEventListener("input",e=>{ if(e.target.dataset.search==="pick"){ S.pickQ=e.target.value; refreshPicks(); } });
-document.addEventListener("input",e=>{ const el=e.target; if(!el.dataset.ps) return; const o=JSON.parse(el.dataset.opts)[+el.value]; el.parentNode.querySelector(".psval").textContent=o[1]; el.setAttribute("aria-valuetext",o[1]); });
-document.addEventListener("change",e=>{ const el=e.target; if(el.dataset.cs){ H[el.dataset.cs]({dataset:{v:el.value}}); return; } if(!el.dataset.ps) return; const o=JSON.parse(el.dataset.opts)[+el.value]; H[el.dataset.ps]({dataset:{v:String(o[0])}}); });
+document.addEventListener("input",e=>{ const el=e.target; if(!el.dataset.ps) return; const t=priceLabel(el.dataset.unit||undefined,psValue(el)); el.parentNode.querySelector(".psval").textContent=t; el.setAttribute("aria-valuetext",t); });
+document.addEventListener("change",e=>{ const el=e.target; if(el.dataset.cs){ H[el.dataset.cs]({dataset:{v:el.value}}); return; } if(!el.dataset.ps) return; H[el.dataset.ps]({dataset:{v:String(psValue(el))}}); });
 document.addEventListener("input",e=>{const u=e.target.dataset.slider; if(!u) return; const i=Number(e.target.value);
   if(e.target.id==="budget") S.form.idx[u]=i; else S.hotIdx[u]=i;
   document.getElementById(e.target.id+"Val").textContent=stepText(u,i);});

@@ -528,3 +528,5 @@ button.grow{cursor:pointer}
 .rate.big .st5{font-size:18px}
 .rate.big small{font-size:13px}
 .person .rate{margin-top:4px}
+
+.psends{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:2px}
