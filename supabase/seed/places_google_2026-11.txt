@@ -1,0 +1,878 @@
+~Osteria da Fortunata Milano Navigli~e~navigli~Via Casale 4~45.4518~9.1704~2~4.5~3252~1200-0100|=|=|=|=|=|=~2Porta Genova~Osteria
+~Trattoria Bolognese da Mauro~e~tortona~Via Elia Lombardini 14~45.4481~9.1648~2~4.6~2219~C|2000-2300|=|=|=|1230-1400,2000-2300|=~2Romolo~Trattoria
+~Trattoria della Gloria~e~navigli~Via Mario Pichi 5~45.4478~9.1753~3~4.5~835~C|=|1930-0000|=|=|1230-1500,1930-0000|=~~Bistro
+~Osteria del Gnocco Fritto~e~navigli~Via Pasquale Paoli 2~45.4508~9.1714~2~4.4~3664~1900-2300|=|=|=|1900-2330|1200-1430,1900-2330|1200-1430,1900-2300~2Porta Genova~Osteria
+~Osteria Milanese OSSBUS~e~navigli~Via Magolfa 1~45.4514~9.1774~2~4.6~1598~1200-1530,1800-2330|=|=|=|1200-1530,1800-0000|1200-1600,1800-0000|1200-1600,1800-2330~2Porta Genova~Osteria
+~L'Antica Pizzeria da Michele Milano - Porta Romana~e~romana~Via Lodovico Muratori 16~45.4516~9.2071~2~4.4~1522~1200-1500,1900-2330|=|=|=|1200-0000|=|=~3Porta Romana~Pizzeria
+~Filumè Milano~e~romana~Corso di Porta Romana 129~45.453~9.2012~2~4.7~477~1130-1500,1800-0000|=|=|=|=|=|1800-2300~3Porta Romana~Pizzeria
+~Pizzeria Vincenzo Capuano Porta Romana~e~romana~Via Lazzaro Papi 7~45.4507~9.207~2~4.0~1639~1200-1500,1830-2330|=|=|=|1200-1500,1900-0000|1200-1530,1900-0000|1200-1530,1830-2330~3Porta Romana~Pizzeria
+~Mimì Ristorante Pizzeria Milano~e~romana~Via Antonio Fogazzaro 7~45.4584~9.2075~3~4.7~497~C|1200-1500,1830-2300|=|=|=|1200-1500,1830-2330|1200-1500,1830-2300~~Seafood
+~Gennaro Esposito Milano - Pizzeria e cucina tipica napoletana~e~romana~Via della Commenda 43~45.455~9.1997~2~4.2~1260~1200-1430,1900-0000|=|=|=|=|1200-1430,1915-0000|1200-1430,1915-2300~3Crocetta~Pizzeria
+~Tusa Isola Cocktail Bar~d~isola~Via Pietro Borsieri 32~45.4895~9.1892~2~4.6~680~1800-0000|=|=|=|1800-0200|1130-0200|1130-0000~5Isola~Cocktail bar
+~Luma Cocktail Bar~d~isola~Via Pietro Borsieri 39~45.4896~9.1887~2~4.5~105~1800-0100|=|=|=|1800-0200|=|1100-0100~5Isola~Cocktail bar
+~Bob Milano~d~isola~Via Pietro Borsieri 30~45.4892~9.1892~2~4.3~973~1800-0200|=|=|=|=|=|=~5Isola~Cocktail bar
+~Frida~d~isola~Via Antonio Pollaiuolo 3~45.4887~9.1873~2~4.2~5127~1200-0100|=|=|1200-0200|=|1800-0200|1700-0100~5Isola~Bar
+~White Rabbit Speakeasy~d~isola~Via Garigliano 4~45.4879~9.1896~2~4.6~1769~1800-0300|=|=|=|=|2000-0300|1800-0200~5Isola~Cocktail bar
+~Pasticceria Grecchi~f~cittastudi~Via Antonio Bazzini 1~45.4809~9.2249~2~4.3~563~C|0600-2100|=|=|=|=|=~2Piola~Pastry shop
+~Pasticceria Antica Sicilia~f~cittastudi~Via Carlo Matteucci 4~45.481~9.2165~2~4.3~1702~C|0700-2200|=|=|=|=|=~12Loreto~Pastry shop
+~Pasticceria DaMa Milano~f~cittastudi~Via Pinturicchio 9~45.4763~9.2212~2~4.9~268~C|0800-1300,1500-1900|=|=|=|0800-1300,1500-1800|0800-1300~2Piola~Pastry shop
+~Dolce Caffè~f~cittastudi~Via Carlo Forlanini 5~45.4719~9.2313~1~4.9~51~0700-1900|=|=|=|=|C|=~4Argonne~Coffee bar
+~Sato Sushi Experience - Porta Venezia~e~venezia~Via Lazzaro Palazzi 6~45.4766~9.2057~3~4.7~1086~1215-1500,1915-2330|=|=|=|=|1215-1530,1915-2330|=~1Porta Venezia~Sushi
+~Poporoya~e~venezia~Via Bartolomeo Eustachi 20~45.4755~9.215~2~4.4~3576~0930-1400,1730-2130|0930-1430,1730-2130|0930-1400,1730-2130|=|=|=|1130-1430,1800-2130~1Lima~Japanese
+~Soyko Ramen - Porta Venezia~e~venezia~Viale Tunisia 6~45.4771~9.2061~2~4.6~415~C|1200-1500,1830-2300|=|=|=|=|=~1Porta Venezia~Japanese
+~Nomado~e~venezia~Viale Piave 41~45.4735~9.2063~4~4.7~119~1930-2300|1230-1430,1930-2300|=|=|=|=|C~1Porta Venezia~Japanese
+~Sushi Matsu Omakase~e~venezia~Via Alvise Cadamosto 7~45.4768~9.2096~4~4.8~121~C|1300-1500,1900-2315|=|=|=|=|C~1Porta Venezia~Japanese
+maccheroni-la-carbonara-n1-di-milano~Maccheroni - La Carbonara N°1 di Milano~e~brera~Via S. Carpoforo 7~45.4716~9.1849~2~4.7~6446~1230-2230|=|=|=|1230-2300|1230-2330|1230-2230~2Lanza~Italian
+~Osteria Da Fortunata - Brera~e~brera~Via Fiori Chiari 13~45.4719~9.1853~2~4.2~9724~1200-0100|=|=|=|=|=|=~2Lanza~Osteria
+~Osteria Formentini~e~brera~Via Marco Formentini 2~45.4715~9.1856~2~4.5~1265~1200-0000|=|=|=|=|=|=~2Lanza~Osteria
+~Bauscia~e~brera~Via dell'Orso 2~45.4692~9.1878~4~4.5~2443~0730-1530,1900-0000|=|=|=|=|1200-1530,1900-0000|1200-1500~3Montenapoleone~Italian
+~Salsamenteria di Parma~e~brera~Via Ponte Vetero 11~45.4697~9.185~2~4.3~3238~1200-2300|=|=|=|=|=|=~1Cairoli~Italian
+~Trattoria la vecchia guardia~e~romana~Via della Commenda 21~45.4572~9.1992~3~4.5~1343~C|1200-1430,1930-2230|=|=|=|=|1200-1430,1930-2200~3Crocetta~Trattoria
+~Trattoria de la Trebia Milano~e~lodi~Via Trebbia 32~45.4479~9.2044~3~4.6~2126~1230-1430,1930-2359|=|=|=|=|1930-2230|C~3Porta Romana~Trattoria
+~Berberè Pizzeria Isola~e~isola~Via Sebenico 21~45.4875~9.1911~2~4.3~4048~1200-1530,1830-2300|=|=|=|=|=|=~5Isola~Pizzeria
+~Sorbillo Isola~e~isola~Via Pietro Borsieri 25~45.4882~9.1887~2~4.3~2558~1200-1500,1900-2300|=|=|=|=|1200-1500,1900-2330|1200-1500,1900-2300~5Isola~Pizzeria
+~Sublime Milano~e~isola~Via Federico Confalonieri 21~45.4868~9.1923~2~4.7~363~1200-1500,1900-2300|=|=|=|1200-1500,1900-0000|1900-0000|=~5Isola~Pizzeria
+~Pizzeria Ciro Cascella 3.0 Isola~e~isola~Via Ugo Bassi 30~45.4898~9.1879~2~4.5~571~1200-1500,1900-2330|=|=|=|1200-1500,1900-0000|=|=~5Isola~Pizzeria
+~Gianni - Noloso Pizza~e~nolo~Via Luigi Varanini 9~45.493~9.2177~2~4.6~646~1830-2330|=|=|=|1830-0000|=|1830-2330~1Pasteur~Pizzeria
+~Corner Nolo Milano - Ristorante Pizzeria Griglieria Cocktail~d~nolo~Via Guido Cavalcanti 2~45.4916~9.2133~2~4.7~690~C|1700-0100|=|=|=|1200-0100|=~1Pasteur~Cocktail bar
+~Osteria Afrodite~e~cittastudi~Via Donatello 9~45.4804~9.2188~3~4.9~978~1915-0000|=|=|=|1900-0000|1230-1430,1900-0000|1230-1430,1915-0000~2Piola~Osteria
+~Trattoria Bertamè~e~cittastudi~Via Francesco Lomonaco 13b~45.4834~9.2231~3~4.4~2038~1930-2230|1230-1430,1930-2230|=|=|=|=|1230-1500,1930-2230~2Piola~Trattoria
+~Belluccio'S~e~cittastudi~Via Beato Angelico 27~45.471~9.2289~3~4.5~805~C|1215-1430,1915-2315|=|=|=|=|1215-1430~4Argonne~Restaurant
+~La Piola~w~cittastudi~Viale Abruzzi 23~45.4774~9.2169~3~4.4~1705~1230-1400,1930-2200|=|=|=|=|=|C~1Lima~Wine bar
+~Delfino Restaurant~e~cittastudi~Viale Gran Sasso 26~45.4821~9.2198~3~4.7~1528~1930-2230|1230-1430,1930-2230|=|=|=|=|C~2Piola~Mediterranean
+~Osteria al Piccolo Molo~e~lambrate~Via Antonio Grossich 2~45.4811~9.2345~3~4.5~800~1200-1500,1900-2300|C|1200-1500,1900-2300|=|=|=|1200-1500,1900-2230~2Lambrate~Seafood
+~La Cappelletta~e~lambrate~Via Carlo Bertolazzi 26~45.4844~9.2424~2~4.2~3868~1900-2300|1200-1430,1900-2300|=|=|=|=|=~2Lambrate~Pizzeria
+~Trattoria Sole~e~lambrate~Via Carlo Valvassori Peroni 41~45.4793~9.2364~2~4.4~652~1200-1400,2000-2300|=|=|=|=|2000-2300|C~2Lambrate~Trattoria
+~Calabrone 2~e~lambrate~Via Muzio Scevola 11~45.484~9.2406~3~4.4~1373~1200-1430,1900-2330|=|=|=|=|=|C~2Lambrate~Italian
+~Il Postaccio Milano~c~lambrate~Via Camillo Golgi 60~45.4795~9.2345~1~4.7~253~0930-1700|0930-2100|=|=|=|C|=~2Lambrate~Street food
+~Osteria Del Binari~e~navigli~Via Tortona 1~45.4537~9.1687~3~4.3~4794~1230-1530,1930-0100|=|=|=|=|=|1200-1530,1930-0100~2Porta Genova~Osteria
+~Belle Donne Bistrot~e~tortona~Via Tortona 28~45.4529~9.1662~3~4.5~2046~1200-1500,1900-0000|=|=|=|=|=|=~2Porta Genova~Bistro
+~Trattoria Aurora~e~tortona~Via Savona 23~45.455~9.1668~3~4.2~1466~C|1230-1430,2000-2300|=|=|=|=|=~2Porta Genova~Trattoria
+~Osteria Fiorentina~e~tortona~Via Tortona 28~45.4529~9.1661~3~4.5~852~1230-1500,1900-2330|=|=|=|=|=|=~2Porta Genova~Osteria
+~Trattoria All'Antica~e~tortona~Via Montevideo 4~45.4552~9.1668~3~4.4~612~1200-1500,1900-0000|=|=|=|=|=|C~2Porta Genova~Seafood
+~Osteria Naviglio Grande~e~tortona~Via Lodovico Il Moro 139~45.4419~9.1325~2~4.6~581~0600-1900|=|=|=|=|=|C~~Osteria
+~Osteria della Darsena~e~navigli~Via Vigevano 1~45.4527~9.1758~3~4.4~1243~1230-1500,1900-2300|C|1230-1500,1900-2300|=|=|=|=~2Porta Genova~Osteria
+~Osteria dal Cornuto~e~navigli~Ripa di Porta Ticinese 55~45.4511~9.1721~2~4.6~2279~1800-0030|=|=|=|=|1200-0030|=~2Porta Genova~Osteria
+~Locanda Sempione~e~sempione~Corso Sempione 38~45.4816~9.1655~3~4.7~208~1200-1500,1900-2300|=|=|=|=|=|C~5Domodossola~Italian
+~Caminetti del Sempione~e~sarpi~Via Giulio Cesare Procaccini 60~45.4816~9.1671~3~4.3~824~1930-2300|C|1230-1500,1930-2300|=|1230-1500,1930-0000|=|1230-1430~5Gerusalemme~Vegetarian
+~Via Pasteria - Arco Delle Pace~e~sempione~Piazza Sempione 6~45.4765~9.1723~2~4.8~8663~1200-2230|=|=|=|=|=|=~~Restaurant
+~Velavevodetto a Porta Venezia~e~venezia~Largo Fra Paolo Bellintani 1~45.4772~9.2046~2~4.8~1001~1230-1500,1900-2300|=|=|=|=|=|=~1Porta Venezia~Italian
+~La Volta at RH Milan~e~venezia~Corso Venezia 56~45.4738~9.2048~2~4.3~192~1200-2200|=|=|=|1200-2300|1100-2300|1100-2200~1Porta Venezia~Restaurant
+~Ristorante Da Oscar (Porta Venezia)~e~venezia~Via Lazzaro Palazzi 4~45.4764~9.2059~2~4.3~3774~1930-2300|1230-2300|=|=|=|=|C~1Porta Venezia~Italian
+~Fresca Pasta Club~e~venezia~Viale Piave 33~45.4727~9.2063~2~4.5~1193~1200-2300|=|=|=|=|=|=~1Porta Venezia~Italian
+~Ristorante Chiantà~e~venezia~Corso Buenos Aires 3~45.4759~9.2059~3~4.8~80~0700-2330|=|=|=|=|=|=~1Porta Venezia~Restaurant
+~Cinc~d~brera~Via Marco Formentini 5~45.4718~9.1859~2~4.0~737~C|1000-0130|=|=|=|=|=~2Lanza~Cocktail bar
+~Vesta Milano~e~brera~Via Fiori Chiari 1A~45.4721~9.187~2~4.2~647~1200-2330|=|=|=|=|=|1200-2300~2Lanza~Seafood
+~Brera 29 Cucina & Cocktails~d~brera~Via Brera 29~45.4728~9.1873~2~4.3~1905~C|1200-0100|=|=|1200-0200|=|1130-0000~2Lanza~Cocktail bar
+~Bar Brera~e~brera~Via Brera 23~45.4724~9.1875~2~4.3~5369~0600-0200|=|=|=|=|0800-0200|=~2Lanza~Restaurant
+~Altrimenti Mixology Art~d~garibaldi~Via Castelfidardo 6~45.4785~9.1893~2~4.6~277~1800-0200|=|=|=|=|=|1800-0000~2Moscova~Cocktail bar
+~Rita Cocktails~d~navigli~Via Angelo Fumagalli 1~45.4504~9.1699~2~4.6~2250~1730-0100|=|=|=|1730-0200|=|C~2Porta Genova~Cocktail bar
+~Sphera Locura~d~navigli~Alzaia Naviglio Grande 40~45.4514~9.1723~1~4.7~383~1030-0300|=|=|=|=|=|=~2Porta Genova~Cocktail bar
+~Tripstillery Navigli~d~navigli~Via Ascanio Sforza 9~45.4507~9.1781~2~4.8~76~C|=|1600-0000|=|=|=|=~2Porta Genova~Bar
+~Zog~d~navigli~Ripa di Porta Ticinese 37~45.4514~9.174~2~4.5~1888~0800-0100|=|=|=|0800-0200|=|0800-0100~2Porta Genova~Cocktail bar
+~Kilburn Cocktail Bar Milano~d~venezia~Via Panfilo Castaldi 35~45.4761~9.2047~2~4.5~1143~1900-0100|=|=|=|1900-0200|=|1900-0100~1Porta Venezia~Cocktail bar
+~Coke Tales~d~venezia~Via Marcello Malpighi 1~45.4745~9.2068~2~4.1~367~1700-0030|1000-0030|=|=|1000-0130|=|1000-0000~1Porta Venezia~Cocktail bar
+~LOLA~d~venezia~Via Alessandro Tadino 6~45.4763~9.2052~1~4.7~177~C|=|1800-0100|1800-0200|1800-0300|=|1700-0100~1Porta Venezia~Cocktail bar
+~The roof milano~d~duomo~Piazza Giuseppe Missori 1~45.4609~9.1888~2~4.2~2629~1200-0100|=|=|=|1200-0200|=|1200-0100~3Missori~Lounge bar
+~SunEleven Rooftop Bar~d~duomo~P.za Cesare Beccaria~45.4646~9.1954~2~4.4~1143~1700-2300|=|=|=|=|1700-0000|1700-2300~14San Babila~Bar
+~LiQuido Rooftop Bar~d~centrale~Via Giovanni Battista Pirelli 5B~45.4841~9.2012~2~4.6~416~1700-0000|=|=|=|=|=|=~23Centrale~Cocktail bar
+~Bar Sempione 49~f~sempione~Corso Sempione 49~45.4819~9.1635~1~4.6~161~0630-1930|=|=|=|=|0700-1200|C~5Domodossola~Café
+~Caffè Sempione~f~sempione~Corso Sempione 17~45.4782~9.1683~1~4.0~204~0700-2000|=|=|0900-2000|0700-2000|C|=~5Domodossola~Café
+~DAZI MILANO~d~sempione~Piazza Sempione 1~45.4752~9.1722~2~4.3~491~C|1200-0200|=|=|=|1100-0200|1100-2200~~Cocktail bar
+~Sergio & Efisio~d~sempione~Corso Sempione 30~45.4797~9.1676~2~4.4~522~C|1700-0200|=|=|=|=|=~5Domodossola~Bar
+~Vice - Cocktail Wine Bar~w~romana~Corso di Porta Romana 123~45.4531~9.2011~2~5.0~263~1800-0130|=|C|1800-0130|=|=|C~3Porta Romana~Wine bar
+~The Spirit~d~romana~Via Piacenza 15~45.4494~9.2054~2~4.5~613~C|1830-0200|=|=|=|=|=~3Porta Romana~Cocktail bar
+~Les Rouges Cucina & Cocktails~e~romana~Via Gerolamo Tiraboschi 15~45.4534~9.2089~2~4.6~217~1800-2300|1800-0000|=|=|1800-0100|=|1730-2230~3Porta Romana~Restaurant
+~Bella Milano – Breakfast, Lunch & Drinks~f~romana~Via Lazzaro Papi 19~45.4515~9.2076~1~4.4~165~0800-0000|=|=|=|=|=|C~3Porta Romana~Coffee bar
+~Dhole Milano~e~romana~Via Gerolamo Tiraboschi 2~45.4519~9.2085~2~4.1~775~0730-0200|=|=|=|=|=|0830-0200~3Porta Romana~Restaurant
+~Morna~d~tortona~Via Tortona 21~45.4528~9.1664~2~4.4~512~0800-0100|=|=|=|0800-0200|1800-0200|C~2Porta Genova~Cocktail bar
+~Baratie~e~tortona~Via Stendhal 49~45.4552~9.158~2~4.4~383~C|1730-0100|=|=|=|=|C~4California~Bistro
+~bistroBASE~f~tortona~V. Bergognone 34~45.452~9.1631~2~4.2~3957~0900-0000|=|=|=|=|1000-0000|=~2Porta Genova~Café
+~Est bar~d~navigli~Via Tortona 12~45.4543~9.1693~2~4.5~107~1700-2230|1000-2330|=|=|=|=|1700-2230~2Porta Genova~Bar
+~Bluesquare - Contemporary Inn~d~tortona~Via Tortona 33~45.4513~9.1615~2~4.2~133~1000-1600|1000-0000|=|=|1000-0230|1230-1500,1800-0230|1230-1600~2Porta Genova~Cocktail bar
+~IURIO~d~nolo~Via delle Leghe 5~45.4916~9.2168~2~4.6~119~1800-0200|=|=|=|=|=|C~1Pasteur~Cocktail bar
+~NoLoSo~d~nolo~Via Luigi Varanini 5~45.493~9.218~2~4.4~1652~1730-0100|=|=|=|1730-0200|=|1730-0100~1Pasteur~Bar
+~NODO BAR~f~nolo~Via Marco Aurelio 8~45.4912~9.2214~2~4.7~83~0800-0000|=|=|0800-0100|1800-0200|=|C~1Pasteur~Café
+~GhePensiMI~b~nolo~Piazza Morbegno 2~45.4929~9.2166~2~4.6~674~C|1700-0100|=|=|=|=|=~1Pasteur~Pub
+~Tin - Cocktail Pub Milano~b~nolo~Via Nino Oxilia 26~45.4918~9.2137~2~4.7~91~1230-0200|=|=|=|=|1800-0200|1800-0100~1Pasteur~Pub
+~Cafezal Torrefazione Specialty Coffee~f~garibaldi~Via Solferino 27~45.4786~9.1883~2~4.7~1524~0800-1800|=|=|=|=|0900-1900|=~2Moscova~Pastry shop
+~Il Cafetero Specialty Coffee Milan~f~sansiro~Via Rembrandt 12~45.4676~9.1387~1~4.8~581~0700-1600|C|0700-1600|=|=|=|0800-1400~1Gambara~Coffee bar
+~Ditta Artigianale Specialty Coffee Roasters~f~duomo~Corso Magenta 31~45.4658~9.1759~2~4.4~1001~0730-2100|=|=|=|=|0800-2100|=~12Cadorna~Coffee bar
+~Coffee Studio 7Gr - Corso Venezia~f~venezia~Corso Venezia 31~45.4697~9.1997~1~4.9~572~0900-1800|=|=|=|=|=|1000-1800~1Palestro~Café
+~Petito e Zorzi Brera~e~brera~Via delle Erbe 1A~45.4709~9.1841~2~4.3~319~C|0800-2100|=|=|=|0900-2100|=~2Lanza~Bistro
+~Panetteria Mercato~f~brera~Via Mercato 24~45.4713~9.1844~1~4.6~182~0700-1930|=|=|=|=|=|C~2Lanza~Bakery
+~G. Cova & C.~f~brera~Via Cusani 10~45.4689~9.184~2~4.2~1301~0730-1900|=|=|=|=|C|=~1Cairoli~Pastry shop
+~Aroma Napoletano~f~brera~Via Ponte Vetero 10~45.4694~9.1855~2~4.3~617~0700-1900|=|=|=|=|0800-1900|=~1Cairoli~Pastry shop
+~Don'Cola Brera~f~brera~Via Fatebenefratelli 16~45.4731~9.1908~2~4.3~204~0730-2000|=|=|=|=|0830-2000|C~3Montenapoleone~Coffee bar
+~Marlà Pasticceria~f~romana~C.so Lodi 15~45.4503~9.2057~2~4.3~1507~C|0800-1900|=|=|=|0830-1900|=~3Porta Romana~Pastry shop
+~Pasticceria Martesana Milano Porta Romana~f~romana~Corso di Porta Romana 131~45.4526~9.2017~2~4.1~501~0730-2000|=|=|=|=|0800-2000|=~3Porta Romana~Pastry shop
+dama-milano~DA•MA MILANO~d~romana~Via Lazzaro Papi 6~45.4501~9.207~1~4.7~158~0730-2100|=|=|=|=|0830-2100|C~3Porta Romana~Cocktail bar
+~Disigu@l Caffè~f~romana~Viale Monte Nero 4~45.4526~9.2031~1~4.6~262~0700-1900|=|=|=|=|0700-1300|C~3Porta Romana~Coffee bar
+~Panificio Davide Longoni~f~romana~Via Gerolamo Tiraboschi 19~45.4535~9.2091~1~4.1~1016~0800-1500|0800-2100|=|=|=|=|0830-1500~3Porta Romana~Bakery
+~Panfuwa | Brunch & Café - Milano Isola~f~isola~Piazzale Lagosta 7~45.4895~9.191~2~4.6~1618~0900-1900|=|=|=|=|0800-1900|=~5Isola~Coffee bar
+~MOMO Milano~e~isola~Piazza Tito Minniti 5~45.4878~9.1887~2~4.2~1683~0700-0000|=|=|0700-0200|=|=|0700-0000~5Isola~Bistro
+~Deus Cafe Isola - The Portal of Possibilities~f~isola~V. Genova Thaon di Revel 3~45.4909~9.1889~2~4.1~5333~1700-0100|1500-0100|=|=|1500-0200|0930-0200|0930-0100~35Zara~Coffee bar
+~Café Gorille~e~isola~Via Gaetano de Castillia 20~45.4856~9.1916~2~4.2~1333~1800-2300|1200-0000|=|=|1200-0100|1100-0100|1100-2200~5Isola~Bistro
+~Vesper Milano Food & Drink~e~isola~Via Garigliano 12~45.4886~9.1902~2~4.9~119~C|1100-0200|=|=|=|=|1200-0200~5Isola~Italian
+~Casamadie - Milano - bakery | brunch | lunch~f~navigli~Via Giuseppe Meda 11~45.4454~9.1794~2~4.2~102~0700-1900|=|=|=|=|0830-1900|0830-1600~~Brunch spot
+~Panfuwa | Brunch & Café - Milano Ticinese~f~navigli~Via Vetere 7~45.4563~9.181~2~4.6~3625~0930-2000|=|=|=|=|0900-2000|=~4Vetra~Coffee bar
+~Osteria del Canaletto~e~navigli~Via Casale 4~45.4519~9.1703~2~4.8~1478~1100-0100|=|=|=|=|=|=~2Porta Genova~Osteria
+~La Prosciutteria Milano Navigli~w~navigli~Ripa di Porta Ticinese 53~45.4511~9.1724~2~4.3~4915~1200-0000|=|=|=|1200-0030|=|1200-0000~2Porta Genova~Wine bar
+~Pasticceria Venezia~f~venezia~Via Achille Maiocchi 16~45.4754~9.2139~2~4.6~97~C|0730-1400,1600-1930|=|=|=|0730-1330,1500-1930|0800-1300~1Lima~Pastry shop
+~GustaMi Bakery (Venezia)~f~venezia~Corso Venezia 41~45.4706~9.2008~1~4.0~828~0630-1930|=|=|=|=|=|0900-1830~1Palestro~Bakery
+~Pasticceria Gelateria Berti dal 1954~f~cittastudi~Via Gaspare Aselli 35~45.4719~9.2299~2~4.4~244~C|0830-1300,1500-2000|=|=|=|=|0830-1330,1500-1930~4Argonne~Pastry shop
+~Debbie's~f~brera~Corso Garibaldi 22~45.4738~9.1836~1~4.8~4979~0600-2100|=|=|=|=|0600-0100|0600-2100~2Lanza~Café
+~Culto~f~garibaldi~Stazione di Milano Porta Garibaldi Piano Interrato~45.4847~9.1874~1~4.7~1465~0600-2000|=|=|=|=|=|=~25Garibaldi~Coffee bar
+~Caffè Napoli Moscova~f~garibaldi~Largo la Foppa 1~45.4781~9.1842~1~4.3~1287~0600-1900|=|=|=|=|0800-1900|=~2Moscova~Coffee bar
+~Radetzky~b~garibaldi~Corso Garibaldi 105~45.4784~9.185~2~3.9~2710~0800-0200|=|=|=|=|=|=~2Moscova~Pub
+~Gelato Fatto Con Amore~f~duomo~Corso Magenta 30~45.4661~9.1775~2~4.8~2500~C|1200-2100|=|=|=|=|=~12Cadorna~Gelateria
+~Ciacco~f~duomo~Via Spadari 13~45.4637~9.1868~2~4.6~5022~0800-2030|=|=|=|0800-2200|0900-2200|1300-2030~1Cordusio~Gelateria
+~VERO - Gelateria Cremeria~f~brera~Corso Garibaldi 60~45.4757~9.1838~2~4.7~3378~1200-2300|=|=|=|1200-2330|=|1200-2300~2Moscova~Gelateria
+~Artico Gelateria Tradizionale~f~duomo~Via Dogana 1~45.4632~9.1895~2~4.4~1249~1200-2000|=|=|=|=|=|=~13Duomo~Gelateria
+~Chocolat~f~sempione~Via Giovanni Boccaccio 9~45.4677~9.1742~2~4.5~3979~~12Cadorna~Gelateria
+~Atypique~w~garibaldi~Via Alessandro Volta 10~45.4797~9.1838~2~4.6~179~C|1730-2330|=|1730-0000|=|=|C~2Moscova~Wine bar
+~La Prosciutteria Milano Brera~w~brera~Corso Garibaldi 55~45.4742~9.1834~2~4.2~4321~1130-0000|=|=|=|=|=|=~2Lanza~Wine bar
+~Signorvino~e~duomo~Via Dante~45.4671~9.1836~2~4.1~3581~1000-0000|=|=|=|=|=|=~1Cairoli~Italian
+~Taglieri e Bicchieri~w~brera~Via Anfiteatro 4~45.4741~9.1832~2~4.5~436~1830-0100|=|=|=|=|=|C~2Lanza~Wine bar
+~GolaSecca PortaRomana~w~romana~C.so Lodi 29~45.449~9.208~2~4.7~216~1730-0030|=|=|=|=|=|=~3Lodi Tibb~Wine bar
+~Il Cavallante~w~romana~Via Lodovico Muratori 3~45.4521~9.2036~2~4.5~332~1800-0030|=|=|=|=|C|=~3Porta Romana~Wine bar
+~Vino~w~romana~Via Pier Lombardo 9~45.4545~9.2059~2~4.4~319~1800-0000|=|=|=|=|=|=~3Porta Romana~Wine bar
+~Winelivery Bar & Enoteca Milano Darsena~w~navigli~Alzaia Naviglio Pavese 2~45.452~9.1776~2~4.9~141~1600-0100|=|=|=|1600-0200|=|1600-0100~2Porta Genova~Wine bar
+~Vinoir - Vini d'autore e cucina~e~tortona~Ripa di Porta Ticinese 93b~45.4494~9.1645~2~4.4~504~1700-0000|=|=|=|=|=|C~2Porta Genova~Restaurant
+~Il Secco - Bollicine italiane - Navigli~w~navigli~Via Angelo Fumagalli 2~45.4504~9.1696~2~4.8~354~1700-2330|=|=|=|1700-0100|=|1700-2330~2Porta Genova~Wine bar
+~Cantine Isola dal 1896~w~sarpi~Via Paolo Sarpi 30~45.4815~9.1762~2~4.5~2213~1000-2200|=|=|=|=|=|=~5Monumentale~Wine bar
+~Il Vinaccio~w~isola~Via Garigliano 5~45.4885~9.1897~2~4.6~92~1700-0000|=|=|=|1700-0100|1800-0100|1600-2200~5Isola~Wine bar
+~Barrique Enoteca e Degustazione~w~isola~Via Pietro Borsieri 41~45.4897~9.1889~2~4.8~51~1730-0000|=|=|=|=|=|=~5Isola~Wine bar
+~Bierfabrik Milano~e~centrale~Via Federico Ozanam 8~45.4803~9.2126~2~4.6~682~1730-0100|=|=|=|1730-0200|=|1730-0000~1Lima~Restaurant
+~Buttiga Beer Room~b~sarpi~Via Paolo Sarpi 64~45.481~9.1703~1~4.6~1563~1700-0100|=|=|=|=|=|=~5Gerusalemme~Pub
+~Navigli Craft Beer~b~navigli~Alzaia Naviglio Grande 44~45.4513~9.172~2~4.6~619~1700-0100|=|=|=|1500-0200|1230-0200|1230-0100~2Porta Genova~Pub
+~BAM Brewery Brew Risto Pub~b~sansiro~Via delle Forze Armate 99~45.4627~9.1266~2~4.7~1144~C|1800-0200|=|=|=|=|=~1Primaticcio~Pub
+~Bere Buona Birra~b~lodi~V. Adige 13~45.448~9.2053~2~4.7~634~1700-2300|C|1700-2300|=|=|1300-2300|1700-2300~3Lodi Tibb~Pub
+~Mulligans Irish Pub & Whisky Bar~b~sarpi~Via Giuseppe Govone 28~45.4895~9.1676~2~4.5~1455~1800-0100|=|=|=|=|=|C~5Cenisio~Irish pub
+~O'Connell Irish Pub Milano Brera~b~brera~Via Brera 3~45.4697~9.188~2~4.1~1527~1700-0200|=|=|=|=|1200-0200|=~3Montenapoleone~Pub
+~Pogue Mahone's~b~romana~Via Vittorio Salmini 1~45.4507~9.2039~2~4.3~2573~1630-0100|=|=|=|1630-0130|1200-0130|1200-0100~3Porta Romana~Irish pub
+~Murphy's Law~b~tortona~Via Montevideo 3~45.4551~9.1665~2~3.9~1612~1600-0200|=|=|=|=|1200-0200|=~2Porta Genova~Irish pub
+~BLUES CANAL~b~navigli~Via Casale 7~45.4515~9.171~2~4.5~6030~1600-0100|=|=|1600-0200|1600-0300|1200-0300|1200-0100~2Porta Genova~Pub
+~La Fontanella~b~navigli~Alzaia Naviglio Pavese 6~45.4518~9.1777~2~4.3~1581~1830-0200|=|=|=|1830-0300|=|1830-0200~2Porta Genova~Pub
+~Doppio Malto Milano Navigli~e~navigli~Viale Liguria 47~45.4439~9.1751~2~4.4~3977~1200-1500,1800-2330|=|=|=|1200-1500,1800-0030|1200-0030|1200-2330~2Romolo~Restaurant
+~Guinness Harp Pub~b~cittastudi~Piazza Leonardo da Vinci 10~45.4774~9.2255~2~4.4~1161~1100-0100|=|=|=|=|1800-0100|C~2Piola~Pub
+~Au Vieux Strasbourg~b~cittastudi~Via Gaetano Strambio 29~45.4736~9.2342~2~4.2~1780~1100-0200|=|=|=|=|=|1800-0200~4Argonne~Pub
+~Union Club~b~cittastudi~Via Moretto da Brescia 36~45.4725~9.2286~1~4.4~1879~0700-0200|1100-0200|=|=|=|1700-0200|C~4Argonne~Pub
+~Brasserie Bruxelles Pub~b~cittastudi~Viale Abruzzi 33~45.4788~9.2167~2~4.2~1657~C|1700-0200|=|=|=|=|=~1Lima~Pub
+~Matricola Pub~b~cittastudi~Viale Romagna 43~45.4757~9.2234~2~4.0~2328~1800-0100|=|=|=|1800-0200|=|1800-0100~2Piola~Pub
+il-vinaccio-nolo~Il Vinaccio~w~nolo~Via Soperga 65~45.4914~9.213~2~4.8~255~1600-2300|=|=|=|1600-0000|1000-1400,1600-0000|1600-2200~1Pasteur~Wine bar
+~Enoteca La Botte Fatale~w~nolo~Via Giuseppe Giacosa 11~45.4919~9.2226~2~4.5~192~1600-2300|=|=|=|=|C|=~1Pasteur~Wine bar
+~Isola della Birra~b~isola~Via Medardo Rosso 18~45.4897~9.1853~2~4.1~846~1700-0000|=|=|=|=|1800-0000|C~5Isola~Pub
+~Ruin~b~isola~Via Antonio Pollaiuolo 5~45.4889~9.1874~1~4.7~133~1730-0200|=|=|=|=|=|=~5Isola~Pub
+~The Wall - Milano Isola~b~isola~Via Carmagnola 15~45.4873~9.1869~2~4.5~757~C|1800-0030|=|=|1800-0100|=|1800-0000~5Isola~Pub
+~Senju~e~cittastudi~Viale Abruzzi 19~45.4763~9.2168~2~4.1~878~C|1200-1500,1900-2330|=|=|=|=|=~1Lima~Japanese
+~sushi Kinmdo cinese e giapponese~e~cittastudi~Via Beato Angelico 29~45.4711~9.2292~2~4.1~166~1130-2300|=|=|=|=|1800-2300|=~4Argonne~Japanese
+~PokeSushi~e~cittastudi~Via Francesco d'Ovidio 8~45.4808~9.2253~2~4.6~159~1100-1500,1730-2230|=|=|=|=|=|C~2Piola~Restaurant
+~Formula sushi~e~lambrate~Via Teodosio 74~45.4883~9.23~2~4.9~237~C|1800-2300|=|=|=|1830-2300|=~2Lambrate~Restaurant
+~Yuebinlou~e~sarpi~Via Paolo Sarpi 42~45.4814~9.1744~2~4.4~1321~1200-1530,1830-2330|C|1200-1530,1830-2330|=|1200-1530,1830-0000|=|1200-1530,1830-2330~5Monumentale~Chinese
+~Long Chang~e~sarpi~Via Paolo Sarpi 42~45.4814~9.1746~2~4.0~2261~1200-1600,1800-0000|C|1200-1600,1800-0000|=|=|=|=~5Monumentale~Chinese
+~Jin Yong~e~garibaldi~Via Paolo Sarpi 2~45.4819~9.1809~2~4.1~1655~1100-0000|=|=|=|=|=|=~5Monumentale~Restaurant
+~Huaren Restaurant~e~sarpi~Via Paolo Sarpi 63~45.4809~9.1708~2~4.6~60~1100-1500,1800-0000|=|C|1100-1500,1800-0000|=|=|=~5Gerusalemme~Chinese
+~Jubin~e~sarpi~Via Paolo Sarpi 11~45.4816~9.1795~2~3.9~2073~1200-1500,1800-2300|=|C|1200-1500,1800-2300|=|=|=~5Monumentale~Chinese
+~Ramen Shifu Navigli~e~navigli~Corso Luigi Manusardi 3~45.4519~9.1793~2~4.8~1911~1200-2300|=|=|=|=|=|=~4Vetra~Ramen bar
+~MIC Ramen Milano Porta Romana~e~romana~Viale Monte Nero 62~45.4593~9.2071~2~4.8~2800~1200-1500,1830-2300|0000-1500,1830-2300|1200-1500,1830-2300|=|=|=|=~~Ramen bar
+~KYOTO RAMEN~e~brera~Via S. Marco 14~45.4747~9.1884~2~4.7~208~C|1200-2230|=|=|=|=|=~2Moscova~Ramen bar
+~Tok Ramen Milano Conciliazione~e~sempione~Viale S. Michele del Carso 7~45.465~9.1647~2~4.9~228~1200-1500,1830-2300|=|=|=|=|=|=~1Conciliazione~Ramen bar
+~Ramen Shifu Lambrate~e~lambrate~Via Giovanni Pacini 67~45.4843~9.2348~2~4.8~2297~1200-2300|=|=|=|=|=|=~2Lambrate~Ramen bar
+~Saravanaa Bhavan Milano | Best Indian Restaurant In Milan~e~duomo~Via Flavio Baracchini 9~45.4614~9.1912~2~4.3~781~0900-2200|=|=|=|=|=|=~3Missori~Vegan
+~Tikka Land - Cucina Autentica Dell'India & Sri Lanka~e~bovisa~Viale Certosa 180~45.4977~9.1352~2~4.7~909~C|1730-2300|1200-1530,1730-2300|=|=|1200-2300|1300-2300~~Indian
+~Banaras~e~romana~Via Orti 2~45.4547~9.1985~3~4.6~925~1800-2300|C|1800-2300|=|=|=|=~3Crocetta~Indian
+~Baba G Indian Restaurant~e~isola~Baba G Indian Take Away Restaurant~45.5028~9.1813~2~4.7~1013~1100-0015|=|=|=|=|=|=~3Dergano~Indian
+~Ristorante Indiano Shiva~e~navigli~V.le Gian Galeazzo 7~45.4529~9.1824~2~4.5~2218~1900-2300|1200-1430,1900-2300|=|=|=|=|=~4Vetra~Indian
+~BANGKOK THAI RESTAURANT MILANO~e~nolo~Via Ruggero Leoncavallo 37~45.492~9.228~2~4.6~186~C|1200-1500,1900-2230|=|=|=|=|=~2Udine~Restaurant
+~Ristorante DeeThai~e~garibaldi~Via Marco Polo 5~45.4808~9.1934~2~4.7~97~C|1200-1500,1900-2330|=|=|=|=|=~3Repubblica~Restaurant
+~Bussarakham~e~navigli~Via Valenza 13~45.4511~9.169~2~4.1~1658~1200-1430,1900-2300|C|1200-1430,1900-2300|=|=|=|=~2Porta Genova~Thai
+~Thai Chokdee Restaurant~e~tortona~Via Massimo Gorki 1~45.4511~9.1504~2~4.5~858~C|1230-1500,1930-2300|=|=|=|=|=~4Tolstoj~Thai
+~Thai Lounge Milano~e~lambrate~Via Conte Rosso 27~45.484~9.2423~2~4.5~326~1200-1500,1900-2300|C|1200-1500,1900-2300|=|=|=|=~2Lambrate~Restaurant
+~Yanso Korean BBQ~e~nolo~Viale Monza 6~45.4879~9.2174~3~4.8~442~1200-1500,1830-2230|=|=|=|=|=|=~1Pasteur~Korean
+~Seon Ristorante Coreano Milano~e~duomo~Corso di Porta Romana 40~45.4588~9.1912~2~4.7~742~1200-1430,1830-2230|=|=|=|=|=|C~4Sforza-Policlinico~Korean
+~Yanso Korean BBQ da Macelleria Sirtori~e~sarpi~Via Paolo Sarpi 27~45.4813~9.176~3~4.9~184~1200-1500,1830-2230|=|=|=|=|=|=~5Monumentale~Korean
+~Dream Korean Restaurant~e~venezia~Piazza Otto Novembre 3~45.475~9.2112~2~4.5~1148~C|1900-2200|1200-1400,1900-2200|=|=|1200-1430,1900-2200|=~1Porta Venezia~Korean
+~Bap Cucina Coreana~e~romana~V.le Bligny 29~45.451~9.1937~2~4.9~123~C|1200-1500,1830-2215|=|=|=|=|=~3Crocetta~Korean
+~LaViet Navigli | Ristorante vietnamita a Milano~e~navigli~Corso S. Gottardo 51~45.4465~9.1796~2~4.6~125~1200-1500,1830-2300|=|=|=|=|1200-1500,1830-2330|1200-1500,1830-2300~~Vietnamese
+~VietGnam® Milano - 100% Vietnamese street food~e~tortona~Via Savona 15~45.4553~9.1679~2~4.9~288~C|1230-1500,1930-2200|=|=|=|=|1230-1500~2Porta Genova~Vietnamese
+~CasaVietnam~e~isola~Viale Nazario Sauro 5~45.4913~9.1969~2~4.4~856~C|1200-1500,1900-2300|=|=|=|=|1900-2300~35Zara~Vietnamese
+~LaViet Milano | Ristorante vietnamita a Milano~e~centrale~Via Emilio Cornalia 8~45.4826~9.1971~2~4.6~374~1200-1500,1900-2300|=|=|=|1200-1500,1830-2300|=|=~2Gioia~Vietnamese
+~Bánh Mì 38｜越南法棍~c~sarpi~Via Paolo Sarpi 38~45.4814~9.1752~1~4.8~286~1130-1530,1730-2300|=|C|1130-1530,1730-2300|1130-2300|=|1130-2230~5Monumentale~Vietnamese
+~Piedra del Sol~e~centrale~Via Emilio Cornalia 2~45.4821~9.1969~3~4.3~2666~1200-1430,1930-2300|=|=|=|1200-1430,1930-2330|1930-2330|1930-2300~3Repubblica~Mexican
+~LA PATRONA~e~nolo~Via Andrea Costa 3~45.4867~9.2184~2~4.6~320~C|0700-0000|=|=|=|0800-0000|0800-2100~12Loreto~Mexican
+~La Parrilla Mexicana~e~sarpi~Corso Sempione 76~45.4851~9.1609~3~4.2~2695~C|1930-0300|=|=|=|=|=~5Domodossola~Mexican
+~Bodega Mexicana Milano Premuda~e~venezia~Viale Premuda 17~45.4655~9.207~2~4.5~153~1200-1500,1800-0000|=|=|=|=|=|=~4Tricolore~Mexican
+~Barragán~e~navigli~Via Ascanio Sforza 51~45.4468~9.1771~2~4.6~353~1830-0000|=|=|=|1830-0100|=|1200-1500,1830-0000~~Mexican
+~TRUJILLO RISTOBAR~e~nolo~Via Privata Oristano 15~45.5053~9.2287~2~4.8~1764~1200-2330|=|=|=|=|=|=~1Gorla~Peruvian
+~Aki me kedo~e~nolo~Via Ottavio Rinuccini 1~45.4961~9.2177~2~4.5~2599~1000-2330|=|=|=|=|=|=~1Rovereto~Peruvian
+~Pachamama Milano~e~tortona~Via dei Tulipani 1~45.4482~9.1383~3~4.7~516~1200-1530,1730-2330|=|C|1200-1530,1730-2330|=|1200-2330|=~~Peruvian
+~El Chorrillano~e~nolo~Via Ferrante Aporti 28~45.4933~9.2135~2~4.0~2392~1200-2230|=|=|=|=|=|=~1Pasteur~Peruvian
+~Casa Lemon - Ristorante Peruviano Fusion. Milano~e~venezia~Via Giulio Uberti 3~45.4689~9.2158~3~4.7~364~C|1230-1430,1830-2230|=|=|1230-1430,1830-2300|1230-1500,1830-2300|C~4Tricolore~Peruvian
+~Fairouz~e~sempione~Via Michelangelo Buonarroti 16~45.469~9.1557~3~4.1~2307~1200-1500,1900-2330|C|1900-2330|1200-1500,1900-2330|=|=|=~1Wagner~Lebanese
+~Fairouz - Centrale~e~centrale~Via Emilio Cornalia 12~45.4829~9.1973~2~4.2~1937~1200-1500,1900-2300|=|=|=|=|=|=~2Gioia~Lebanese
+~La Meza~e~bovisa~Via Giuseppe Tartini 13~45.5041~9.1757~2~4.7~237~1200-1500,1900-2300|C|1200-1500,1900-2300|=|=|=|=~3Dergano~Lebanese
+~Wadi Milano~e~venezia~Viale Tunisia 16~45.4779~9.2045~3~4.3~346~1200-1500,1900-0200|=|=|=|=|=|1200-1500,1900-2300~1Porta Venezia~Lebanese
+~Darna Ristorante~e~isola~Viale Nazario Sauro 9~45.4917~9.1955~2~4.8~377~1030-1600,1900-2300|=|=|=|=|=|C~35Zara~Lebanese
+~Ristorante di Pesce Milano Buon prezzo - Settembrini 18~e~centrale~Via Luigi Settembrini 18~45.4812~9.2056~2~4.7~2792~1200-1500,1900-2300|=|=|=|=|1900-2300|=~1Lima~Pizzeria
+~Marea Seafood & Beverage~d~duomo~Via Papa Gregorio XIV 16~45.4592~9.1826~3~4.8~543~1800-0000|=|=|=|=|=|C~4Vetra~Lounge bar
+~Pescetto~e~garibaldi~Via Alessandro Volta 9~45.4795~9.1835~2~4.4~2875~C|1830-2230|=|=|=|1230-1430,1830-2230|1230-1530~2Moscova~Seafood
+~Antica Osteria del Mare | Cucina di mare sarda e mediterranea~e~navigli~Via Ascanio Sforza 105~45.4383~9.1751~3~4.5~1033~1930-2230|1230-1430,1930-2230|=|=|=|=|C~2Famagosta~Seafood
+~Beef Club Milano - Miglior Ristorante di Carne alla Brace della città~e~sempione~Via Giovanni Boccaccio 15~45.4676~9.1725~3~4.7~1234~1200-1430,1900-2330|=|=|=|1200-1430,1900-0000|=|1200-1430,1900-2330~12Cadorna~Restaurant
+~Viro Steak Restaurant Milano~e~venezia~Via Lodovico Settala 2~45.4764~9.2028~2~4.8~649~1230-1500,1900-2300|=|=|=|=|=|=~1Porta Venezia~Steakhouse
+~PitBeef Milano~e~isola~Via Gaetano de Castillia 7~45.4855~9.1895~3~4.9~842~C|1230-1430,1930-2230|=|=|=|=|C~5Isola~Steakhouse
+~Nusr-Et Steakhouse Milan~e~brera~Piazzetta M. Bossi 2~45.468~9.1875~4~4.3~198~1145-2300|=|=|=|=|=|=~1Cordusio~Steakhouse
+~Le Brasier - Miglior steakhouse e BBQ di Milano~e~cittastudi~Viale Abruzzi 23~45.4774~9.2169~3~4.7~1545~1900-0030|=|=|=|=|1200-1500,1900-0030|=~1Lima~Steakhouse
+~Street Smash Burgers~c~garibaldi~Corso Garibaldi 119~45.4795~9.1859~2~4.7~452~1200-2330|=|=|=|=|=|=~2Moscova~Burgers
+street-smash-burgers-navigli~Street Smash Burgers~c~navigli~Via Edmondo de Amicis 9~45.4572~9.1803~2~4.6~786~1200-2330|=|=|=|=|=|=~4Vetra~Burgers
+street-smash-burgers-duomo~Street Smash Burgers~c~duomo~Corso Magenta 34~45.4661~9.1764~2~4.7~772~1200-0200|=|=|=|=|=|=~12Cadorna~Burgers
+~Chunk Milano~d~navigli~Ripa di Porta Ticinese 55~45.451~9.1722~2~4.9~3277~1500-0000|=|1200-0000|=|1200-0100|=|1200-0000~2Porta Genova~Cocktail bar
+~Doppio Malto Milano Duomo~b~duomo~Via Dogana 1~45.4632~9.1898~2~4.5~5796~1130-0000|=|=|=|1130-0100|=|1130-0000~13Duomo~Brewpub
+~GIARDÍ~e~centrale~Via Napo Torriani 3~45.4807~9.2034~2~4.6~702~1030-1500,1830-2130|=|=|=|=|1000-1500,1830-2130|1000-1600~3Repubblica~Vegan
+~Ristoro Vegano~e~navigli~Ripa di Porta Ticinese 77~45.45~9.1684~2~4.9~65~C|1230-1430|=|=|=|=|=~2Porta Genova~Vegan
+~Linfa da Visionnaire | Gluten-Free & Plant-Based~e~brera~Piazza Cavour 3~45.4729~9.1947~3~4.6~779~1200-1500,1800-2300|=|=|=|1200-1500,1800-2330|=|C~3Turati~Vegan
+~La Colubrina~e~venezia~Via Felice Casati 5~45.4774~9.2064~3~4.5~1445~C|1930-2300|=|=|=|1230-1430,1930-2300|=~1Porta Venezia~Vegan
+~Brolo Milano - Orto con cucina~e~venezia~Via Melzo 19~45.4751~9.2078~2~4.2~807~0800-0100|=|=|=|0800-0200|=|0800-0100~1Porta Venezia~Vegetarian
+~VegAmore~c~romana~Via Crema 12~45.4498~9.2024~2~4.5~868~1030-2300|=|=|=|=|=|1030-1530~3Porta Romana~Deli
+~Altatto~e~tortona~Via Bonaventura Zumbini 39~45.4404~9.1554~4~4.7~439~1900-2300|=|=|=|=|C|=~~Vegetarian
+~il Lughino, Come Natura insegna - Milano~e~brera~Via Solferino 12~45.4744~9.1873~2~4.5~548~1130-2300|=|=|=|=|=|=~2Moscova~Vegan
+~Osteria Pugliese - Gatto Bianco | Milano~e~romana~Via Friuli 75~45.4568~9.2152~3~4.3~401~1200-1430,1930-2300|=|=|=|=|=|=~~Osteria
+~Da Nonna | Ristorante pugliese a Milano~e~sansiro~Via Mosè Bianchi 103~45.4762~9.1441~2~4.6~389~0800-2300|=|=|=|=|=|=~15Lotto~Italian
+~PugliaMia Milano Braceria~e~duomo~Via Urbano III 3~45.4592~9.1815~2~4.9~366~1200-1530,1830-0000|=|=|=|=|=|=~4Vetra~Restaurant
+~Osteria San Giovanni - Ristorante Pugliese~e~bicocca~Viale Monza 256~45.5156~9.2258~3~4.5~233~1200-1500,1900-2330|=|=|=|=|1200-1500,1900-0000|1200-1600,1900-2300~1Villa San Giovanni~Osteria
+~Trattoria Pugliese Acquasala~e~navigli~Ripa di Porta Ticinese 71~45.4503~9.1689~2~4.3~1006~C|1200-1500,1900-0000|=|=|=|=|1200-1500~2Porta Genova~Trattoria
+~Trattoria Don Ciccio Milano~e~sarpi~Via Losanna 11~45.4857~9.1628~3~4.8~170~C|1200-1430,1930-2330|=|=|=|=|=~5Gerusalemme~Trattoria
+~L'Amùri Sicilian Restaurant Milano~e~romana~Via Maestri Campionesi 30~45.456~9.2161~3~4.6~508~1930-2300|1230-1500,1930-2300|=|=|=|=|1230-1500~~Italian
+~Bottega Sicula~e~romana~Via Mantova 5~45.4486~9.2068~4~4.5~1468~1230-1430,1930-2330|=|=|=|=|=|=~3Lodi Tibb~Seafood
+~SlowSud Isola~e~isola~Via Garigliano 8~45.4881~9.1899~2~4.7~1576~1230-1500,1930-2300|=|=|=|=|1230-1600,1930-2300|=~5Isola~Italian
+~Restaurant Sicilia~e~isola~Via Benefattori dell'Ospedale 24~45.5061~9.1885~3~4.8~168~1200-1430,2000-2200|=|=|=|=|=|C~3Dergano~Italian
+~Trattoria Toscana a Milano - K2~e~venezia~Via Antonio Stoppani 15~45.4749~9.2141~2~4.2~515~C|1200-1430,1900-2230|=|=|1200-1430,1900-2300|=|1200-1500~1Lima~Trattoria
+~Trattoria Al Toscanaccio~e~sarpi~Via Privata Chieti 1~45.4846~9.1628~2~4.4~707~1200-1500,1900-2230|=|=|=|1200-1500,1900-2300|=|=~5Gerusalemme~Trattoria
+~ToscaNino Milano~d~venezia~Via Melzo~45.4741~9.2087~3~4.3~915~1800-0000|=|=|=|=|=|C~1Porta Venezia~Cocktail bar
+~Trattoria Mibabbo~e~romana~Via Lazzaro Papi angolo~45.4501~9.2065~3~4.5~1805~1200-1500,1930-2300|=|=|=|=|1930-2300|C~3Porta Romana~Trattoria
+~Ristorante Sa Mesa~e~bovisa~Via Giuseppe Arimondi~45.4902~9.1549~3~4.4~1119~1200-1430,1900-2300|C|1900-2300|1200-1430,1900-2300|=|=|1200-1500,1900-2300~~Seafood
+~Ristorante Sardo Milano - Barbagia~e~sarpi~Via Ruggero di Lauria 18~45.4864~9.1565~2~4.3~551~1200-1430|1200-1430,1930-2300|=|=|=|=|C~~Pizzeria
+~Osteria Caneva~e~sarpi~Via Cenisio 70~45.488~9.1595~3~4.6~945~C|1200-1500,1900-2300|=|=|=|=|1200-1500~5Gerusalemme~Seafood
+~L'Isola del Tesoro~e~duomo~Via Ludovico da Viadana 2~45.4587~9.1907~3~4.4~2765~C|1200-1500,1900-2330|=|=|=|=|=~3Missori~Pizzeria
+~Gallura~e~tortona~Via Vittoria Colonna 50~45.4672~9.1484~4~4.5~939~1900-2300|1200-1430,1900-2300|=|=|=|=|C~1De Angeli~Italian
+~Cacio & Pepe Restaurant~e~navigli~V.le Gian Galeazzo 3~45.4529~9.1819~3~4.4~1988~1230-1500,1945-2300|=|=|=|=|=|C~4Vetra~Italian
+~Cacio & Pepe Bottega Romana~e~romana~Via Augusto Anfossi 2~45.4605~9.2085~2~4.2~680~1230-1430,1930-2300|=|=|=|=|=|C~~Italian
+~Pizzeria Navigli Pizza Tua Qui Milano~e~navigli~Via Ascanio Sforza 29~45.4498~9.178~2~4.8~620~1530-2330|C|1530-2330|=|1600-0100|=|1530-2330~~Pizzeria
+~Sciué Navigli~e~navigli~Alzaia Naviglio Pavese 6~45.4515~9.1777~2~4.7~3364~1545-2345|=|=|=|=|1200-2345|=~2Porta Genova~Pizzeria
+~Assaje Navigli~e~navigli~Via Casale 5~45.4518~9.1707~2~4.7~850~1200-1600,1730-0000|=|=|=|1200-0030|=|=~2Porta Genova~Pizzeria
+~I Capatosta Navigli~e~navigli~Alzaia Naviglio Grande 56~45.451~9.1706~2~4.2~2456~1200-2345|=|=|=|=|=|=~2Porta Genova~Pizzeria
+~Berberè Pizzeria Navigli~e~navigli~Via Vigevano 8~45.453~9.1743~2~4.4~2192~1200-1430,1830-2300|=|=|=|=|=|=~2Porta Genova~Pizzeria
+~Venice Ristorante Pizzeria~e~venezia~Corso Buenos Aires 2~45.475~9.2059~2~4.5~1447~1200-2230|=|=|=|=|=|C~1Porta Venezia~Pizzeria
+~Pizzeria Tarantè Napoli – Milano~e~venezia~Via Marcello Malpighi 8~45.4746~9.2078~2~4.5~234~1200-0000|=|=|=|=|=|=~1Porta Venezia~Pizzeria
+~Maruzzella~e~venezia~Piazza Guglielmo Oberdan 3~45.4753~9.2049~2~4.4~4318~C|1200-1430,1900-2330|=|=|=|=|=~1Porta Venezia~Pizzeria
+~Pinkerì Porta Venezia~e~venezia~Via Lazzaro Palazzi 2~45.4765~9.2062~2~4.7~119~1800-2330|=|=|=|=|1730-2330|=~1Porta Venezia~Pizzeria
+~Pizzeria Padre Pio~c~venezia~Via Antonio Stoppani 14~45.4751~9.2132~1~4.5~146~1000-2330|=|1000-0200|=|=|=|1000-2330~1Porta Venezia~Pizzeria
+~Pizzalandia~c~cittastudi~Via Antonio Bazzini 1~45.4811~9.225~1~4.3~246~1000-2200|=|=|=|=|=|C~2Piola~Pizzeria
+~Al Magna Magna Pizzeria~c~cittastudi~Largo Rio de Janeiro &~45.473~9.2241~1~4.3~600~1100-1500,1800-0000|=|=|=|=|=|=~~Pizzeria
+~Strambiosei Trattoria Pizzeria~e~cittastudi~Via Gaetano Strambio 6~45.4733~9.2315~2~4.3~1353~1200-1430,1830-2200|=|=|=|=|C|1200-1500,1800-2230~4Argonne~Pizzeria
+~La Scarpetta~e~cittastudi~Via Alessandro Visconti d'Aragona 22~45.4728~9.2326~2~4.4~237~1200-1500,1830-0000|=|=|=|=|=|1200-1500~4Argonne~Restaurant
+~Il Tegamino~e~venezia~Via Bartolomeo Eustachi 30~45.4769~9.215~2~4.2~682~C|1200-1430,1900-2300|=|=|1200-1430,1900-2330|=|1830-2300~1Lima~Pizzeria
+~Fradiavolo Pizzeria - Milano Sempione~e~sempione~Via Agostino Bertani 2~45.4772~9.1744~2~4.4~2296~1200-1500,1900-2300|=|=|=|=|=|=~~Pizzeria
+~Filante - Sempione~e~sarpi~Corso Sempione 71~45.485~9.1593~2~4.7~406~1200-1430,1900-2300|=|=|=|=|=|=~5Domodossola~Pizzeria
+~PizzArt da gimmy~e~lodi~C.so Lodi 72~45.4437~9.2162~2~4.5~1019~C|1200-1500,1830-0000|=|=|=|=|=~3Brenta~Pizzeria
+~Restaurant and Pizzeria da Mimmo~e~lodi~C.so Lodi 107~45.4418~9.2208~2~4.0~1208~1200-1500,1900-2330|=|=|=|=|=|1900-2330~3Brenta~Pizzeria
+~Pizzeria Da Romano Milano~e~romana~C.so Lodi 12~45.4503~9.205~2~4.2~319~1830-2330|1200-1430,1830-2330|=|=|=|=|1830-2330~3Porta Romana~Pizzeria
+~Pizzeria del Sole~e~santagiulia~Via Carlo Marochetti 10~45.4391~9.2252~2~4.3~2025~1200-1430,1830-0000|=|C|1200-1430,1830-0000|=|=|=~3Corvetto~Pizzeria
+~Break Time~e~lodi~C.so Lodi 112~45.441~9.2216~2~4.1~158~1030-1500,1745-2300|=|=|=|=|=|=~3Corvetto~Pizzeria
+~Elsa~e~bicocca~Piazzale Egeo 9/A~45.5145~9.2145~2~4.1~368~0700-2300|=|=|=|=|=|1900-2230~~Pizzeria
+~Pizzeria Grume Milano~e~bicocca~Viale Fulvio Testi 186~45.5149~9.2059~2~4.5~633~1200-1445,1900-2230|1200-1430|1200-1445,1900-2300|1200-1445,1900-2230|1200-1445,1900-2300|1900-2300|=~5Bicocca~Pizzeria
+~Taskeria Bicocca~c~bicocca~Via Piero Caldirola 5~45.5143~9.2121~1~5.0~190~1130-1600|=|=|=|=|C|=~5Bicocca~Pizzeria
+~Bicocca Turkish Kebap & Pizza~e~bicocca~Viale Sarca 198~45.5177~9.2101~2~4.0~394~1100-0100|=|=|=|=|=|1800-0000~5Bicocca~Pizzeria
+~SottoSopra~e~bicocca~Viale Piero e Alberto Pirelli 16~45.5156~9.2121~2~4.3~1596~C|1200-1445,1900-2245|=|=|=|=|=~5Bicocca~Seafood
+~Pizzeria Vincenzo Capuano San Siro Milano | Giardino~e~sansiro~Piazzale dello Sport 6~45.4813~9.1293~2~4.2~438~1200-1500,1900-2330|=|=|=|1200-1500,1900-0000|=|1200-1500,1900-2330~~Pizzeria
+~Ciao San Siro~e~sansiro~Via Alfonso Capecelatro 81~45.4745~9.125~2~4.4~325~1145-1400|1145-1430,1730-2030|=|=|=|=|C~~Pizzeria
+~Ristorante La Barchetta~e~sansiro~Via Federico Tesio 15~45.4789~9.1173~2~4.2~2486~1200-1430,1900-2300|=|=|=|=|=|=~~Pizzeria
+~Doppio Malto Sport Pub San Siro~b~sansiro~Piazzale Angelo Moratti~45.4769~9.1241~2~4.6~347~1000-2300|=|=|=|=|=|=~~Pub
+~Pizza al taglio - Sapò Milano~c~brera~Via Cusani 10~45.4689~9.1838~1~4.9~625~1200-1530|1200-2000|=|=|=|=|=~1Cairoli~Pizzeria
+~Slice Milano~e~sempione~Via Giovanni Gherardini 2~45.4768~9.17~2~4.8~1928~1130-2300|=|=|=|=|1130-0000|1130-2300~~Pizzeria
+~AL PIZZINO - Pinsa Romana, Pizza al taglio, Arancineria~c~isola~Via Pietro Borsieri 24~45.4885~9.1891~1~4.7~354~1700-0130|=|=|=|1700-0230|1200-0300|1200-0100~5Isola~Pizzeria
+~Roma in Teglia~c~sansiro~Viale Daniele Ranzoni 1~45.4673~9.1457~1~4.6~179~1100-2230|1100-2200|=|=|=|=|=~1De Angeli~Pizzeria
+~Sa Pizzedda - Porta Venezia~c~venezia~Via Lazzaro Palazzi 10~45.4773~9.2041~1~4.7~255~1130-2200|=|=|=|1130-2300|=|1130-2200~1Porta Venezia~Pizzeria
+~Pizzeria di Porta Garibaldi - MILANO~e~garibaldi~Corso Como 6~45.4815~9.1874~2~4.2~3832~1200-1500,1900-0100|=|=|=|1200-1500,1900-0300|1200-0300|1200-0100~25Garibaldi~Pizzeria
+~Il Postino~e~lambrate~Via Edoardo Bassini 41~45.4812~9.2351~2~4.4~1354~C|1200-1430,1900-2230|=|=|=|=|1900-2200~2Lambrate~Pizzeria
+~Pizzeria Mundial~c~lambrate~Piazza Enrico Bottini 2~45.4842~9.236~1~4.0~1980~0700-2100|=|=|=|=|0800-2100|C~2Lambrate~Pizzeria
+~Pizzeria Dallo Zio~e~lambrate~Viale delle Rimembranze di Lambrate 16~45.4822~9.2401~2~4.4~1421~1200-1500,1800-2200|=|C|1200-1500,1800-2200|=|=|1800-2200~2Lambrate~Pizzeria
+~Antica Pizzeria Leone~e~lambrate~Via Giovanni Pacini 60~45.4835~9.2337~2~4.1~192~1000-1500,1730-2300|=|=|=|=|1000-1500,1800-2330|1200-1500,1800-2300~2Lambrate~Pizzeria
+~Bobino Milano~n~navigli~Piazzale Stazione Genova 4~45.4536~9.1698~2~4.2~2468~C|1800-0100|=|1800-0200|1800-0300|=|1830-0100~2Porta Genova~Club
+~Nidaba Theatre - Live Music & Blues Club Milano Navigli~u~navigli~Via Emilio Gola 12~45.449~9.1758~2~4.7~1085~C|=|1940-0200|2000-0200|=|=|C~2Porta Genova~Concert hall
+~Osteria Del Jazz~e~sansiro~Via Filippo Carcano 8~45.4746~9.1478~2~4.3~250~C|1730-0200|=|=|=|=|C~1Amendola~Osteria
+~Detune~d~venezia~Via Felice Casati 24~45.4791~9.203~2~4.8~158~C|1800-0200|=|=|=|=|C~3Repubblica~Bar
+~Bachelite cLab~e~romana~Via Vertoiba 3~45.458~9.2191~2~4.2~857~C|1800-0100|=|=|1800-0200|=|C~~Bistro
+~Jazz Cafè Milano~e~sempione~Corso Sempione 8~45.4773~9.1707~2~4.1~2436~C|1830-0200|=|=|1830-0300|=|1800-0200~~Restaurant
+its-good~It’s good~d~tortona~Ripa di Porta Ticinese 115~45.4485~9.1604~2~4.5~280~C|1700-0200|=|=|=|=|=~~Cocktail bar
+~Leonardo da Vinci Museum of Science and Technology~u~navigli~Via San Vittore 21~45.4629~9.1707~2~4.6~31866~C|0930-1700|=|=|=|0930-1830|=~24Sant'Ambrogio~Museum
+~Museum of Senses Milano~u~garibaldi~Viale Monte Grappa 10~45.481~9.1904~2~4.3~2387~1000-2000|=|=|=|=|0900-2000|=~25Garibaldi~Museum
+~Milan Natural History Museum~u~venezia~Corso Venezia 55~45.4728~9.2024~2~4.5~11562~C|1000-1730|=|=|=|=|=~1Palestro~Museum
+~Modern Art Gallery~u~venezia~Via Palestro 16~45.4728~9.2~2~4.5~3339~C|1000-1630|=|=|=|=|=~1Palestro~Gallery
+~Dep Art Gallery~u~romana~Via Comelico~45.4541~9.2146~2~4.7~149~C|1030-1900|=|=|=|=|C~~Gallery
+~Galleria d'arte contemporanea l'Affiche~u~duomo~Via Nirone 11~45.4645~9.1784~2~4.9~87~1500-2000|1000-2000|=|=|=|=|C~12Cadorna~Gallery
+~Gilda Contemporary Art~u~duomo~Via S. Maurilio 14~45.4624~9.1839~2~4.8~42~C|=|1030-1930|=|=|1030-1830|C~1Cordusio~Gallery
+~Teatro alla Scala~u~duomo~V. Filodrammatici 2~45.4674~9.1896~2~4.7~35417~~1Cordusio~Concert hall
+~Arcimboldi Theater Milan~u~bicocca~Viale dell'Innovazione 20~45.5144~9.2137~2~4.5~18164~C|1000-1900|=|1030-2100|1000-2100|=|1000-2000~5Bicocca~Theatre
+~National Theater CheBanca!~u~tortona~Via Giordano Rota 1~45.4668~9.1542~2~4.5~7788~C|1300-1900|=|=|=|=|C~1Wagner~Theatre
+~Teatro Manzoni~u~brera~Via Alessandro Manzoni 42~45.4713~9.1944~2~4.4~5578~1230-1900|=|=|=|=|=|C~3Montenapoleone~Theatre
+~Teatro Lirico~u~duomo~Via Larga 14~45.4615~9.1918~2~4.5~3536~C|1300-1900|=|=|=|1400-1900|=~3Missori~Theatre
+~Anteo Palazzo del Cinema~u~garibaldi~P.za XXV Aprile 8~45.48~9.1878~2~4.4~6127~1000-2200|=|=|=|=|=|=~2Moscova~Cinema
+~CityLife Anteo~u~sempione~Piazza Tre Torri 1/l~45.4782~9.1553~2~4.4~4376~1230-0100|=|=|=|=|=|=~5Tre Torri~Cinema
+~Orfeo Multisala~u~navigli~Viale Coni Zugna 50~45.4569~9.1696~2~4.4~2317~1430-2130|=|=|=|=|=|=~2Sant'Agostino~Cinema
+~Multisala Eliseo~u~duomo~Via Torino 64~45.4608~9.1827~2~4.2~1470~1430-2130|=|=|=|=|=|=~4Vetra~Cinema
+~Multisala Colosseo~u~romana~Viale Monte Nero 84~45.4617~9.2079~2~4.3~2978~1430-2130|=|=|=|=|=|=~4Tricolore~Cinema
+~Bowling Space Milano~u~sansiro~Via Novara 15~45.4684~9.1278~2~4.5~611~1500-0100|=|=|=|=|1400-0100|=~~Bowling
+~Bowling dei fiori~u~navigli~Via Privata Renzo e Lucia 4~45.4351~9.1706~2~3.9~2771~1530-0100|=|=|=|1500-0200|1400-0300|1400-0100~2Famagosta~Bowling
+~Bowling Milano~u~nolo~Via Francesco Cavezzali~45.4965~9.2292~2~3.9~1052~2000-0100|=|=|C|2000-0100|1500-0200|1100-0100~~Bowling
+~Bela Tusa Trattoria~e~isola~Via Pietro Borsieri 26~45.4886~9.1892~3~4.7~1421~1200-1500,1900-2300|=|=|=|=|1200-2300|=~5Isola~Trattoria
+~Osteria Dal Verme~e~isola~Via Jacopo dal Verme 19~45.4875~9.1883~3~4.2~1075~1200-1500,1900-0000|=|=|=|=|=|1200-1500,1900-2300~5Isola~Osteria
+~Osteria dei Vecchi Sapori~e~isola~Via Carmagnola 3~45.4863~9.1866~3~4.2~1986~1200-1430,1900-2230|=|=|=|=|=|=~25Garibaldi~Osteria
+~Speciale Osteria~e~isola~Via Pastrengo 11~45.4865~9.1867~3~4.8~720~1200-1500,1900-2330|=|=|=|=|=|=~25Garibaldi~Osteria
+~Trattoria da Tomaso~e~isola~Via Gaetano de Castillia 20~45.4856~9.1914~2~4.3~405~1200-1400|=|=|=|=|C|=~5Isola~Trattoria
+~Osteria Zio Nino - NoLo~e~nolo~Via Pietro Marocco 17~45.4904~9.2124~3~4.4~72~C|1200-1430,1900-2300|=|=|=|=|=~1Pasteur~Osteria
+~Osteria della Stazione l'Originale~e~nolo~Via Popoli Uniti 26~45.496~9.2166~3~4.4~751~C|=|1200-1530,1930-2300|=|=|1200-1630,1930-2300|1200-1600~1Rovereto~Osteria
+~Trattoria da Abele~e~nolo~Via Temperanza 5~45.4901~9.2203~3~4.3~744~C|2000-0000|=|=|=|=|=~1Pasteur~Trattoria
+~Taverna dei terroni~e~nolo~Viale Monza 28~45.4903~9.2183~2~4.3~587~1200-1400|1200-1400,2000-2200|=|=|=|=|1200-1400~1Pasteur~Restaurant
+~Osteria della Pasta e Fagioli~e~nolo~Via Giulio e Corrado Venini 54~45.492~9.2162~2~4.2~2182~1200-1500|1200-1500,1900-0000|=|=|=|=|1200-1600,1900-2300~1Pasteur~Osteria
+~Crono~e~cittastudi~Via Giovanni Pascoli 15~45.4747~9.2198~2~4.2~557~1200-1430,1930-2200|=|=|=|1200-1430,1930-2230|1930-2230|C~~Restaurant
+~Osteria La Bistecca~e~cittastudi~Via Paracelso 5~45.4805~9.2166~3~4.4~951~C|1930-2330|1230-1430,1930-2330|=|=|=|=~1Lima~Osteria
+~Do Mish Milano~e~lodi~C.so Lodi 56~45.4449~9.2138~3~4.8~454~1915-0000|=|=|=|1915-0100|=|1915-0000~3Brenta~Restaurant
+~Trapizzino Milano | Corso Lodi~w~romana~C.so Lodi 1~45.4519~9.2031~2~4.2~2029~1200-0000|1000-0000|=|=|1000-0100|=|1000-0000~3Porta Romana~Wine bar
+~Osteria Tajoli di Famiglia Tajoli~e~lodi~Via Brembo 11~45.4446~9.2101~3~4.1~1964~1200-1430,1900-2230|=|=|=|=|1200-1530,1900-2230|=~3Lodi Tibb~Osteria
+~Taverna dei Golosi~e~sempione~Corso Sempione 12~45.4778~9.1701~3~4.2~1659~1200-1500,1900-0000|=|=|=|=|1200-0000|=~~Italian
+~Fresco Trattoria Pizzeria Sempione~e~sempione~Corso Sempione 41~45.481~9.1645~2~4.0~656~1200-1500,1900-2300|=|=|1200-1500,1900-2330|=|=|=~5Domodossola~Trattoria
+~La Posteria di Nonna Papera~e~sempione~Via Giuseppe Piermarini 4~45.4764~9.1706~3~4.4~639~1230-1430,1915-2300|=|=|=|=|1915-2300|C~~Seafood
+~Osteria di Brera~e~brera~Via S. Marco 5~45.4745~9.1876~3~4.4~124~~2Moscova~Osteria
+~Ottocene~w~venezia~Via Giuseppe Sirtori 6~45.4726~9.2084~3~4.8~480~1900-2230|=|=|=|=|=|=~1Porta Venezia~Wine bar
+~Piccola Cucina~e~venezia~Viale Piave 17~45.471~9.2065~3~4.7~325~1230-1430,1930-2230|=|1930-2230|1230-1430,1930-2230|=|1930-2230|C~1Palestro~Italian
+~Rosy e Gabriele 1~e~venezia~Via Giuseppe Sirtori 26~45.4744~9.2077~2~4.4~1944~1200-1430,1900-0100|=|=|=|=|=|=~1Porta Venezia~Italian
+~Osteria Isola~e~isola~Via Spalato 14~45.4884~9.1918~2~4.0~699~1200-1530|1200-1430,1900-2300|=|=|=|=|=~5Isola~Osteria
+~Verve Osteria Conversevole~e~isola~Via Federico Confalonieri 5~45.4866~9.1902~3~4.9~296~C|1900-2300|1200-1500,1900-2300|=|=|1200-1500,1900-2330|1200-1530~5Isola~Osteria
+~Trattoria Pizzeria Toscana Da Silvano dal 1956~e~sempione~Via S. Siro 20~45.4707~9.1528~2~4.3~651~1200-1430|C|1200-1430,1900-2230|=|=|1200-1430,1900-2245|1200-1430,1900-2230~1Buonarroti~Pizzeria
+~Trattoria Da Panciroli~e~navigli~Via Gaudenzio Ferrari 1~45.4564~9.1749~3~4.5~79~1200-1430,1900-2230|=|=|=|=|=|C~4De Amicis~Trattoria
+~Trattoria La Pesa dal 1902~e~sansiro~Via Giovanni Fantoni 26~45.4679~9.1345~3~4.4~3137~1200-1500,1900-0000|=|=|=|=|=|=~~Trattoria
+~SlowSud De Angeli~e~tortona~Via Luigi Sacco 3~45.4661~9.1513~2~4.4~1360~1230-1430,1900-2300|=|=|=|1230-1430,1900-2330|1230-1600,1900-2330|1230-1600,1900-2300~1De Angeli~Italian
+~Trattoria Bovisa~e~bovisa~Via Don Giuseppe Andreoli 27~45.5034~9.1615~2~4.8~61~1150-1500,1900-2300|1900-2300|1150-1500,1830-2300|=|=|=|=~~Trattoria
+~Ma Mi Hostaria Gastronomy~c~bovisa~Via Giuseppe Candiani 122~45.5033~9.1626~2~4.7~215~1200-1500|=|1200-1500,1830-2230|=|=|1830-2230|C~~Deli
+~TRATTORIA TOSCANA DA AVE~e~bovisa~Via Giovanni Battista Varè 32~45.5027~9.1618~2~4.0~284~1200-1445,1900-2145|=|=|=|=|=|C~~Trattoria
+~Chiesa Vecchia~e~bovisa~Via Giovanni Battista Varè 9~45.5005~9.1631~2~4.2~1094~1200-1400,1830-0000|1200-1400,1900-0000|=|=|=|1900-0000|C~~Italian
+~125 Centoventicinque~c~bovisa~Via Giuseppe Candiani 125~45.5031~9.1626~1~4.8~481~0900-1530|=|=|=|=|C|=~~Restaurant
+~Ristorante Vista Duomo~e~duomo~P.za del Duomo 17/A~45.4646~9.1884~2~4.1~1060~1000-0200|=|=|=|=|=|=~13Duomo~Restaurant
+~Pino in Duomo~e~duomo~Via Silvio Pellico 4~45.4651~9.1895~2~3.9~2036~1200-2300|=|=|=|=|=|=~13Duomo~Italian
+~Inno~e~duomo~Piazza Duomo~45.4635~9.1883~4~4.8~81~1830-2330|=|=|=|=|1215-1500,1830-2330|=~13Duomo~Restaurant
+~Osteria da Fortunata - Moscova Milano~e~garibaldi~Via della Moscova 52~45.4778~9.185~2~4.5~4687~1200-0100|=|=|=|=|=|=~2Moscova~Osteria
+~miscusi | pasta fresca - Milano Centrale~e~centrale~Piazza S. Camillo de Lellis~45.4818~9.2033~2~4.4~10457~1130-2300|=|=|=|=|=|=~23Centrale~Vegan
+~Osteria italiana~e~centrale~Via Napo Torriani 22~45.4829~9.2034~2~4.1~4514~1100-2330|=|=|=|=|=|=~23Centrale~Osteria
+~Mamma Rosa Osteria~e~venezia~P.zza Cincinnato 4~45.4797~9.2044~3~4.4~5102~1200-2330|=|=|=|=|=|=~3Repubblica~Seafood
+~Ristorante Da Gigi~e~centrale~Via Mauro Macchi 2~45.4809~9.2038~2~4.3~1313~1200-2300|=|=|=|=|=|=~3Repubblica~Italian
+~Yakito Street Food~e~garibaldi~Via Paolo Sarpi 4~45.4818~9.1806~2~4.8~354~C|1200-2130|=|=|1200-2200|=|1200-2130~5Monumentale~Restaurant
+~Kungfu Bao Sarpi~e~sarpi~Via Alfredo Albertini 8~45.481~9.1725~2~4.8~277~C|1200-1500,1830-2330|=|=|=|1200-1600,1830-2330|=~5Gerusalemme~Asian
+~Ristorante La Bicocca~e~bicocca~Viale Sarca 179~45.5158~9.2085~3~4.6~850~1215-1500,1915-2330|=|=|=|=|1930-2300|C~5Bicocca~Restaurant
+~Calavera Restaurant - Bicocca~e~bicocca~Bicocca Village~45.522~9.2149~2~4.5~586~1200-2230|=|=|=|1200-2300|=|1200-2230~~Restaurant
+~Primevo Ristorante~e~bicocca~Viale Sarca 198~45.5176~9.2105~3~4.8~530~1200-1430,1900-2330|=|=|=|=|=|=~5Bicocca~Restaurant
+~Santa Giulia Pizzeria Con Cucina...~e~santagiulia~Via Francesco Pizzolpasso 1~45.4361~9.2399~2~4.1~215~1130-1500,1830-2300|=|=|=|=|1830-2300|=~~Pizzeria
+~Osteria di Rogoredo~e~santagiulia~Via Monte Palombino 2~45.4313~9.2435~2~4.2~106~1200-1500,1900-2300|=|=|=|=|=|1200-1500~~Osteria
+~Trattoria Giada~c~lodi~C.so Lodi 112~45.441~9.2217~2~4.3~565~1100-1500,1730-2300|=|C|1100-1500,1730-2300|=|1100-2300|=~3Corvetto~Deli
+~Il Delfino - Ristorante Milano zona Lodi~e~lodi~Via Scrivia 5~45.444~9.2142~2~4.4~611~C|1200-1430,1900-2300|=|=|=|=|=~3Brenta~Pizzeria
+~Isola Rooftop Terrace Milano~e~duomo~P.za Cordusio 2~45.4652~9.1867~3~4.1~118~0700-0000|=|=|=|=|=|=~1Cordusio~Italian
+~IL PORTO~e~isola~Via Traù 2~45.4897~9.1903~2~4.8~121~1200-1500|1200-1500,1900-2300|=|=|=|=|=~5Isola~Restaurant
+~I Pupari~e~nolo~Viale Monza 57~45.4924~9.2184~3~4.4~889~C|1100-2330|1100-2300|=|1100-2330|=|=~1Pasteur~Mediterranean
+~Particolare Milano~e~romana~Via Gerolamo Tiraboschi 5~45.4526~9.2083~3~4.6~813~1830-2330|1830-0000|=|=|=|1230-1500,1830-0000|=~3Porta Romana~Restaurant
+~Dü Bistrot | Porta Romana~e~romana~Via Serviliano Lattuada 17~45.4531~9.2056~2~4.8~171~C|1100-1500,1800-0000|=|=|=|=|1800-0000~3Porta Romana~Bistro
+~Lucky Bar~b~isola~Via Antonio Pollaiuolo 5~45.489~9.1874~1~4.6~693~1500-0000|1400-0200|=|=|=|=|1530-0140~5Isola~Pub
+~BOOZ~d~isola~Via Pietro Borsieri 34~45.4896~9.1893~1~4.9~75~C|1700-0200|=|=|=|=|=~5Isola~Bar
+~Frèro Bar~d~cittastudi~Via Donatello 18~45.4802~9.2198~2~4.9~248~C|1730-0100|=|=|=|1730-0200|1730-0100~2Piola~Bar
+~Boccon d.o.c~c~cittastudi~Via Andrea Maria Ampère 58~45.4841~9.2266~1~4.5~95~0700-2100|=|=|=|=|0800-1400|C~2Piola~Bistro
+~Baobar~d~venezia~Via Bartolomeo Eustachi 24~45.476~9.215~2~4.2~1031~1200-1500,1800-0100|=|=|=|1200-1500,1800-0200|1800-0200|1200-0100~1Lima~Bar
+~drinc.different~d~venezia~Via Francesco Hayez~45.4754~9.216~2~4.9~544~1800-0100|=|=|=|1800-0200|=|1800-0100~1Lima~Cocktail bar
+~Birrificio Lambrate Golgi~b~lambrate~Via Camillo Golgi 60~45.4797~9.2345~2~4.4~6548~1200-0200|=|=|=|=|=|C~2Lambrate~Brewpub
+~La taverna di Lambrate~w~lambrate~Via Edoardo Bassini 45~45.4812~9.236~2~4.2~411~1200-0000|=|=|=|1200-0200|=|1600-0000~2Lambrate~Wine bar
+~Il Cappuccino~f~lambrate~Via Edoardo Bassini 43~45.4812~9.2358~1~4.4~272~0600-1900|=|=|=|=|0600-1930|0700-1830~2Lambrate~Café
+~JJ's Corner.~b~lambrate~Via Edoardo Bassini 41~45.4811~9.2353~2~4.1~977~1730-0100|=|=|=|1730-0200|1730-0100|1800-0000~2Lambrate~Pub
+~Lambrettino Bistrot~e~lambrate~Piazza Vigili del Fuoco 14~45.4788~9.2473~2~4.4~149~0600-0000|=|=|=|0600-0200|=|=~~Bistro
+~Agua Sancta~d~garibaldi~Corso Garibaldi 110~45.479~9.1859~2~4.2~571~C|1700-0200|=|=|=|=|=~2Moscova~Cocktail bar
+~Chinese Box~d~garibaldi~Corso Garibaldi 104~45.4784~9.1855~2~4.1~2433~0800-0200|=|=|=|=|=|=~2Moscova~Cocktail bar
+~Good - Time~f~sarpi~Via Paolo Sarpi 50~45.4812~9.1727~2~4.5~140~0700-0200|=|=|=|0700-0300|=|0700-0200~5Gerusalemme~Café
+~Cantina Sarpi 1~w~garibaldi~Via Paolo Sarpi 1~45.4818~9.1808~1~4.3~203~0900-0200|=|=|=|=|=|=~5Monumentale~Wine bar
+~oTTo~e~sarpi~Via Paolo Sarpi 8~45.4819~9.1799~2~4.0~3583~0930-2230|=|=|=|0930-0130|=|0930-2230~5Monumentale~Restaurant
+~Alla Goccia Sarpi~w~sarpi~Via Paolo Sarpi 36~45.4814~9.1754~2~4.4~127~1700-2330|=|=|=|1630-0130|=|1630-2230~5Monumentale~Wine bar
+~Frère Bistrot & Cocktail Bar~d~sarpi~Via Paolo Sarpi 58~45.4811~9.1713~2~4.2~169~C|1830-0100|=|=|1830-0200|=|1830-0100~5Gerusalemme~Cocktail bar
+~Monkey Cocktail Bar~d~centrale~Via Napo Torriani 5~45.4809~9.2035~2~4.5~851~C|1800-0200|=|=|=|=|C~3Repubblica~Cocktail bar
+~Bovisa Urban Garden~e~bovisa~Via Emilio Broglio 3~45.5027~9.1642~2~4.1~791~0900-2300|=|=|=|0900-0000|=|0900-2300~~Bistro
+~Francesino caffè~f~bovisa~Via Antonio Carnevali 116~45.5019~9.1666~1~4.5~579~0630-1930|=|=|=|=|0630-1900|0730-1230~~Café
+~Vineria della Bovisa~w~bovisa~Via Angelo Brofferio 1~45.5026~9.1647~1~4.6~136~1730-2300|=|=|=|1730-0000|=|C~~Wine bar
+~Todo Modo~f~bovisa~Via Don Giuseppe Andreoli 27~45.5034~9.1614~2~4.3~774~0730-2030|=|=|=|=|C|=~~Café
+~Il Bauscia~f~bovisa~Via Giovanni Battista Varè 28~45.5019~9.1623~2~4.3~70~0700-0000|=|=|=|=|=|0700-1400~~Café
+~Rusty2~d~romana~C.so Lodi 8c~45.4505~9.2044~1~4.5~396~1800-0100|=|=|1800-0200|=|=|1800-0100~3Porta Romana~Cocktail bar
+~Il Sole - Bar & Aperitivi~c~romana~Viale Monte Nero 28~45.4554~9.2046~1~4.8~355~0700-0200|=|=|=|=|=|1500-0200~3Porta Romana~Sandwiches
+~Bar la darsena~f~navigli~Corso S. Gottardo 3~45.4517~9.1802~1~4.2~71~0700-2100|=|=|=|=|=|0800-1300~4Vetra~Café
+~La Darsena Bar & Tobacco~f~navigli~Via Vigevano 1~45.4527~9.176~1~4.5~210~1000-0200|=|=|=|=|=|=~2Porta Genova~Café
+~Caffetteria della Darsena - Tabacchi~f~navigli~Viale Gorizia 6~45.4545~9.1732~1~4.2~132~0630-2000|=|=|=|=|=|0730-2000~2Porta Genova~Coffee bar
+~New Luca's Bar Colonne di San Lorenzo~f~navigli~Corso di Porta Ticinese 51~45.4575~9.1811~1~4.7~1619~0900-0200|=|=|=|=|=|1500-0000~4Vetra~Café
+~Todos~d~navigli~Via Edmondo de Amicis 4~45.4578~9.1806~2~4.2~736~0700-0100|0700-0130|0700-0200|=|=|0800-0200|0800-0100~4Vetra~Cocktail bar
+~Rizla~d~navigli~Corso di Porta Ticinese 38~45.4576~9.1808~1~4.5~71~1600-0200|=|=|=|=|=|=~4Vetra~Cocktail bar
+~Isola cafè~b~isola~Via Luigi Porro Lambertenghi 19~45.4892~9.1874~1~4.5~60~0630-0200|=|=|=|=|=|=~5Isola~Pub
+~Caffetteria Morelli~f~isola~Via Pietro Borsieri 29~45.4888~9.1888~1~4.7~200~0630-1930|=|=|=|=|=|C~5Isola~Coffee bar
+~+58~f~nolo~Via Giulio e Corrado Venini 53~45.4909~9.2155~1~4.9~186~0700-1230|0700-1930|=|=|=|=|0730-1900~1Pasteur~Coffee bar
+~It takes a drink~f~nolo~Via Martiri Oscuri~45.4947~9.2183~1~4.7~283~0800-1230,1430-2300|=|=|=|=|=|0800-1230,1630-2300~1Rovereto~Café
+~Pasticceria Fugazza Di Origgi Gianpiero~f~navigli~Via Vigevano 45~45.4531~9.1706~2~4.7~167~0800-2000|C|0800-2000|=|=|=|=~2Porta Genova~Pastry shop
+~La Pagnottella Milano Panetteria Pasticceria dal 1999~f~navigli~Corso Cristoforo Colombo~45.455~9.1729~1~4.5~107~0830-1945|=|=|=|=|=|C~2Porta Genova~Bakery
+~Pasticceria Caravaggio~f~navigli~Via Giuseppe Meda 14~45.4446~9.179~2~4.6~417~C|0700-1930|=|=|=|=|0730-1930~~Pastry shop
+~Pasticceria Spezia~f~navigli~Via Spezia 26~45.4411~9.1721~2~4.5~786~0800-1930|=|=|=|=|=|0800-1900~2Romolo~Pastry shop
+~Na'ranita Milano~f~tortona~Via Eugenio Villoresi 1~45.4487~9.1625~2~4.5~1169~1200-0000|=|=|=|1000-0000|=|=~2Romolo~Gelateria
+~Panificio Antico Forno Milano~f~navigli~Corso S. Gottardo 19~45.4499~9.18~1~4.7~112~0700-1930|=|=|=|=|=|C~~Bakery
+~Il Forno Di Via Pola S.n.c. Di Ometto Gianluca E C.~f~isola~Via Pola 21~45.4892~9.1923~1~4.8~357~0630-1930|=|=|=|=|=|C~5Isola~Bakery
+~Forno Granfior~f~sansiro~Via delle Forze Armate 165~45.461~9.1186~1~4.5~1439~~1Inganni~Bakery
+~L'Antico Forno~f~tortona~Via Ettore Ponti 33~45.4421~9.1552~1~4.5~106~0700-1930|=|=|=|=|0600-1400|C~~Bakery
+~Il Forno di Lambrate~f~lambrate~Via Teodosio 2~45.4829~9.2302~1~4.7~315~0730-1930|=|=|=|=|0730-1630|C~2Lambrate~Bakery
+~Barona Oven~f~tortona~Via Lago di Nemi 25~45.4356~9.1511~1~4.4~719~~~Bakery
+~La Casa della Brioche~f~sansiro~Via Spagnoletto 19~45.4732~9.1444~1~4.3~448~0730-1930|=|=|=|=|0730-1330|C~1Amendola~Bakery
+~Il Negozietto del Gelato~f~navigli~Alzaia Naviglio Pavese 6~45.4517~9.1777~2~4.8~844~1330-2200|=|=|=|1330-2300|=|1330-2200~2Porta Genova~Gelateria
+~GelaCreperia~f~navigli~Ripa di Porta Ticinese 9~45.452~9.1767~2~4.7~920~1030-0100|=|=|=|1030-0130|1030-0200|1030-0100~2Porta Genova~Gelateria
+~LatteNeve~f~navigli~Via Vigevano 27~45.453~9.1728~2~4.5~703~1230-2300|=|=|=|1230-2330|=|1215-2300~2Porta Genova~Gelateria
+~Gelateria Orso Bianco~f~navigli~Via Casale 7~45.4515~9.171~2~4.5~575~1100-0100|=|=|=|=|=|=~2Porta Genova~Gelateria
+~Iconico Gelato Porta Venezia~f~venezia~Corso Buenos Aires 2~45.4752~9.2062~2~4.5~318~1130-0000|=|=|=|1130-0030|=|1130-0000~1Porta Venezia~Gelateria
+~Out of the Box~f~venezia~Via Marcello Malpighi 7~45.4748~9.2074~2~4.2~1373~1200-2300|=|=|=|1200-0000|=|1200-2300~1Porta Venezia~Gelateria
+~Artico Gelateria - Isola~f~isola~Via Luigi Porro Lambertenghi 15~45.4893~9.1867~2~4.5~2598~1200-2300|=|=|=|=|=|=~5Isola~Gelateria
+~Gelato Giusto~f~venezia~Via S. Gregorio 17~45.4785~9.2063~2~4.5~1362~C|1200-2100|=|=|=|=|=~1Lima~Gelateria
+~Gelateria LAB~f~venezia~Via Antonio Stoppani 7~45.4756~9.2127~2~4.6~536~1300-2300|=|=|=|1300-0000|=|1200-0000~1Lima~Gelateria
+~Masayume | Ramen & Izakaya~e~isola~Via Garigliano 6~45.488~9.1897~2~4.7~515~C|1200-1400,1900-2200|=|=|=|=|C~5Isola~Ramen bar
+~Casanori~e~isola~Via Antonio Pollaiuolo 5~45.4888~9.1874~3~4.7~618~1200-1500,1900-2300|=|=|=|1200-1500,1900-0000|=|1200-1500,1900-2300~5Isola~Japanese
+~Minami Milano | Japanese Restaurant~e~isola~Via Valtellina 2~45.4889~9.1824~3~4.9~351~1200-1430,1900-2330|=|=|=|1130-1500,1900-2330|=|=~5Monumentale~Japanese
+~NORI WAY~e~isola~Via Federico Confalonieri~45.4863~9.19~3~4.9~1580~C|1200-1430,1900-0000|=|=|=|=|=~5Isola~Japanese
+~Takumi Milan Isola Ramen & Yakisoba~e~isola~Via Luigi Porro Lambertenghi 24~45.489~9.1877~2~4.5~785~1200-1500,1900-2200|=|=|=|1200-1500,1900-2230|=|=~5Isola~Ramen bar
+~Bomaki Navigli~e~navigli~Alzaia Naviglio Grande 38~45.4515~9.1726~2~4.6~297~1230-1430,1930-2300|=|=|1230-1430,1730-2300|1230-1430,1730-2330|1230-1500,1730-2330|1230-1500,1730-2300~2Porta Genova~Sushi
+~Shinko Milano - Sushi Restaurant~e~tortona~V. Bergognone 31~45.454~9.1641~2~4.8~395~1200-1500,1900-2300|C|1200-1500,1900-2300|=|=|=|=~2Porta Genova~Asian
+~Toyama 3~e~navigli~Via Vigevano 13~45.4528~9.1743~2~4.9~2045~C|1200-1500,1900-2330|=|=|=|=|=~2Porta Genova~Japanese
+~Sushi Kayama Milano Navigli~e~navigli~Corso Cristoforo Colombo 6~45.4544~9.1711~2~4.1~1157~1200-1500,1900-2330|=|=|=|=|=|=~2Porta Genova~Sushi
+~Muu Sushi - Porta Romana~e~romana~V.le Sabotino 24~45.4509~9.2014~2~4.5~857~1130-1500,1830-2330|C|1130-1500,1830-2330|=|=|=|=~3Porta Romana~Sushi
+~Nest Sushi Milano~e~romana~V. Adige 8~45.4485~9.205~3~4.5~211~1915-2330|=|1215-1500,1915-2330|=|=|=|=~3Porta Romana~Sushi
+~Mini Sushi~e~romana~Via Friuli 15~45.4508~9.2103~3~4.9~191~1900-2330|1200-1500,1900-2330|=|=|=|=|1900-2330~3Lodi Tibb~Sushi
+~Bomaki Porta Romana~e~romana~Via Bernardino Corio 8~45.4516~9.2053~3~4.3~938~1230-1430,1930-2300|=|=|=|1230-1430,1930-2330|1230-1500,1930-2330|1230-1500,1930-2300~3Porta Romana~Sushi
+~Izu Milano~e~romana~C.so Lodi 27~45.4493~9.2075~4~4.3~1192~C|1200-1430,1900-2330|=|=|=|=|=~3Lodi Tibb~Japanese
+~Ta-Hua~e~centrale~Via Gustavo Fara 15~45.4833~9.1981~3~4.4~2796~1200-1415,1900-2230|=|=|=|=|=|=~2Gioia~Chinese
+~Jade Garden~e~duomo~Via Palazzo Reale 5~45.4623~9.1928~2~4.3~869~C|1200-1430,1900-2230|=|=|=|=|=~13Duomo~Chinese
+~Yuan Duomo~e~duomo~Via Maurizio Gonzaga 5~45.4616~9.1894~2~4.2~1476~1200-1530,1800-2230|=|=|=|=|=|=~3Missori~Chinese
+~Jinyong Duomo~e~duomo~Via Giuseppe Mazzini 12~45.4624~9.1883~2~4.5~562~1100-2330|=|=|=|=|=|1100-2230~3Missori~Chinese
+~JinYong Ticinese~e~duomo~Corso di Porta Ticinese 6~45.4597~9.181~2~4.8~442~C|1200-1500,1830-2330|=|=|=|=|1200-1500,1830-2300~4De Amicis~Chinese
+~Dim Sum~e~venezia~Via Nino Bixio 29~45.4724~9.2109~3~4.3~584~C|1200-1430,1900-2330|=|=|=|=|=~1Porta Venezia~Chinese
+~Dream Poke~e~duomo~Via Falcone 7~45.4624~9.1876~2~4.6~616~1100-2230|1100-2300|=|=|=|=|1100-2200~3Missori~Vegan
+~Poke House - Nirone~c~duomo~Via Nirone 5~45.4654~9.1782~2~4.5~336~1130-2200|=|=|=|=|=|=~12Cadorna~Street food
+~Poke House - Turati~c~brera~V. Filippo Turati 3~45.4731~9.1948~2~4.5~222~1130-2200|=|=|=|=|=|=~3Turati~Street food
+~I Love Poke - Piazza Liberty~e~duomo~Galleria de Cristoforis~45.4659~9.1949~2~4.4~45~1100-2200|=|=|=|=|=|=~14San Babila~Restaurant
+~Poke House - Isola~c~isola~Via Gaetano de Castillia 24~45.4857~9.1922~2~4.3~1773~1130-2230|=|=|=|=|=|=~5Isola~Street food
+~Warsa Restaurant~e~venezia~Via Melzo 16~45.4736~9.2095~3~4.4~1527~1900-0000|1200-1500,1900-0000|1900-0000|1200-1500,1900-0000|=|=|=~1Porta Venezia~Vegetarian
+~Savana Ristorante Eritreo~e~sarpi~Via Luigi Canonica 45~45.4789~9.1738~2~4.6~1281~C|1900-2240|=|=|=|1215-1445,1900-2240|=~~African
+~Injera~e~venezia~Via Lazzaro Palazzi 9~45.4766~9.2048~2~4.4~974~1130-2300|=|=|=|=|=|=~1Porta Venezia~Restaurant
+~Ristorante Africa~e~venezia~Via Lazzaro Palazzi 9~45.4768~9.2049~2~4.3~611~1100-2300|=|=|=|=|=|=~1Porta Venezia~Restaurant
+~Abissinia~e~romana~Viale Molise 47~45.4557~9.2237~2~4.7~363~1230-1530,1930-2330|=|=|=|=|=|=~~Restaurant
+~Taverna Greca Mykonos~e~nolo~Via Tofane 5~45.5034~9.2208~3~4.5~3220~2000-2230|=|=|=|=|=|1230-1400,2000-2230~1Turro~Greek
+~Ristorante Greco , Casa Greca Pita Gyros~e~sansiro~Via Caccialepori 3~45.4674~9.1439~2~4.7~481~C|1200-1500,1730-2230|=|=|=|=|=~1Gambara~Greek
+~Vero Sapore Greco - Milano (Duomo) - La Cucina Greca a Milano! Speciale pita gyros!~e~duomo~Via delle Ore 2~45.4629~9.1933~2~4.4~1865~1200-1415|=|1200-1415,1900-2200|=|1200-1415,1900-2215|1200-1500,1900-2215|C~13Duomo~Greek
+~Isola Greca~e~garibaldi~Viale Monte Grappa 18~45.481~9.1888~3~4.4~237~1200-1500,1900-0000|=|=|=|=|=|1200-1500~25Garibaldi~Greek
+~MIRA CUCINA GRECA~e~nolo~Viale Monza 119~45.4983~9.2202~2~4.6~112~1800-0000|1100-1500,1800-0000|=|=|1100-1500,1800-0400|1100-0400|1100-0000~1Rovereto~Greek
+~Albufera~e~centrale~Via Luigi Settembrini 26~45.4819~9.2062~3~4.5~2714~1900-0000|=|=|=|=|1230-1500,1900-0000|=~1Lima~Spanish
+~Tapa~e~romana~Via Francesco Burlamacchi 7~45.4512~9.206~2~4.0~1561~C|1800-0200|=|=|=|=|=~3Porta Romana~Spanish
+~Tapas de Pescado~e~romana~V. Gaetana Agnesi 2~45.4504~9.201~3~4.5~686~C|1900-0000|=|=|=|=|1230-1430,1900-0000~3Porta Romana~Seafood
+~Llevataps~e~navigli~Via Ariberto 31~45.4599~9.1715~3~4.2~743~1230-1430,1900-0000|=|=|=|=|1900-0000|C~2Sant'Agostino~Spanish
+~Oveja Negra Milano - Ristorante Spagnolo di Tapas e Paella/Fideuà~e~cittastudi~Via Ortica 8~45.4709~9.2427~3~4.6~287~C|=|1930-2230|=|1930-2300|=|1230-1500,1930-2230~~Spanish
+~Ristorante Mamma Africa chef~e~centrale~Via Giulio e Corrado Venini 14~45.4871~9.2118~3~4.7~542~1200-2230|=|=|=|=|=|=~2Caiazzo~Restaurant
+~Corno d'Africa~e~romana~Via Cadibona 3~45.4537~9.2248~2~4.8~191~1000-2300|C|1030-2300|=|=|=|=~~Restaurant
+~URUS sapori d'africa restaurant and lounge~e~venezia~Via Panfilo Castaldi 25~45.4768~9.203~2~4.1~108~1200-0000|=|=|=|1200-0300|=|1200-0000~1Porta Venezia~Restaurant
+~Risotteria Melotti Milano~e~navigli~Via Privata Sartirana 1~45.4531~9.1711~2~4.7~715~1100-1500,1800-2230|=|=|=|1100-2230|=|=~2Porta Genova~Italian
+~Risoelatte Duomo~e~duomo~Via Manfredo Camperio 6~45.4664~9.1833~3~4.5~3475~1200-2330|=|=|=|=|=|=~1Cairoli~Italian
+~Osteria Conchetta~e~navigli~Via Conchetta 8~45.4466~9.1786~3~4.5~2832~1900-2300|=|=|=|=|1200-1430,1930-2300|1200-1430,1930-2230~~Osteria
+~Casa Fontana - 23 Risotti~e~isola~Piazza Carbonari 5~45.4938~9.1986~3~4.5~824~C|2000-2200|1245-1400,2000-2200|=|=|1245-1400,1930-2200|1230-1400,2000-2130~5Marche~Restaurant
+~Al Garghet~e~lodi~Via Selvanesco 36~45.4199~9.1929~3~4.5~7316~C|1900-0000|=|=|=|1200-1600,1900-0000|=~~Italian
+~Anima Milano | Enrico Bartolini~e~garibaldi~Via Gaspare Rosales 4~45.4813~9.1885~4~4.8~147~C|1230-1430,1930-2230|=|=|=|=|C~25Garibaldi~Fine dining
+~Sadler Restaurant~e~brera~Via dell'Annunciata 14~45.4727~9.1925~4~4.6~739~1230-1430,1930-2230|=|=|=|=|=|1230-1430~3Montenapoleone~Fine dining
+~Gloria Osteria Milano~e~brera~Via Tivoli 3~45.4718~9.1834~3~4.8~12489~1200-1430,1830-2215|=|=|1200-1430,1830-2245|=|1200-1445,1830-2245|1200-1445,1830-2215~2Lanza~Osteria
+~SENSORIUM | Experiential Dining~e~duomo~Via Crocefisso 2~45.4572~9.187~4~4.8~424~C|=|2000-0000|=|=|=|C~4Santa Sofia~Fine dining
+~Milano Bistrot~f~venezia~Via Carlo Pisacane 57~45.4738~9.211~3~4.6~402~0800-2100|=|=|=|0800-2300|1800-2300|C~1Porta Venezia~Breakfast spot
+~Bistrò~e~duomo~Corso Magenta 9~45.4656~9.1798~2~4.2~1894~C|1100-2300|=|=|=|=|1100-1600~1Cairoli~Bistro
+~Bistrot Milano~c~cittastudi~Via Giuseppe Compagnoni 10~45.4643~9.2219~1~4.1~113~0700-2000|=|=|=|=|0700-1630|C~~Bistro
+~L'immagine Bistrot Ristorante~e~bovisa~Via Varesina 61~45.4972~9.1456~3~4.8~3278~1730-2230|=|=|=|=|=|C~~Bistro
+~Qualunquecosa Bistrot Milano~f~navigli~Via Cesare Correnti 28~45.4593~9.1784~2~4.9~57~C|0700-2100|=|=|=|0830-2100|0830-1530~4De Amicis~Coffee bar
+~Rubacuori Restaurant~e~venezia~Château Monfort~45.4683~9.2074~2~4.6~368~1230-1400,1930-2200|=|=|=|=|=|=~4Tricolore~Italian
+~Osteria delle Corti~e~sarpi~Via Giovanni Battista Fauchè 11~45.4848~9.1651~3~4.2~1602~0930-2330|=|=|=|=|0900-2330|0930-2330~5Gerusalemme~Seafood
+~Ristorante Galleria~e~duomo~Galleria Vittorio Emanuele II 75~45.4661~9.1899~3~4.5~6698~1100-0000|=|=|=|=|=|=~13Duomo~Italian
+~Al Fresco~e~tortona~Via Savona 50~45.4541~9.1631~3~4.2~2251~1230-1500,1930-0000|=|=|=|=|=|=~4California~Italian
+~Il Fortino Milano~e~romana~V.le Bligny 44~45.4508~9.1925~3~4.4~2043~1900-2330|=|=|=|=|1200-1530,1900-2330|=~3Crocetta~Italian
+~La Cantina del Mangia~e~duomo~Via Flavio Baracchini 9~45.4614~9.1912~2~4.0~439~1130-1430|=|=|=|=|C|=~3Missori~Restaurant
+~Trattoria La Rava e La Fava~e~sarpi~Via Principe Eugenio 28~45.4899~9.1651~2~4.1~1877~1130-1500,1900-2330|=|=|=|=|=|=~5Cenisio~Trattoria
+~Un'Altra Pasta~e~duomo~Via Bergamini 5~45.4619~9.1941~2~4.6~2516~1200-1530,1830-2230|=|=|=|=|1200-1600,1830-2230|=~4Sforza-Policlinico~Pizzeria
+~Vivá~e~centrale~Via Alessandro Tadino 36~45.4803~9.209~2~4.6~1126~1130-1500,1900-2230|=|=|=|=|=|C~1Lima~Italian
+~Royal Duomo Turkish Kebap Pizza Grill Bar&Cocktail~d~duomo~Via Torino 50~45.4611~9.1845~2~4.7~1053~1100-0300|=|=|=|=|=|=~3Missori~Cocktail bar
+~Kral Kebap Pizza~c~nolo~Via Andrea Maria Ampère 123~45.4886~9.2262~1~5.0~628~1100-2300|=|=|=|1100-0000|=|1130-2300~1Pasteur~Kebab
+~Casa Doner Kebab & Pizza~e~duomo~Corso Monforte 18~45.4669~9.2004~2~4.8~345~1100-2200|=|=|=|=|=|=~14San Babila~Turkish
+istanbul-turkish-kebap~İSTANBUL Turkish Kebap~c~sarpi~V. Piero della Francesca 24~45.4831~9.1654~1~4.8~1513~1100-2300|=|=|=|=|=|=~5Gerusalemme~Turkish
+~NAZAR TURKISH PIZZA KEBAP~c~romana~V.le Bligny 44~45.4508~9.1928~1~4.9~130~1100-0200|=|=|=|=|=|C~3Crocetta~Kebab
+~La Piadineria~c~isola~Via Alessandro Paoli 2~45.4853~9.1956~2~4.5~91~1100-2100|=|=|=|=|1100-1500|C~2Gioia~Street food
+la-piadineria-duomo~La Piadineria~c~duomo~Via dell'Unione 4~45.4624~9.187~1~3.9~1066~1100-2130|=|=|=|=|=|=~3Missori~Street food
+la-piadineria-romana~La Piadineria~c~romana~C.so Lodi 11~45.4509~9.2049~2~4.1~126~1130-2230|=|=|=|=|=|=~3Porta Romana~Street food
+~Panzerotti Luini~f~duomo~Via Santa Radegonda 16~45.4658~9.1916~1~4.5~17238~1000-2000|=|=|=|=|=|C~13Duomo~Bakery
+~Il Panzerotto da Ettore~c~navigli~Ripa di Porta Ticinese 13~45.4519~9.1763~1~4.7~319~C|1700-0200|=|=|=|1200-0200|=~2Porta Genova~Restaurant
+~Panzer~c~venezia~Via Rosolino Pilo 9~45.4736~9.2124~2~4.7~289~1145-0400|=|=|=|=|=|=~1Porta Venezia~Street food
+~PUSANÉ squisitamente pugliese~c~romana~Via Orti 7~45.455~9.1993~1~4.7~474~1100-1445,1730-2300|1100-1430,1730-2300|=|=|=|=|1730-2300~3Crocetta~Street food
+~I Love Panzerotti~c~isola~Via Jacopo dal Verme 14~45.4872~9.1883~1~4.9~434~0900-1530|0000-2300|1200-2300|1200-1530,1930-2300|1200-0200|1200-0300|C~5Isola~Italian
+~Focaccerie Genovesi Milano~f~venezia~Via Plinio 5~45.4797~9.2118~1~4.8~683~1030-1430|1030-2000|=|=|1030-1930|1030-2000|C~1Lima~Bakery
+~Focacceria Cecino~c~romana~Via Alfonso Lamarmora 22~45.4566~9.1996~1~4.9~343~1200-2000|=|=|=|=|1200-1600|C~3Crocetta~Vegan
+~All'Antico Vinaio~c~duomo~Via Lupetta 12~45.4613~9.1864~2~4.5~7412~1000-2200|=|=|=|=|=|=~3Missori~Sandwiches
+~La Focacceria~e~sempione~Piazzale Luigi Cadorna 10~45.4686~9.1761~2~4.0~824~0700-2200|=|=|=|=|0800-2200|0900-2100~12Cadorna~Italian
+la-focacceria-brera~La Focacceria~c~brera~Via Cusani 13~45.4686~9.1837~1~4.3~272~0730-1900|=|0730-2000|=|=|0830-2000|0900-2000~1Cairoli~Restaurant
+~Street food Betlemme~e~venezia~Via Panfilo Castaldi 40~45.4756~9.2052~2~4.5~838~1200-0030|=|=|=|1200-0100|=|1200-0000~1Porta Venezia~Middle Eastern
+~Mama Eat Milano Missori~e~duomo~Via Zebedia 9~45.4607~9.1872~2~4.7~4469~1100-0000|=|=|=|=|=|=~3Missori~Restaurant
+~Cose Nostre~c~navigli~Via della Chiesa Rossa 71~45.4294~9.1717~1~4.4~3510~0730-0000|=|=|=|=|=|=~2Abbiategrasso~Italian
+~A'Vucciria~c~navigli~Viale Gorizia 32A~45.4522~9.1776~1~3.9~1611~1030-0145|=|=|=|1030-0345|1030-0445|1030-0145~2Porta Genova~Deli
+~Sfrigola Milano~c~navigli~Corso di Porta Ticinese 76~45.4547~9.1802~1~4.7~73~~4Vetra~Restaurant
+~Le Delizie Della Sicilia~f~lambrate~Piazza Vigili del Fuoco 13~45.4792~9.2471~2~4.2~767~0630-2100|C|0630-2100|=|=|=|0700-2100~~Pastry shop
+~Pescheria Spadari~e~duomo~Via Santa Maria Valle 2A~45.4604~9.1838~3~4.3~619~0900-2300|=|=|=|=|=|1100-1700~3Missori~Seafood
+~La Chiatta~e~navigli~Via Casale 8~45.4513~9.1709~2~4.6~554~1700-0000|=|=|=|1200-0000|1200-0030|1200-0000~2Porta Genova~Seafood
+~Osteria da Zio Ninì~e~bovisa~Via Tibullo 10~45.4974~9.1334~2~4.5~5609~C|1200-1500,1900-2330|=|=|=|=|1200-1500~~Seafood
+~Dal Gallo~e~sansiro~Via Rubens 9~45.467~9.1449~2~4.9~45~0900-2100|=|=|=|=|=|0900-1430~1Gambara~Restaurant
+allantico-vinaio~All’Antico Vinaio~c~centrale~Piazza Luigi di Savoia~45.486~9.2062~2~4.4~2123~1000-2200|=|=|=|=|=|=~2Caiazzo~Sandwiches
+~Cesarino~c~duomo~Via Pattari 2~45.4644~9.1935~1~4.8~3220~1000-0000|=|=|=|=|=|=~13Duomo~Sandwiches
+allantico-vinaio-duomo~All’Antico Vinaio~c~duomo~Via Orefici 5~45.4642~9.1874~2~4.4~971~1000-2200|=|=|=|=|=|=~13Duomo~Sandwiches
+~I panini della Bottega di Via Laghetto~c~duomo~Via Laghetto 3~45.4618~9.1954~2~4.7~360~1000-1630|1000-2200|=|=|=|=|=~4Sforza-Policlinico~Sandwiches
+~Rosticceria Palazzi~c~venezia~Via Plinio 9~45.4794~9.2125~2~4.1~255~1030-2130|=|=|=|=|=|=~1Lima~Deli
+~Gastronomia e salumeria Civelli~c~duomo~Corso Italia 16~45.4579~9.1875~2~4.5~143~0800-1930|=|=|=|=|0800-1500|C~4Santa Sofia~Deli
+~Volemose Bene Rosticceria Romana~e~nolo~Via Giuseppe Pecchio 1~45.4847~9.2158~2~4.7~1548~1200-2230|=|=|=|1200-2300|=|1200-2230~12Loreto~Italian
+~GastronoMi Citylife -Zona MM Lotto~c~sansiro~Via Francesco Albani 31~45.4802~9.147~2~4.7~356~0800-1930|=|=|=|=|=|C~15Lotto~Deli
+~PugliamiVia - Gastronomia Pugliese~c~sempione~Via Paolo Giovio 1~45.4661~9.1598~2~5.0~87~C|1100-2000|=|=|=|=|1100-1800~1Pagano~Deli
+~Via Pasteria - Daniele Crespi~e~navigli~Via Daniele Crespi 14~45.4569~9.1735~2~4.8~10292~1200-2230|=|=|=|=|=|=~2Sant'Agostino~Restaurant
+~Pasta Fresca Brambilla - Bistrot e Laboratorio~e~venezia~Via Melzo 2~45.4725~9.2102~2~4.5~592~C|0900-1900|=|=|=|=|C~1Porta Venezia~Bistro
+~Pasta Fresca Da Giovanni~e~navigli~Via Ascanio Sforza 31~45.4492~9.1776~2~4.7~1314~1200-1430|C|1200-1430|=|1200-1430,1830-2130|=|0130-2130~~Bistro
+~Wizard~b~navigli~Ripa di Porta Ticinese 69~45.4504~9.1693~1~4.5~652~C|1730-0200|=|=|=|=|=~2Porta Genova~Pub
+~La Buttiga Beer Room Porta Romana~b~lodi~Viale Isonzo 10~45.4471~9.2079~2~4.4~281~1800-0100|=|=|=|=|=|=~3Lodi Tibb~Pub
+~Lambiczoon~b~romana~Via Friuli 46~45.4541~9.2134~2~4.5~1719~1800-0100|=|=|=|1800-0200|=|C~~Pub
+mahones-restaurant~Mahone’s Restaurant~c~romana~C.so Lodi 4~45.451~9.2037~2~4.3~959~1215-1500,1900-0000|=|=|=|=|1230-0000|=~3Porta Romana~Burgers
+~Hop~b~romana~Viale Regina Margherita 16~45.4595~9.2064~2~4.3~923~1800-0100|=|1800-0130|=|1800-0200|=|1800-0100~~Pub
+~Pub 24~b~isola~Via Pietro Borsieri 24~45.4883~9.1891~2~4.0~1089~1700-0200|=|=|=|=|=|=~5Isola~Pub
+~L'Ambrata~b~lambrate~Via Privata Giovanni Ventura 16~45.484~9.2449~2~4.5~272~1800-0100|=|=|1800-0200|=|1200-1500,1800-0200|1200-1500~~Pub
+~East End Pub~b~lambrate~Via Canelli 1~45.4883~9.2541~2~4.3~958~1900-0200|=|=|=|=|=|=~~Pub
+~Overtime Sports Pub~b~centrale~Via Luigi Settembrini 36~45.483~9.2076~2~4.6~101~1730-2330|1130-2330|=|=|=|=|=~2Caiazzo~Pub
+~The Football Pub~b~duomo~V. Valpetrosa 5~45.462~9.1854~2~4.2~1735~1200-1500,1700-0000|1200-0000|=|=|=|=|1200-2300~3Missori~Pub
+~Offside Sports Pub~b~sarpi~Via Losanna 46~45.4872~9.1658~2~4.4~1200~1800-0200|=|=|=|=|1200-0200|=~5Gerusalemme~Pub
+~Sporting Pub~b~bicocca~Viale Giovanni Suzzani 92~45.5109~9.2004~2~4.5~679~C|1700-0200|=|=|=|=|=~5Ca' Granda~Pub
+~Ministry of kitchen~b~duomo~Via Larga 11~45.4618~9.1929~2~4.7~138~0800-2300|=|=|=|=|=|C~4Sforza-Policlinico~Sports bar
+~Magutt~d~venezia~Via Lambro 11~45.4744~9.2098~2~4.6~292~1800-0100|=|=|=|1800-0200|=|1800-0100~1Porta Venezia~Bar
+~Pigato Milano | Clubhouse Sandwich and Fine Drinks~d~venezia~Via Lambro 9~45.4743~9.2096~2~4.7~72~C|1700-0200|=|=|=|=|1600-2300~1Porta Venezia~Cocktail bar
+~Birrificio Milano~b~forlanini~Via Zante 14~45.4548~9.2484~2~4.9~132~0830-1700|=|=|=|=|C|=~~Brewpub
+~Pils Pub~b~sempione~Via Agostino Bertani 2~45.4774~9.1745~2~4.1~1353~1100-1530,1700-0030|1100-1500,1700-0200|=|=|=|1700-0200|1100-0200~~Pub
+~Spiller | Milano Sempione~c~sempione~Corso Sempione 7~45.477~9.1703~2~4.0~701~1200-1500,1800-0100|=|=|=|1200-1500,1800-0200|1200-0200|1200-0100~~Burgers
+~B Locale~b~sarpi~Via Alfredo Albertini 4~45.4805~9.1718~2~4.6~302~1730-2330|=|=|=|1730-0030|=|1730-2330~5Gerusalemme~Pub
+~Wineroad Milano~w~venezia~Viale Piave 19~45.4711~9.2065~2~4.4~204~1230-1500|1230-1500,1815-2330|=|=|=|1815-2330|C~1Palestro~Wine bar
+~Il Gottino Milano~w~venezia~Largo Fra Paolo Bellintani 2~45.4771~9.2048~2~4.4~282~C|1730-0200|=|=|=|=|=~1Porta Venezia~Wine bar
+~The Winery 2 Aaron Brussolo~w~venezia~Viale Vittorio Veneto 30~45.4777~9.1991~2~4.3~264~1530-0100|=|=|=|1530-0200|=|1530-0100~3Repubblica~Wine bar
+~Ravioli Navigli~c~navigli~Ripa di Porta Ticinese 19~45.4518~9.1757~1~5.0~2085~1230-2230|C|1230-2230|=|1230-0000|=|1230-2230~2Porta Genova~Asian
+~Fico Navigli~e~navigli~Ripa di Porta Ticinese~45.4513~9.174~2~4.5~624~1100-0100|=|=|=|1100-0200|=|1100-0100~2Porta Genova~Bistro
+~Fininfondo~d~navigli~Ripa di Porta Ticinese 69~45.4504~9.1692~2~4.4~672~1000-1600|1000-1630|1000-0000|=|=|=|=~2Porta Genova~Cocktail bar
+~Osteria Al 29~e~duomo~Corso Magenta 29~45.466~9.1768~2~4.3~1353~1200-1530,1900-2300|=|=|=|=|=|=~12Cadorna~Pizzeria
+~Tutto Bene, Grazie Bistrò~e~duomo~Corso Magenta 30~45.4662~9.1772~2~4.1~1227~0730-2300|0730-0000|=|=|=|0900-2300|0830-1700~12Cadorna~Bistro
+~Cavoli a merenda! La Terrazza nascosta.~e~sempione~Corso Magenta 66~45.4658~9.1724~4~4.7~130~C|1230-1430,1930-2230|=|=|=|C|=~12Cadorna~Italian
+~L'Uccellina~e~sempione~Piazzale Francesco Baracca~45.4663~9.1662~3~4.3~1387~1200-1445,1900-0000|=|=|=|=|=|=~1Conciliazione~Italian
+~Locanda Perbellini Bistrot Milano~e~brera~Via della Moscova 25~45.4767~9.1896~3~4.5~1133~C|1230-1430,1900-2230|=|=|=|=|C~2Moscova~Italian
+~Sevilla Mia - Moscova~e~garibaldi~Largo la Foppa 1~45.4783~9.1843~2~4.7~457~1200-1500,1800-0000|=|=|=|=|=|1100-1600,1800-0000~2Moscova~Spanish
+~Denis Milano Moscova~e~garibaldi~Via Statuto 16~45.4772~9.1854~2~4.4~2098~1230-1430,1930-2230|=|=|=|1230-1430,1930-2300|1230-1430,1900-2300|=~2Moscova~Pizzeria
+~miscusi | pasta fresca - Milano Moscova~e~garibaldi~Corso Garibaldi 104~45.4785~9.1856~2~4.7~1552~1200-2200|=|=|=|1200-2300|=|1200-2200~2Moscova~Italian
+~La Scaletta~e~navigli~Piazzale Stazione Genova 3~45.4535~9.1704~3~4.5~672~1230-1430,2000-2300|=|=|=|=|2000-2300|C~2Porta Genova~Seafood
+~Buona Forchetta~e~navigli~Via Casale 5~45.4518~9.1707~2~4.3~2575~1100-0100|=|=|=|=|=|=~2Porta Genova~Italian
+~The Meatball Family~e~navigli~Via Vigevano 20~45.4532~9.1722~2~4.6~3350~1200-1500,1900-2300|=|=|=|=|=|=~2Porta Genova~Italian
+pasta-dautore~Pasta d’Autore~e~duomo~Corso di Porta Ticinese 16~45.4588~9.1809~2~4.5~4551~1200-1500,1900-2300|=|=|=|=|=|=~4Vetra~Pizzeria
+~AltaRè - La Puglia a Morsi~d~navigli~Corso di Porta Ticinese 76~45.4547~9.1803~2~4.7~1147~C|1200-0000|=|=|=|=|=~4Vetra~Cocktail bar
+~Osteria Fiaschetto | Ristorante a Milano~e~navigli~Via Pioppette 3~45.4576~9.1816~3~4.6~713~1900-0100|=|=|=|=|1200-1500,1900-0100|=~4Vetra~Osteria
+~Taverna Gran Sasso~e~navigli~Corso di Porta Ticinese 60~45.4558~9.1806~2~4.5~100~1830-0100|=|=|=|=|=|=~4Vetra~Italian
+~CIACCO Bistrot~e~romana~C.so di Porta Vittoria 46~45.4621~9.2051~2~4.9~117~1230-1530|1230-1530,1900-2300|=|=|=|1200-1530,1900-0000|C~~Restaurant
+~Kona Milano~e~romana~C.so di Porta Vittoria 49~45.4624~9.2051~2~4.5~219~1200-2130|=|=|=|=|=|C~4Tricolore~Restaurant
+~Ampere 57~e~cittastudi~Via Andrea Maria Ampère 57~45.4835~9.2263~3~4.4~374~1200-1430,1930-2200|=|=|=|=|1930-2330|C~2Piola~Seafood
+~Il Veliero~e~cittastudi~Viale Romagna 59~45.4779~9.2234~2~4.1~204~1200-1500,1800-2200|=|=|=|=|=|=~2Piola~Pizzeria
+~MOBA Milano~d~cittastudi~Via Giovanni Pascoli~45.4765~9.225~2~4.4~1700~2000-0400|=|=|=|2000-0500|=|2000-0400~2Piola~Cocktail bar
+~Le Meraviglie~e~bicocca~Edificio centrale~45.5159~9.2261~3~4.5~5877~1230-1430,1930-2300|=|=|=|=|=|=~1Villa San Giovanni~Pizzeria
+~Casa Bi Restaurant~e~sempione~Piazza Tre Torri~45.4788~9.1576~2~3.9~145~1230-2315|=|=|1230-2345|=|=|1230-2315~5Tre Torri~Italian
+~Dispensa Emilia Milano Citylife~e~sempione~Piazza Tre Torri~45.4784~9.155~2~4.3~993~1100-2230|=|=|=|=|=|=~5Tre Torri~Italian
+~Tradizioni Italiane~e~sempione~Piazza Tre Torri 1~45.4779~9.1569~2~4.1~117~0900-2300|=|=|=|=|=|=~5Tre Torri~Italian
+~Osteria Nanin City Life~e~sempione~Piazza Tre Torri 1/L~45.478~9.1569~3~4.2~63~1000-1500,1800-2300|=|=|=|=|=|=~5Tre Torri~Osteria
+~Bistrot Stendhal CityLife~e~sempione~Piano Uno~45.4785~9.1565~3~4.3~83~1200-1430,1800-2200|=|=|=|=|=|=~5Tre Torri~Bistro
+~Osteria Serafina~e~tortona~Via Luigi Sacco 9~45.4656~9.1519~4~4.7~3482~1915-0000|1230-1430,1915-0000|=|=|1230-1430,1900-0000|=|1230-1430,1915-0000~1De Angeli~Osteria
+~Sciué Washington~e~tortona~Via Giorgio Washington 52~45.4626~9.1548~2~4.5~1094~1200-1500,1845-2345|=|=|=|=|=|1200-1545,1845-2300~1Wagner~Pizzeria
+~Eden Wine & Cucina~e~tortona~Via Giorgio Washington 51~45.4612~9.1552~3~4.3~128~1000-0200|0800-0200|=|=|=|0900-0200|=~4California~Restaurant
+~Washington 80 Pizzeria~e~tortona~Via Giorgio Washington 80~45.4583~9.1542~2~4.2~286~1000-2300|=|=|=|=|=|=~4Bolivar~Pizzeria
+~Portico84~f~brera~Corso Garibaldi 84~45.477~9.1845~2~4.4~53~0800-0000|=|=|=|=|=|=~2Moscova~Café
+~Moscova Quindici Bar~f~brera~Via della Moscova 15~45.4763~9.1909~2~4.3~169~0700-2000|=|=|=|=|0800-1430|C~3Turati~Café
+~The Manhattan~d~garibaldi~Via Alessandro Volta 4~45.4792~9.1841~2~4.4~474~C|1800-0200|=|=|=|=|=~2Moscova~Cocktail bar
+~Winelivery Bar Navigli~d~navigli~Via Casale 3a~45.4521~9.1705~1~4.9~307~1600-0100|=|=|=|1600-0200|=|1600-0100~2Porta Genova~Bar
+~Cape Town~b~navigli~Via Vigevano 3~45.4527~9.1756~2~4.3~668~1800-0200|=|=|=|=|=|=~2Porta Genova~Pub
+~My Friend Cafe~f~duomo~Corso Magenta 48~45.4658~9.1742~2~5.0~41~0800-2000|=|=|=|=|1200-2000|C~12Cadorna~Coffee bar
+~Amaretto Caffè~f~sempione~Corso Magenta 50~45.4658~9.1739~1~4.7~374~0700-1930|=|=|=|=|=|C~12Cadorna~Coffee bar
+~Cafezal Specialty Coffee - Magenta~f~sempione~Corso Magenta 96~45.4661~9.1663~1~4.7~373~0800-1600|=|=|=|=|0900-1800|=~1Conciliazione~Coffee bar
+~La Spritzeria~f~cittastudi~Via Giovanni Pascoli 55~45.4769~9.2252~1~4.3~316~0700-2015|=|=|=|=|1700-2015|C~2Piola~Café
+~Vintage 39~e~nolo~Viale Monza 39~45.4901~9.2177~2~4.6~328~1200-1500,1900-0000|=|=|=|=|1900-0000|C~1Pasteur~Restaurant
+~Bandiera Rossa~e~nolo~Viale Monza 26~45.49~9.2181~2~4.0~308~C|1100-1500,1700-2230|=|=|=|1100-2230|=~1Pasteur~Chinese
+~Vins~f~bicocca~Viale Monza 294~45.5189~9.2268~1~4.6~318~0645-1800|=|=|=|0645-1830|0645-1200|C~1Villa San Giovanni~Coffee bar
+~Memà Cafè~e~venezia~Largo Fra Paolo Bellintani 2~45.4771~9.2048~2~4.1~1003~1700-0100|=|=|=|1700-0200|=|C~1Porta Venezia~Bistro
+~Cin-Cin...Nato - Cafè&Bistro~f~venezia~Via Lazzaretto 16~45.4796~9.204~1~4.5~192~0715-2100|=|=|=|=|=|=~3Repubblica~Coffee bar
+~Osteria Del Lazzaretto~e~venezia~Via Lazzaretto 15~45.4793~9.2033~2~4.2~1243~1200-1500,1840-2340|=|=|=|=|=|1640-2340~3Repubblica~Pizzeria
+~Step Bar Milano~d~venezia~Via lecco angolo~45.4765~9.2037~1~4.5~558~1630-0100|=|=|=|1630-0200|=|1530-0100~1Porta Venezia~Bar
+~Garden~f~duomo~C.so di Porta Vittoria 32~45.462~9.203~1~4.3~87~0700-2000|=|=|=|=|=|C~14San Babila~Café
+~KoRo Café~f~duomo~C.so di Porta Vittoria 14~45.4621~9.1989~1~4.6~296~0700-1800|=|=|=|=|0900-1800|1000-1600~14San Babila~Café
+~Caffè Savarè~f~duomo~Via Manlio e Gioacchino Savaré~45.4624~9.2035~1~4.3~64~0700-2000|=|=|=|=|0700-1400|C~14San Babila~Café
+~Gerry~f~duomo~C.so di Porta Vittoria 32~45.4619~9.2031~1~4.6~49~0600-2030|=|=|=|=|0600-1600|C~14San Babila~Café
+~Milano Island lounge & sushi bar~d~isola~Via Pietro Borsieri 41~45.4897~9.1889~2~4.6~320~1700-0200|=|=|=|=|=|=~5Isola~Cocktail bar
+~Cocktail Sempione 83 | Gin & Drink~d~sarpi~Corso Sempione 83~45.4863~9.1581~2~4.8~129~1800-0230|=|=|=|1700-0230|1700-0300|1800-0230~5Domodossola~Cocktail bar
+~Deseo~e~sempione~Corso Sempione 2~45.4768~9.1716~2~3.9~1896~0800-0000|=|=|=|0800-0200|=|=~~Restaurant
+~El Tabacheè in Moscova~f~brera~Via della Moscova 29~45.4768~9.1889~1~4.7~75~0600-1930|=|=|=|=|0630-1830|0630-1800~2Moscova~Coffee bar
+~Caffè Passalacqua~f~brera~Via della Moscova 7~45.4758~9.1937~1~4.5~45~0700-1630|=|=|=|=|0700-1400|C~3Turati~Coffee bar
+~Rebelot~c~lambrate~Via Giovanni Bottesini 18~45.4853~9.2342~1~4.6~98~0700-1800|=|=|0700-2000|=|0700-1400|C~2Lambrate~Bistro
+~SAMI : Peruvian Coffee~f~lambrate~Via Ambrogio Campiglio 13~45.4817~9.234~1~4.8~144~0745-1600|0745-1800|=|=|0745-1900|0830-1800|0900-1500~2Lambrate~Coffee bar
+~CLANDESTINO non esiste~f~lambrate~Via Conte Rosso 18~45.4827~9.2427~1~4.4~201~C|0800-1900|=|=|=|0900-1300|=~2Lambrate~Bakery
+~Bistrot Dolce Amaro Caffè~f~venezia~Viale Piave 38~45.4727~9.2068~2~4.6~312~0630-2000|=|=|=|=|=|C~1Porta Venezia~Coffee bar
+~Cafezal Brunch & Specialty Coffee - Porta Venezia~f~venezia~Via S. Gregorio 29A~45.4796~9.2041~1~4.4~604~0800-1800|=|=|=|=|0900-1900|=~3Repubblica~Brunch spot
+~Felix Navigli~e~navigli~Via Filippo Argelati 1~45.4514~9.1742~2~4.6~876~0800-0200|=|=|=|=|=|=~2Porta Genova~Bistro
+~Sofa Cafe~f~navigli~Ripa di Porta Ticinese 7~45.452~9.1769~1~4.1~766~0800-0000|=|=|=|0800-0200|=|0800-0000~2Porta Genova~Coffee bar
+~Luca e Andrea Bar - Ristorante~e~navigli~Alzaia Naviglio Grande 34~45.4516~9.1729~2~4.2~1495~0800-0200|=|=|=|=|=|=~2Porta Genova~Italian
+~La Teiera Eclettica~f~venezia~Via Melzo 30~45.4753~9.2081~2~4.6~674~C|1000-1330,1430-1930|=|=|=|=|C~1Porta Venezia~Tea room
+~La Corte Romanengo - Salon de thé Caminadella – Milano~f~navigli~Via Caminadella 23~45.4603~9.1762~2~4.7~128~C|0800-1900|=|=|=|0900-1830|0900-1430~4De Amicis~Pastry shop
+~Momenteeria~f~navigli~V. Giosuè Carducci 38~45.4621~9.1734~2~4.6~173~0900-1900|=|=|=|=|1000-2000|=~24Sant'Ambrogio~Tea room
+~DOOOLCE LAB~d~isola~Piazzale Carlo Archinto 1~45.4875~9.1869~2~4.5~271~0730-1800|=|=|=|=|=|0830-1200~5Isola~Cocktail bar
+aroma-napoletano-isola~Aroma Napoletano~f~isola~Via Traù 2~45.4899~9.1899~2~4.2~2729~0700-1830|=|=|=|=|=|0800-1830~5Isola~Pastry shop
+~Tre Chicchere~f~isola~Via Gian Antonio Boltraffio 12~45.4917~9.1869~2~4.2~575~0800-1300|0800-1230,1330-1900|=|=|=|0800-1900|=~35Zara~Pastry shop
+~Toldo milano~f~isola~Via Pietro Borsieri 7~45.4866~9.1884~1~4.6~269~0730-1900|=|=|=|=|=|0830-1300~5Isola~Gelateria
+~L'Arte del dolce~f~lodi~C.so Lodi 71~45.4439~9.2166~2~4.4~205~0700-1930|=|=|=|=|=|=~3Brenta~Pastry shop
+~Cose Nostre Corso Lodi~f~romana~C.so Lodi 1~45.4518~9.2034~2~4.8~351~0700-2300|=|=|=|=|0700-0000|0700-2300~3Porta Romana~Pastry shop
+~Il Forno Di Corso Lodi~f~lodi~C.so Lodi 113~45.4415~9.2215~1~4.6~129~0700-2030|=|=|=|=|0700-1400,1600-2030|C~3Corvetto~Bakery
+~Dolce Officine~f~lodi~Via Tullo Massarani 2~45.4446~9.2163~2~4.4~649~0730-1400|C|0730-1400|=|=|=|=~3Brenta~Pastry shop
+~Citylife Caffe'~f~sansiro~Via Masaccio 18~45.4796~9.146~2~4.5~178~0700-2300|=|=|=|=|C|=~15Lotto~Café
+~Panfuwa | Brunch & Café - Milano CityLife~f~sempione~Piazza Tre Torri 1~45.4781~9.1573~2~4.5~335~0800-2000|=|=|=|=|0900-2100|=~5Tre Torri~Coffee bar
+~illy~f~sempione~Piastra Nord~45.4789~9.1567~1~3.9~460~0800-2000|=|=|=|=|0830-2000|=~5Tre Torri~Coffee bar
+~Al Padellone~e~bovisa~Via Filippo Baldinucci 96~45.5028~9.1667~2~4.4~2841~1200-1430,1900-2300|=|=|=|=|1900-2300|=~~Steakhouse
+~La Carrettiera~e~bovisa~Via degli Imbriani 30~45.5~9.1683~2~4.3~409~1200-1400,1900-2200|=|=|=|=|=|C~~Italian
+~Al sasset Ristorante Niguarda~e~bicocca~Via Graziano 35~45.5138~9.1911~2~4.8~407~0900-2330|0900-0000|0900-2330|=|0900-0000|=|=~~Italian
+~Osteria Al Circolino~e~bicocca~Via Giovanni Terruggia 32~45.5173~9.1877~3~4.6~235~C|=|1500-0000|=|1500-0030|=|1200-1600~~Osteria
+~Antica Trattoria Ambrosiana~e~bicocca~Via Paulucci di Calboli Fulcieri 30~45.5171~9.1917~2~4.2~479~1100-1500|=|=|=|=|=|1200-1400~~Trattoria
+~Cascina California~e~bicocca~Via Luigi Ornato 122~45.5234~9.1926~2~4.3~1548~C|1200-1430,1900-2230|=|=|=|=|=~~Pizzeria
+~Pizzeria e trattoria san giorgio~e~bicocca~Via Luigi Ornato 134~45.5239~9.1926~2~4.4~307~1000-1430|1000-2300|=|=|=|=|1600-2230~~Pizzeria
+~Affori Restaurant~e~bovisa~Via Astesani ang~45.5193~9.17~3~4.3~582~C|1200-1445,1900-2300|=|=|=|=|1200-1445~~Italian
+~Trattoria Al 395~e~sansiro~Via delle Forze Armate 395~45.4609~9.0911~2~4.4~2092~0800-1830|=|=|=|=|0800-0000|C~~Trattoria
+~Trattoria Fà Ballà L'Oeucc~e~sansiro~Via Pistoia 19~45.4627~9.0905~3~4.2~1470~C|=|1930-2330|1900-2330|=|1200-1530,1900-2330|1230-1600~~Trattoria
+~Tavernacolo Milano Baggio~d~sansiro~Piazza Anita Garibaldi 3~45.4625~9.0877~2~4.8~67~C|1200-1430,1800-2330|=|=|=|1800-2330|=~~Bar
+~Ristorante Al Coltello~e~tortona~Via Lorenteggio 163~45.4502~9.1366~3~4.6~827~1200-1500,1900-0000|=|=|=|=|=|=~~Restaurant
+~Ristorante Pizzeria DOC~e~tortona~Via Lorenteggio 47~45.4528~9.1461~2~4.7~177~1200-1530|1200-1500,1900-2300|=|=|=|=|=~4Tolstoj~Pizzeria
+~Trattoria L'Angelo Bianco~e~tortona~Via Angelo Inganni 11~45.4458~9.1281~2~4.6~74~1200-1500|1200-1500,1830-2300|=|=|=|=|1200-1500,1830-2330~~Trattoria
+~La Forchetta~e~tortona~Via Curio Dentato 14~45.4497~9.1416~2~4.2~1864~1200-1430,1900-0000|=|=|=|=|=|=~4Tolstoj~Italian
+~Porkettiamo~e~tortona~Via Giambellino 57~45.4498~9.1468~2~4.5~451~1200-1500,1900-2300|=|=|=|1200-1500,1900-2330|1200-1530,1900-2330|1200-1500,1900-2300~4Tolstoj~Bistro
+~Ristorante Bel Sit Milano~e~tortona~Via Barona 51~45.4333~9.1499~2~4.0~522~1200-1500|1200-1500,1800-2200|=|=|1200-1500,1900-2200|2000-2300|1200-1500~~Italian
+~Ristorante Sale Rosa~e~tortona~Via Ambrogio Binda 10~45.4437~9.1549~2~4.7~241~C|1200-1500,1900-2300|=|=|=|=|=~~Pizzeria
+~Ristorante Pizzeria Lo Smeraldo~e~tortona~Via Ettore Ponti 53~45.4411~9.1517~2~4.2~2319~1200-1430,1900-0000|=|=|=|=|=|=~~Seafood
+~La Corte Della Risaia Ristorante~e~assago~Via Bardolino 30~45.4277~9.1399~2~4.0~602~0900-1400|=|=|0900-1400,1900-2200|=|0900-1500,1900-2200|0900-1500~~Italian
+~Ristorante Carmen 2~e~tortona~Via Bonaventura Zumbini 46~45.4406~9.1552~2~4.2~762~1200-1430,1900-2345|1200-1500|1200-1430,1900-2345|=|=|=|=~~Italian
+~Antica Trattoria Monluè~e~forlanini~Via Monlue' 75~45.4568~9.2551~3~4.4~1090~1200-1430,1930-2230|=|=|=|=|1230-1530,1930-2230|1230-1530~~Seafood
+~Orecchiette e Vino~e~forlanini~Via Marco Bruto 7~45.46~9.2387~2~4.5~574~C|1200-1430,1900-2230|=|=|=|=|=~~Italian
+~Soprattutto~c~forlanini~P.za Cartagine 4~45.4562~9.2383~2~4.7~1186~1800-0200|=|=|=|=|=|=~~Burgers
+~Osteria Valtellina~e~forlanini~Via Privata Taverna 34~45.4684~9.2561~3~4.4~763~C|1930-2300|=|=|=|=|1230-1530,1930-2230~~Osteria
+~Trattoria Ortica 27~e~lambrate~Via Ortica 27~45.4712~9.2452~2~3.9~684~1200-1500,1900-2300|=|=|=|=|=|C~~Trattoria
+~Giardino Ortica 10~e~cittastudi~Via Ortica 10~45.4709~9.2433~2~4.5~484~1200-1530,1800-0100|=|=|=|1200-1530,1800-0200|1800-0100|1200-1530,1800-0100~~Restaurant
+~Trattoria Pizzeria L'Ortiga~e~cittastudi~Via S. Faustino 1~45.471~9.2416~2~4.5~1218~C|1200-1500,1900-2300|=|=|=|1830-2300|=~~Pizzeria
+~RISTORANTE TRE SAPORI GORLA~e~nolo~Viale Monza 187~45.5048~9.2221~2~4.6~81~1200-1430,1900-2330|=|=|=|=|=|=~1Gorla~Italian
+~Acquacheta~e~bicocca~Via Erodoto 2~45.509~9.2229~3~4.1~1987~1900-2330|=|=|=|=|1230-1500,1900-2330|=~1Gorla~Italian
+~Trattoria la Madonnina di Costantino Cuciniello (Precotto)~e~bicocca~Via Luigi Cislaghi 8~45.5121~9.2264~2~4.2~808~1200-1500,1900-2230|=|=|=|=|=|C~1Precotto~Trattoria
+~Ribot Restaurant~e~sansiro~Via Marco Cremosano 41~45.4832~9.138~4~4.6~5309~1215-1430,1915-2300|=|=|=|=|=|=~1QT8~Italian
+~Puglia & Basilicata by Cico Bistrot~e~sansiro~Via Enrico Terzaghi 2~45.4879~9.131~2~4.5~200~1200-1430,1900-2300|=|=|=|=|1900-2300|C~1Lampugnano~Italian
+~Ribot Bistrot~e~sarpi~Via Ruggero di Lauria 17~45.4872~9.156~3~4.5~1637~C|1215-1430,1915-2230|=|=|=|=|=~~Burgers
+~Obama Bar Ristorante Pizzeria~e~sansiro~Via Giovanni Cimabue 24~45.4902~9.1372~2~4.3~69~1200-1430,1800-2330|=|=|=|=|=|C~1QT8~Pizzeria
+~Arci l'Impegno~u~bovisa~Via Giambattista Bodoni 3~45.493~9.1504~2~4.4~132~1800-2000|=|=|=|1800-0200|1100-1300,1700-2000|C~~Concert hall
+~Rainbow Café Milano~d~venezia~Via Alessandro Tadino 6~45.4762~9.2052~1~4.4~521~1530-0300|=|=|=|=|=|=~1Porta Venezia~Bar
+~Sui Generis~b~venezia~Via Panfilo Castaldi 31~45.4763~9.2041~2~4.6~456~1700-0200|=|=|=|=|=|=~1Porta Venezia~Pub
+~Red Cafè~d~venezia~Via Lecco 5~45.4766~9.2038~1~3.9~625~1700-0200|=|=|=|=|=|=~1Porta Venezia~Bar
+~Leccomilano~e~venezia~Via Lecco 5~45.4768~9.2041~2~4.1~1189~C|1700-0200|=|=|=|=|C~1Porta Venezia~Restaurant
+~Mono Bar~d~venezia~Via Lecco 6~45.4765~9.2041~2~4.1~264~C|1800-0130|=|=|1800-0200|=|1800-0100~1Porta Venezia~Bar
+~New York Lounge~d~centrale~Via Fabio Filzi 33~45.4865~9.2014~2~4.0~1202~0700-2200|=|=|=|0700-0100|=|C~23Centrale~Lounge bar
+~L'Alter Bar~f~sempione~Via Vincenzo Monti 15~45.4674~9.1736~2~4.7~842~0700-2200|0700-2300|=|0700-0000|0700-0100|=|C~12Cadorna~Café
+~Malaga Sin City~d~tortona~Via Enrico Schievano 8~45.444~9.1607~2~4.4~196~0900-0000|=|=|0900-0200|=|1700-0200|1700-0000~2Romolo~Cocktail bar
+~INSIDE CLUB~d~centrale~Via Vittor Pisani 12a~45.4818~9.2008~3~4.3~197~~3Repubblica~Cocktail bar
+~Museo d'Arte e Scienza~u~brera~Via Quintino Sella 4~45.4703~9.1823~2~4.5~219~1000-1800|1400-1800|1100-1900|1400-1800|1000-1800|C|=~2Lanza~Museum
+~Fondazione Marconi~u~venezia~Via Alessandro Tadino 15~45.4777~9.2062~2~4.6~91~C|1100-1800|=|=|=|=|C~1Porta Venezia~Museum
+~Fondazione Mudima~u~venezia~Via Alessandro Tadino 26~45.4794~9.2081~2~4.6~64~1100-1300,1500-1900|=|=|=|=|C|=~1Lima~Gallery
+~Teatro Carcano~u~romana~Corso di Porta Romana 63~45.4565~9.1953~2~4.3~2735~1300-1830|=|=|=|=|1100-1830|C~3Crocetta~Theatre
+~Teatro Linguaggicreativi~u~tortona~Via Eugenio Villoresi 26~45.4465~9.1634~2~4.6~134~0930-1730|=|=|=|=|C|=~2Romolo~Theatre
+~ESCAPERS MILANO - Escape Room Milano~u~isola~Via Francesco Nava 17~45.4944~9.1921~2~4.9~3394~1030-0000|=|=|=|=|=|=~35Zara~Games and arcade
+~Trap | Escape Room Milano~u~centrale~Via Adeodato Ressi 23~45.4967~9.203~2~4.9~3654~1130-0030|=|=|=|1130-0100|=|=~5Istria~Games and arcade
+~Evasion Escape Room~u~sarpi~Via Domenico Cucchiari 15~45.4893~9.1661~2~4.9~1337~1430-2300|C|1430-2300|=|1430-0030|1300-0030|1300-2300~5Cenisio~Games and arcade
+~Underground Milano ☔ | Escape Room Milano~u~centrale~Via Melchiorre Gioia 84~45.4915~9.2037~2~4.9~300~1430-2330|C|1430-2330|=|1430-0030|=|1430-2330~3Sondrio~Games and arcade
+~Zero Latency VR Milano~u~sansiro~Via Bisceglie 74~45.4523~9.1165~2~4.9~782~C|=|1430-2230|=|=|1030-2230|=~1Bisceglie~Games and arcade
+~Trattoria Da Armando & Christian~e~navigli~Corso Cristoforo Colombo 10~45.4541~9.1708~2~4.2~391~1200-1430,1900-2330|1200-1430|1200-1430,1900-2330|=|=|=|1200-1430~2Porta Genova~Seafood
+~Gambarotta~e~garibaldi~Via della Moscova 50~45.4776~9.1854~2~4.4~620~1230-1430,1930-2300|=|=|=|=|=|C~2Moscova~Pizzeria
+~Osteria del Corso~e~brera~Corso Garibaldi 75~45.4756~9.1837~3~4.4~767~0715-1500,1945-2245|=|=|=|=|=|C~2Moscova~Osteria
+~Volta Street~e~garibaldi~Via Alessandro Volta 3~45.4786~9.1843~2~4.6~465~C|1130-1500,1830-2330|=|=|=|=|=~2Moscova~Italian
+~Osteria Papà Nicola~e~centrale~V. Ruggero Boscovich 23~45.4824~9.2032~2~4.5~3590~1145-0000|=|=|=|=|=|=~23Centrale~Osteria
+~Hostaria La Baita~w~centrale~V. Roberto Lepetit 29~45.4838~9.2051~2~4.4~1170~1200-1430,1830-2230|=|=|=|=|=|C~23Centrale~Wine bar
+~vecchia osteria 老酒馆~e~sarpi~Via Giordano Bruno 18~45.4807~9.1751~2~4.5~278~1100-1500,1730-0000|=|C|1100-1500,1730-0000|=|=|=~5Monumentale~Chinese
+~TRATTORIA DA LUCA~e~venezia~Via Bartolomeo Eustachi 6~45.474~9.2151~2~4.7~187~1200-1500,1800-2300|=|=|=|=|=|=~~Trattoria
+~Trattoria Commercio~e~lambrate~Viale delle Rimembranze di Lambrate 7~45.4824~9.2396~2~4.2~165~1130-1400|=|=|=|=|=|C~2Lambrate~Trattoria
+~Hosteria~e~venezia~Via Antonio Stoppani 9~45.4756~9.2129~3~4.5~262~1230-1430,1930-2230|=|=|=|=|1930-2230|C~1Lima~Osteria
+~Casa Tua Osteria~e~romana~Via Ludovico Muratori~45.4519~9.2051~2~4.0~1453~1200-1500,1930-0000|=|=|=|=|=|=~3Porta Romana~Osteria
+~Giulio Pane e Ojo~e~romana~Via Lodovico Muratori 10~45.4519~9.2047~2~3.9~3945~1200-1500,1930-0000|=|=|=|=|1200-1500,1900-0000|=~3Porta Romana~Italian
+~Al Cantinone~e~duomo~Via Agnello 19~45.466~9.1917~3~4.2~4134~1200-2200|=|=|=|=|=|=~13Duomo~Italian
+~Sugo Milano - Duomo~e~duomo~Via dell'Unione 11~45.4619~9.1875~2~4.6~1522~1230-1500,1930-2300|=|=|=|=|=|=~3Missori~Italian
+~Casa Sorbillo Duomo~e~duomo~Via Agnello 18~45.4662~9.1917~2~4.1~1988~1200-2300|=|=|=|=|=|=~13Duomo~Pizzeria
+~Gino Sorbillo - Pizza Gourmand~e~duomo~Via Ugo Foscolo 1~45.4652~9.1909~2~4.1~5501~1200-2300|=|=|=|=|=|=~13Duomo~Pizzeria
+~Pizzeria Positano Milano - Colonne di San Lorenzo~e~duomo~Via S. Vito 5~45.4597~9.1824~2~4.6~1892~1200-2300|=|=|=|=|=|=~4Vetra~Pizzeria
+~Vecchio Mulino Pizzeria - Milano Moscova~e~garibaldi~Via Solferino 44~45.4786~9.1885~2~4.5~177~1130-1500,1800-2300|=|=|=|=|=|C~2Moscova~Pizzeria
+~Vurria Pizzeria~e~brera~Via della Moscova 27~45.4767~9.1891~2~4.4~662~1200-1500,1900-2300|=|=|=|1200-1500,1900-2330|=|1200-1500,1900-2300~2Moscova~Pizzeria
+~Pizzeria Vincenzo Capuano Moscova Milano~e~garibaldi~Via Alessandro Volta 7~45.4791~9.1839~2~4.0~438~1200-0000|=|=|=|=|=|=~2Moscova~Pizzeria
+~Pizzacoteca di Brera~e~brera~Via Brera 29~45.4728~9.1873~2~3.9~887~1200-2300|=|=|=|=|=|=~2Lanza~Pizzeria
+~Pizzeria da Giuliano~e~sarpi~Via Paolo Sarpi 60~45.4811~9.1711~2~4.3~3171~C|1200-1430,1900-2300|=|=|=|=|=~5Gerusalemme~Pizzeria
+~Gino Sorbillo Gourmand Montevideo~e~tortona~Via Montevideo 4~45.4553~9.1668~2~4.2~2016~1200-1500,1900-2300|=|=|=|=|=|=~2Porta Genova~Pizzeria
+~Alice Pizza~c~navigli~Via Vigevano 43~45.4531~9.1708~1~4.2~341~1100-2200|=|=|=|=|=|=~2Porta Genova~Pizzeria
+~Amunì Trattoria e Pizzeria Sicula~e~tortona~Via Andrea Solari 7~45.4565~9.1675~2~4.5~507~C|1200-1500,1900-2230|=|=|=|=|=~2Sant'Agostino~Pizzeria
+~Berberè Pizzeria Centrale~e~centrale~Via Alfredo Cappellini 18/A~45.4812~9.2028~2~4.4~2827~1200-2300|=|=|=|=|=|=~3Repubblica~Pizzeria
+~Napule è - Fratelli Coppola~e~centrale~Via Alfredo Cappellini 23~45.4817~9.2024~2~4.5~3753~1200-1500,1900-2300|=|=|=|=|1200-1500,1900-2330|1200-1530,1900-2300~3Repubblica~Italian
+~Ristorante Pizzeria L'antro della Sibilla~e~centrale~Via S. Gregorio 37~45.4801~9.2031~2~4.5~2321~1200-2330|=|=|=|=|=|=~3Repubblica~Pizzeria
+~borgo in centrale (( pizzeria, cocktail, birra, wine))~d~centrale~Via Napo Torriani 9~45.4816~9.2034~2~4.9~418~1000-0000|=|=|=|=|=|C~23Centrale~Cocktail bar
+~Casa Biga Milano - Moscova~e~garibaldi~Via Alessandro Volta 20~45.4805~9.1831~2~4.5~1330~1200-1430,1930-2300|=|=|=|1200-1430,1930-2330|1230-1500,1900-2330|1230-1500,1930-2300~2Moscova~Pizzeria
+~Pizza Romana da Giulio Cesare~e~brera~Piazza del Carmine 1~45.47~9.1853~2~4.6~520~1200-0100|=|=|=|=|=|=~2Lanza~Pizzeria
+~Futura Pizzeria Romana~e~isola~Via Pietro Borsieri 28~45.4888~9.1892~2~4.4~1859~1900-0000|=|=|=|=|1200-1430,1900-0000|=~5Isola~Pizzeria
+~Rom'antica Milano Buenos Aires~c~centrale~Corso Buenos Aires 47~45.4811~9.2115~1~4.0~138~1100-2100|=|=|=|=|=|=~1Lima~Pizzeria
+~Rom'antica Milano Ponte Vetero~c~brera~Via dell'Orso 20~45.469~9.1854~1~4.4~707~1000-2100|=|=|=|=|=|=~1Cairoli~Pizzeria
+~Al Paradiso della Pizza~e~bovisa~Via Pellegrino Rossi 52~45.5114~9.1756~2~4.5~1416~C|1200-1400,1900-2200|=|=|=|=|=~~Pizzeria
+~Pizzeria Quadrifoglio~e~bicocca~Via Luigi Ornato 47~45.5185~9.1918~2~4.4~701~1200-1430,1900-2300|=|C|1200-1430,1900-2300|=|=|1900-2300~~Pizzeria
+~Ristorante Niguarda Il Gatto e La Volpe~e~bicocca~Via Paulucci di Calboli Fulcieri 4~45.5155~9.1925~2~4.1~1132~C|0800-1430,1800-2300|=|=|=|1100-1430,1800-2300|1800-2300~~Italian
+~Moe's Pizza~e~bicocca~Via Privata Paolo Rotta 10~45.5164~9.1893~2~4.4~612~0700-1430,1700-0000|=|=|=|=|0800-1300,1700-0000|1700-0000~~Pizzeria
+~Piccola Ischia Pizzeria (Via Morgagni)~e~venezia~Via Giovanni Battista Morgagni 7~45.4779~9.2115~2~4.4~3471~1200-1430,1900-2330|=|1900-2330|1200-1430,1900-2330|=|1900-2330|=~1Lima~Pizzeria
+~Ci Sta - Buenos Aires~e~centrale~Via Federico Ozanam 11~45.4806~9.213~2~4.3~281~1230-1430,1900-2300|=|=|=|1230-1430,1900-0000|1230-1600,1900-2330|1230-1600,1900-2300~1Lima~Pizzeria
+~Little Italy~e~centrale~Via Alessandro Tadino 41~45.4805~9.2092~2~4.4~3498~1200-2300|=|=|=|1200-0000|=|1200-2300~1Lima~Pizzeria
+~Fradiavolo Pizzeria - Milano Citylife Shopping District~e~sempione~Piazza Tre Torri~45.4782~9.1543~2~4.2~980~1200-1500,1900-2300|=|=|=|=|1200-2300|=~5Tre Torri~Pizzeria
+~Mani in Pasta~e~sempione~Via Giovanni da Procida 1~45.479~9.1629~2~4.8~4586~1230-1500,1930-2300|=|=|=|1230-1500,1900-2300|=|=~5Domodossola~Pizzeria
+~DaV Milano~e~sempione~Piazza Tre Torri 3~45.4776~9.1573~4~4.4~591~1930-0100|=|=|=|=|1230-1500,1930-0100|=~5Tre Torri~Italian
+~Ristorante Ivan e Frank | Ristorante Pizzeria Porta Romana~e~lodi~C.so Lodi 37/A~45.4481~9.2093~3~4.2~1511~1200-1500,1900-0000|=|=|=|=|=|=~3Lodi Tibb~Pizzeria
+~WANGLAI | 旺来~e~lodi~C.so Lodi 36~45.4477~9.209~2~4.9~46~1630-2330|=|=|=|=|=|C~3Lodi Tibb~Restaurant
+~Al Chiosco DA GIACOMO BIRRE ARTIGIANALI~e~santagiulia~P.le Luigi E. Corvetto.4C02~45.4395~9.224~2~4.9~105~1730-0130|=|=|=|=|=|=~3Corvetto~Restaurant
+~Resaurant Brenta~e~lodi~C.so Lodi 90~45.4429~9.2179~2~4.2~75~0930-2330|=|=|=|=|=|=~3Brenta~Restaurant
+~Tijuana Cafe' 2.0~f~lodi~Via Tullo Massarani 5~45.4444~9.2164~2~4.2~1011~C|1200-1430,1800-0030|=|=|1200-1430,1800-0100|1800-0100|C~3Brenta~Coffee bar
+~Berberè Pizzeria Porta Romana~e~romana~Via Carlo Botta 4~45.4525~9.2039~2~4.2~968~1200-1430,1830-2300|=|=|=|=|=|=~3Porta Romana~Pizzeria
+~Zulo Milano~c~romana~Viale Monte Nero 28~45.4555~9.2047~1~4.8~43~1130-1930|=|1130-2200|1130-1930|1130-2200|1130-1930|C~3Porta Romana~Pizzeria
+~Onda Osteria~e~tortona~Via Savona 45~45.453~9.1608~3~4.6~179~1230-1500,1930-0000|=|=|=|=|1930-0000|C~4California~Osteria
+~Ristorante Rodrigo~e~tortona~Via Savona 11~45.4554~9.1683~3~4.7~78~1900-0100|1230-1430,1900-0100|=|=|=|=|C~2Porta Genova~Italian
+~CUBE Milano Brera~f~garibaldi~Via Solferino 27~45.4783~9.1881~2~4.3~449~0700-0100|=|=|=|0700-0200|=|C~2Moscova~Coffee bar
+~Losko~d~venezia~Via Lecco 15~45.4784~9.2054~3~4.8~268~1830-2300|=|=|=|1830-0000|=|C~1Porta Venezia~Cocktail bar
+~Osteria La Ciccia~e~venezia~Via Lecco 15~45.4785~9.2053~3~4.4~811~1200-1500,1900-0000|=|=|=|=|=|=~1Porta Venezia~Grill
+~La Madia~e~venezia~Via Lecco 5~45.4767~9.2039~2~4.6~397~0730-1900|=|=|=|=|0730-1930|C~1Porta Venezia~Bistro
+~Sen-ryo Sushi Milano~e~venezia~Via Lecco 16~45.4778~9.2053~2~4.7~801~1200-1500,1900-2300|=|=|=|1200-1515,1900-2330|=|1200-1515,1900-2300~1Porta Venezia~Restaurant
+~Vistamare~e~romana~Corso Ventidue Marzo 30~45.4621~9.218~4~4.8~41~1930-2330|1230-1430,1930-2330|=|=|=|=|C~~Seafood
+~Trattoria Al Muleto~e~cittastudi~Corso Ventidue Marzo 57~45.4623~9.2222~3~4.5~446~1230-1430,1930-2230|=|=|=|=|=|1230-1430~~Seafood
+~Bistrot Jacopo~e~romana~Corso Ventidue Marzo 38~45.4621~9.219~2~4.4~413~1200-1500,1900-2330|=|=|=|=|=|C~~Bistro
+~Ketobar - Corso XXII Marzo~e~romana~Corso Ventidue Marzo 25~45.4625~9.2127~2~4.4~66~1000-2200|=|=|=|=|=|=~4Tricolore~Restaurant
+~Kitchen @more by Daniele bar bistrot~e~venezia~Viale Piave 6~45.4694~9.2071~2~4.4~171~0700-2000|=|=|=|=|C|=~4Tricolore~Bistro
+~Blitz~d~venezia~Viale Premuda 36~45.466~9.2075~2~4.3~272~1800-0100|=|=|1800-0130|1800-0200|=|C~4Tricolore~Cocktail bar
+~Date Food~f~bovisa~Via Raffaele Lambruschini 9~45.5025~9.1567~2~4.1~216~0700-1700|=|=|=|=|=|C~~Café
+~Coccinella~e~cittastudi~Viale Argonne 11~45.4685~9.2265~2~4.9~96~1230-1430,1930-2300|=|=|=|=|1230-1500,1930-2300|=~4Argonne~Pizzeria
+~AUuM (Piazzale Susa)~e~cittastudi~Piazzale Susa 7~45.4689~9.2234~2~4.2~2610~1200-1500,1900-0000|=|=|=|=|=|=~4Argonne~Pizzeria
+~Ke Pizza~e~cittastudi~Via Gerolamo Turroni 4~45.4671~9.2227~2~4.4~542~C|1200-1430,1900-2300|=|=|=|=|1900-2300~4Argonne~Pizzeria
+~La Cometa - Ristorante e Pizzeria~e~cittastudi~Via Giovanni da Milano 2~45.4689~9.2248~2~4.5~670~C|1200-1500,1900-2300|=|=|=|=|=~4Argonne~Pizzeria
+~Pizza A Pezzi~e~cittastudi~Via Gaspare Aselli 14~45.4702~9.2304~2~4.2~1598~C|1200-1500,1830-2300|=|=|=|=|=~4Argonne~Pizzeria
+~Torrefazione~f~romana~Corso Ventidue Marzo 18~45.4621~9.2106~1~4.4~416~0700-1930|=|=|=|=|=|0800-1930~4Tricolore~Café
+~Bar Macchiato~f~romana~Corso Ventidue Marzo 40~45.4622~9.2194~1~4.6~100~0700-2000|=|=|=|=|=|C~~Café
+~Buongiorno Milano~f~cittastudi~Corso Ventidue Marzo 63~45.4623~9.2234~1~4.5~346~0230-2000|=|=|=|=|=|=~~Coffee bar
+~Glamour Cafè~f~venezia~Corso Ventidue Marzo 49~45.4625~9.2197~1~4.3~59~0500-2000|=|=|=|=|=|1030-1330~~Café
+~Pizzeria & Ristorante d'amare~e~tortona~Via Romolo Gessi 48~45.457~9.1529~2~4.7~1262~1230-1500,1915-2300|=|=|=|1230-1500,1915-2330|=|1230-1500,1915-2300~4Bolivar~Pizzeria
+~Ifu Oriental Restaurant~e~tortona~Viale Misurata 60~45.4544~9.1527~3~4.5~1837~1930-2300|=|1230-1430,1930-2300|=|=|=|=~4Bolivar~Sushi
+~KAPE~f~tortona~Piazza Simone Bolivar 3~45.4548~9.1525~1~4.5~101~0700-1900|=|=|=|=|=|C~4Bolivar~Café
+~Premiata Cremeria~f~tortona~Piazza Simone Bolivar 7~45.4547~9.1522~2~4.5~972~1030-0000|=|=|=|1000-0100|=|1000-0000~4Bolivar~Gelateria
+~Don Raffaele - Trattoria Pizzeria~e~tortona~Via Roncaglia 3~45.4587~9.154~2~4.2~3241~1200-1500,1900-2330|=|=|=|=|=|=~4Bolivar~Trattoria
+~La Mongolfiera~e~cittastudi~Via Giovanni da Milano 4~45.469~9.225~3~4.6~797~1240-1430,1940-2330|=|C|1240-1430,1940-2330|=|=|=~4Argonne~Italian
+~Stella Marina Milano~e~cittastudi~Via Luigi Frapolli 40~45.4673~9.2295~2~4.1~181~1200-1500,1800-2330|=|=|=|=|=|=~4Argonne~Pizzeria
+~Jamm~c~duomo~Via Francesco Sforza 47~45.4578~9.1939~1~4.6~196~1000-1730|=|=|=|=|1000-1530|C~4Sforza-Policlinico~Deli
+~Osteria Grand Hotel~e~navigli~Via Ascanio Sforza 75~45.4423~9.1771~3~4.3~501~C|1930-0000|=|=|=|1230-1430,1930-0000|=~~Osteria
+~Mix Bar~f~duomo~Via Francesco Sforza 47~45.4579~9.1938~1~4.5~219~0600-1930|=|=|=|=|0600-1600|C~4Sforza-Policlinico~Café
+~Cagiada - Milano - Festa del Perdono~e~duomo~Via Festa del Perdono 4~45.4616~9.1946~2~4.5~672~1100-0000|=|=|=|=|=|=~4Sforza-Policlinico~Pizzeria
+~Once Upon a Time~f~duomo~Via Festa del Perdono 14~45.4607~9.194~1~4.3~394~0700-2000|=|=|=|=|C|=~4Sforza-Policlinico~Coffee bar
+~U Spinnu - Sicilian Food & Drink~d~romana~V. Gaetana Agnesi 2~45.4504~9.201~2~4.8~160~C|1200-0000|=|=|=|=|1200-1530~3Porta Romana~Lounge bar
+~Fuel - Food is Energy~e~duomo~Via Festa del Perdono 8~45.4613~9.1946~2~4.6~363~0800-2230|=|=|=|=|=|C~4Sforza-Policlinico~Restaurant
+~Grecale's University Bar~f~duomo~Via Festa del Perdono 12~45.4607~9.1941~1~3.9~59~0700-2000|=|=|=|=|C|=~4Sforza-Policlinico~Café
+~MachanPub~b~lodi~C.so Lodi 52~45.4452~9.2131~2~4.3~89~1630-0100|=|=|=|1630-0200|=|1630-0100~3Lodi Tibb~Pub
+~40Sette~f~lodi~C.so Lodi 47~45.4467~9.2117~1~4.5~166~0700-1900|=|=|=|=|0700-1300|C~3Lodi Tibb~Café
+~Vento di Sardegna~e~navigli~Via Edmondo de Amicis 44~45.4603~9.1757~3~4.5~1739~C|1230-1415,1930-2330|=|=|=|=|=~4De Amicis~Seafood
+~Grand'Italia~e~navigli~Via Edmondo de Amicis 4~45.4579~9.1804~2~4.8~96~1000-0000|=|=|=|=|=|=~4Vetra~Italian
+~Viaggi nel Gusto~e~navigli~Via Edmondo de Amicis 24~45.4588~9.1782~2~4.6~899~1200-1430,1900-2230|=|=|=|1200-1500,1900-2300|=|1200-1500,1900-2230~4De Amicis~Italian
+~Roncoroni Classici Gastronomici | Ristorante gourmet a Milano~e~navigli~Via Edmondo de Amicis 4~45.458~9.1806~3~4.2~52~C|1830-2300|=|=|=|=|C~4Vetra~Restaurant
+~DedasPuri Ristorante Georgiano & Wine Shop - Milano~e~navigli~Via Edmondo de Amicis 44~45.4602~9.1758~3~4.6~874~C|1900-2330|1200-1500,1900-2330|=|=|=|=~4De Amicis~Restaurant
+~La Stuzzicheria~c~navigli~Corso Genova 15~45.4573~9.1758~1~4.7~154~0700-2030|=|=|=|=|=|C~4De Amicis~Bistro
+~Bar Atlantic~f~navigli~Corso Genova 19~45.4568~9.1752~1~4.5~51~0700-2100|=|=|=|=|=|0800-2000~4De Amicis~Coffee bar
+~Ristorante da Giordano Il Bolognese~e~navigli~Via Giovanni Battista Torti~45.458~9.1771~2~4.3~993~1230-1430,1930-2300|C|1230-1430,1930-2300|=|1930-2300|1230-1430,1930-2300|=~4De Amicis~Italian
+~Al Porto Ristorante~e~navigli~Piazzale Antonio Cantore 13~45.4555~9.1734~4~4.6~1094~1930-2230|1230-1430,1930-2230|=|=|=|=|C~2Sant'Agostino~Seafood
+~Ficopalo Bistrot~e~navigli~Via Molino delle Armi 31~45.4568~9.1832~2~4.7~146~0800-2200|=|=|0800-0200|=|0800-1600,2000-0300|C~4Vetra~Italian
+~Da Giulio~e~navigli~Corso S. Gottardo 38~45.4482~9.1795~2~4.2~785~C|1200-1500,1900-0000|=|=|=|=|=~~Pizzeria
+~Otto - Pizza~c~navigli~Corso S. Gottardo 28~45.4494~9.1796~1~4.9~191~C|1130-1530,1900-2300|=|=|=|=|1900-2300~~Pizzeria
+milano-yldz-kebap-pizza-gril-ristoranti~Milano Yıldız kebap pizza gril ristoranti~c~navigli~Corso S. Gottardo 29~45.4494~9.18~1~4.9~73~1100-0400|=|=|=|=|=|=~~Pizzeria
+~Pizzeria da Mammà~e~navigli~Via Antonio Tantardini 2~45.4463~9.1798~2~4.5~340~1200-1430,1900-2245|=|1200-1430,1900-2230|=|1200-1430,1900-2245|=|1900-2245~~Pizzeria
+~Pizza Kebab San Gottardo~c~navigli~Corso S. Gottardo 15~45.4503~9.18~1~4.2~317~1100-0300|=|=|=|1100-0530|=|1100-0300~~Kebab
+~Le Striatelle di Nonna Mafalda Milano~e~navigli~Via Vigevano 11~45.4527~9.1745~2~4.5~2416~1230-1500,1900-2230|C|1230-1500,1900-2230|=|=|=|=~2Porta Genova~Italian
+~Flame Craft BBQ牛门焰烤肉~e~navigli~Via Vigevano 9~45.4528~9.175~3~4.8~499~1200-1500,1900-2330|C|1200-1500,1900-2330|=|=|=|=~2Porta Genova~Restaurant
+~SHANCHENG~e~navigli~Via Vigevano 8~45.4531~9.1742~2~4.8~358~1200-1500,1830-2330|C|1200-1500,1830-2330|=|=|=|=~2Porta Genova~Chinese
+~Rab Questo Non É Un Bar~f~navigli~Corso S. Gottardo 41~45.4478~9.1797~1~4.4~829~0800-2100|=|=|0800-2330|=|1000-2330|C~~Coffee bar
+~Bonomi Bistrot~c~navigli~Corso S. Gottardo 51~45.4466~9.1796~1~4.4~285~0700-2000|=|=|=|=|=|0800-1300~~Bistro
+~Sucré Salé - San Gottardo~f~navigli~Corso S. Gottardo 41~45.4477~9.1797~2~4.1~331~0730-2000|=|=|=|=|=|=~~Pastry shop
+~Le Voglie Milano~c~navigli~Corso S. Gottardo 30~45.4491~9.1796~1~4.6~137~~~Bistro
+~Les Amis in Solari - Bistrot~e~tortona~Via Andrea Solari 30~45.4549~9.1615~2~4.4~194~0800-0000|=|=|=|=|=|=~4California~Restaurant
+~Due Tradizioni Solari | Lebanese Restaurant~e~tortona~Via Andrea Solari 39~45.4535~9.1579~2~4.5~138~1200-1430,1830-2300|=|C|1200-1430,1830-2300|1200-1430,1830-2330|=|1200-1430,1830-2300~4Bolivar~Lebanese
+~Il ristorantino della carne~e~tortona~Via Andrea Solari 12~45.4557~9.1638~3~4.2~993~C|1230-1430,1930-2300|=|=|=|=|=~4California~Restaurant
+~Sciué Solari~e~tortona~Via Andrea Solari 6~45.4561~9.1651~2~4.4~2505~1200-1500,1845-2345|=|=|=|=|=|1200-1545,1845-2300~4Coni Zugna~Pizzeria
+~BarBip~d~tortona~Via Andrea Solari 22~45.4551~9.162~2~4.9~55~C|=|0800-2200|=|=|=|0800-1200,1700-2200~4California~Bar
+~Art Café~f~tortona~Via Andrea Solari 19~45.4558~9.1655~1~4.5~146~0700-2100|=|=|=|=|=|0800-2100~4Coni Zugna~Café
+~Filly Vizi e Sfizi~f~tortona~Via Andrea Solari 4~45.4563~9.1656~1~4.6~265~0645-1830|=|=|=|=|0700-1700|C~4Coni Zugna~Café
+~Lumière Milano~e~sarpi~Via Mac Mahon 16~45.4893~9.1643~3~4.3~70~~5Gerusalemme~Restaurant
+~Pizzeria Blow Out~c~tortona~Via Lorenteggio 163~45.4496~9.1365~1~4.6~897~1000-2100|=|=|=|=|=|=~~Pizzeria
+~Silia Pizza al Trancio~e~tortona~Via Giambellino 90~45.4488~9.1424~2~4.4~285~1130-2330|=|=|=|=|=|=~4Tolstoj~Pizzeria
+~Ristorante Pizzeria La Carrozza~e~tortona~Largo Giambellino 122~45.448~9.1376~2~4.1~329~1000-1500|1000-1500,1800-0000|=|=|=|=|=~~Pizzeria
+~Cafè Solari 72~f~tortona~Via Andrea Solari 72~45.4532~9.1557~1~4.7~278~0800-1800|=|=|=|=|=|C~4Bolivar~Coffee bar
+~Pasticceria Caffetteria Giorgia~f~tortona~Piazza del Rosario 1~45.455~9.1635~1~3.9~421~0700-2000|=|=|=|=|=|=~4California~Café
+~Harmony Lounge Cafe~f~tortona~Via Andrea Solari 46~45.4541~9.1586~2~4.3~188~0730-2100|=|=|0730-0000|0730-0200|=|C~4California~Coffee bar
+~Ristorante Al Capriccio di Licia e Oreste~e~tortona~Via Giorgio Washington 106~45.4546~9.1543~3~4.4~293~C|1200-1500,1915-2300|=|=|=|=|C~4Bolivar~Seafood
+~Ristorante Pace Piazza Roma~e~tortona~Via Giorgio Washington 74~45.4595~9.1545~2~4.3~1485~1200-1500,1900-2300|=|=|=|=|=|=~4Bolivar~Restaurant
+~Quartieri Spagnoli Milano~e~sarpi~Via Cenisio 19~45.4873~9.1697~2~3.9~629~C|1200-1500,1900-2330|=|=|1200-1500,1900-0000|=|=~5Cenisio~Seafood
+~Sento Ramen~e~sarpi~Via Cenisio 13~45.4874~9.1705~2~4.9~1047~1900-2300|1200-1500,1900-2300|=|=|=|=|=~5Cenisio~Ramen bar
+~Pepe Verde~e~sarpi~Via Cenisio 7~45.4873~9.1716~2~4.4~987~1130-1500,1800-2300|=|=|=|=|=|1800-2300~5Cenisio~Pizzeria
+blitz-sarpi~Blitz~e~sarpi~Via Cenisio 9~45.4873~9.1712~3~4.5~666~C|2000-0130|=|=|=|=|=~5Cenisio~Italian
+~Sakakura - Sarpi~e~sarpi~Via Paolo Sarpi 15~45.4815~9.1781~2~4.4~915~1130-1530,1830-2230|=|=|=|=|1130-2300|=~5Monumentale~Japanese
+~Basìn~f~sarpi~Via Cenisio 42~45.4879~9.1646~2~4.7~161~0730-2200|0730-0100|=|0730-0130|=|0800-0130|0900-2200~5Gerusalemme~Café
+~Emporio Cafè~f~sarpi~Via Cenisio 54~45.4881~9.1624~1~3.9~212~0600-0000|=|=|=|=|=|=~5Gerusalemme~Café
+~Mathilda Cafe~f~sarpi~Via Cenisio 10~45.4877~9.1709~2~4.1~250~0700-2300|=|=|=|=|0900-2300|=~5Cenisio~Coffee bar
+~Legame | Pizza e Vini Naturali~e~sarpi~Via Giulio Cesare Procaccini 66~45.4814~9.1666~2~4.8~314~C|1930-2300|=|1930-2330|=|1230-1430,1930-2330|1230-1500,1930-2330~5Domodossola~Pizzeria
+~Pizzium - Milano Via Procaccini~e~sarpi~Via Giulio Cesare Procaccini 30~45.4836~9.1703~2~4.4~4347~1200-1430,1900-2300|=|=|=|1200-1500,1900-2330|=|=~5Gerusalemme~Pizzeria
+~Mama Eat - Gluten-free Restaurant & Pizzeria~e~sarpi~Via Giulio Cesare Procaccini 32~45.4835~9.1701~2~4.3~3587~1100-0000|=|=|=|=|=|=~5Gerusalemme~Pizzeria
+~Antica Pizzeria Bianca~e~sarpi~Via Giulio Cesare Procaccini 26~45.4838~9.171~2~4.4~198~1730-0300|=|=|=|=|=|=~5Gerusalemme~Pizzeria
+~A'Riccione Bistrot & Restaurant~e~sarpi~Via Giulio Cesare Procaccini 28~45.4838~9.1708~2~4.5~797~1230-1500,1930-0000|=|=|=|=|=|C~5Gerusalemme~Seafood
+~Trattoria Il Quadrifoglio~e~sarpi~Via Giulio Cesare Procaccini 21~45.4835~9.1725~2~4.6~625~1200-1500,1900-2300|C|1200-1500,1900-2330|1200-1500,1900-2300|=|=|=~5Gerusalemme~Trattoria
+~Trattoria Montina dal 1995~e~sarpi~Via Giulio Cesare Procaccini 54~45.4817~9.1674~3~4.4~615~1200-1530,1830-2330|=|=|=|1200-1530,1800-2330|=|1200-1530~5Gerusalemme~Trattoria
+~Il Chiosco di VALERIA & BRUNELLA al Monumentale~f~garibaldi~Piazzale Cimitero Monumentale~45.485~9.1803~1~4.7~55~C|1200-2000|=|=|=|1200-1900|C~5Monumentale~Coffee bar
+~Ceresio 7 Pools & Restaurant~w~garibaldi~Via Ceresio 7~45.4835~9.1804~2~4.4~3456~1230-0100|=|=|=|=|1230-0200|1230-0100~5Monumentale~Wine bar
+~Montecristo~e~sempione~Corso Sempione 28~45.4796~9.1681~4~4.5~499~1215-1430,1915-2330|C|1215-1430,1915-2330|=|=|1915-2330|1215-1430,1915-2330~5Domodossola~Seafood
+~I Vaccinari Milano~e~sempione~Corso Sempione 5~45.4766~9.1708~2~4.4~484~1200-1500,1900-2300|=|=|=|1200-1500,1800-0000|1200-1500,1900-2300|=~~Italian
+~Casa Portello~f~bovisa~Via Grosotto 7~45.4907~9.1451~2~4.0~428~1200-1500,1900-2200|=|=|=|=|=|=~~Coffee bar
+~Trattoria Milanese dal 1997| Famiglia Mita~e~bovisa~Via Carlo Ilarione Petitti 11~45.4885~9.1528~3~4.5~205~C|1200-1500,1900-2300|=|=|=|=|1200-1500~~Trattoria
+~Malìa Milano City Life~f~sempione~Piazza Sei Febbraio 22~45.478~9.1614~2~4.3~146~0730-2130|=|=|=|=|0800-2130|0800-1700~5Tre Torri~Pastry shop
+~Pepe & Sale~e~sempione~Via Monte Rosa 20~45.4733~9.1518~3~4.2~1500~1200-1445,1900-2330|=|=|=|=|=|=~1Amendola~Pizzeria
+~Glory POP (Via Correggio, Milano)~e~sempione~Via Correggio 14~45.4704~9.1512~2~4.7~943~1200-1430,1900-2300|=|=|=|1200-1500,1900-2330|=|=~1Buonarroti~Pizzeria
+~Lo Zenzero~e~sempione~Via Monte Amiata 4~45.4763~9.1508~3~4.2~1234~1200-1430,1900-2330|=|=|=|=|=|=~1Amendola~Pizzeria
+~Panetteria Monterosa~f~sempione~Via Monte Rosa 69~45.4754~9.1485~1~4.3~42~0730-1430|0730-1430,1630-1830|=|=|=|0730-1400|C~1Amendola~Bakery
+~Pizzium - Via Buonarroti~e~sempione~Via Michelangelo Buonarroti 3~45.4673~9.1549~2~4.4~1790~1200-1430,1900-2300|=|=|=|1200-1500,1900-2330|=|=~1Wagner~Pizzeria
+~Altriménti~e~sempione~Via Monte Bianco 2/A~45.4749~9.1508~4~4.6~276~C|1245-1400,1930-2230|=|=|=|=|C~1Amendola~Italian
+~Lo Spuntino~f~sempione~Corso Vercelli 34~45.4666~9.1601~2~4.1~67~0700-2030|=|0700-2100|=|0700-2030|=|C~1Pagano~Café
+~Torrefazione Vercelli~f~sempione~Via Francesco Cherubini 2~45.4667~9.1598~1~4.5~254~0700-1900|=|=|=|=|=|C~1Pagano~Coffee bar
+~Settimio caffè e bistrot~f~sempione~Largo Settimio Severo 1~45.466~9.1624~2~3.9~430~0700-2100|=|=|=|=|0800-2100|0900-2100~1Pagano~Gelateria
+~Annarella~c~sempione~Corso Vercelli 20~45.4666~9.1616~2~5.0~206~0730-1930|=|=|=|=|0730-1700|C~1Pagano~Deli
+~Ristorante la Villetta~e~isola~V.le Zara 87~45.4969~9.1948~2~4.2~703~~5Marche~Seafood
+~Cookingarage~e~isola~Via Ala 2~45.5009~9.1967~2~4.7~308~0730-2100|0730-2130|=|=|0730-2100|=|C~5Istria~Bistro
+~Ristorante Pizzeria Maruzzella Zara~e~isola~V.le Zara 118~45.4988~9.1968~2~4.3~1796~C|1200-1430,1900-2330|=|=|=|=|=~5Istria~Pizzeria
+~La Sirenella~e~isola~Via Scipio Slataper 17~45.5002~9.1988~3~4.5~1413~1230-1430,1930-2330|=|C|1230-1430,1930-2330|=|=|=~5Istria~Seafood
+~NoodleMan RAMEN 重庆小面侠CHONGQING RISTORANTR~e~isola~V.le Zara 117~45.4983~9.1956~2~4.8~122~1130-1500,1800-2200|=|=|=|=|=|=~5Marche~Chinese
+~PQuattordici~f~bicocca~Viale Piero e Alberto Pirelli 14~45.5156~9.2116~1~4.1~519~0645-2100|=|=|=|=|=|C~5Bicocca~Café
+~CAFFE' EGEO~f~bicocca~Piazzale Egeo 9~45.5145~9.2145~2~4.2~279~0630-0030|=|=|=|=|0730-0030|1800-2300~~Coffee bar
+~People Eat Milano~e~bicocca~Piazza della Trivulziana 5~45.5151~9.2117~2~4.0~1294~1100-1530,1700-2100|=|=|1100-1530,1700-2200|1100-1530,1700-2100|1000-2100|=~5Bicocca~Restaurant
+~Ristorante Pizzeria Il Faro Milano Ca' Granda~e~bicocca~Via Emilio de Martino 1~45.5082~9.1976~2~4.4~1454~1200-1430,1900-2300|=|=|=|=|=|=~5Ca' Granda~Pizzeria
+~Je Suis Jambon~b~bicocca~Piazza della Trivulziana 4~45.5149~9.2123~2~4.5~1029~1200-0100|=|=|=|1200-0200|1800-0200|C~5Bicocca~Pub
+~Doppio Malto Milano Bicocca Village~b~bicocca~Via Chiese~45.5225~9.2158~2~4.3~774~1200-1500,1800-0000|=|=|=|1200-1500,1800-0100|1200-0100|1200-0000~~Brewpub
+~Maga Furla~e~bicocca~Via Roberto Cozzi 50~45.5096~9.2118~2~4.3~1464~1800-0200|=|=|=|=|=|=~~Restaurant
+~AloPanCafe~f~bicocca~Viale Piero e Alberto Pirelli 14~45.5155~9.2115~1~4.1~504~0600-2100|=|=|=|=|=|0800-2000~5Bicocca~Coffee bar
+~Gelateria Bar Al Bicocca - Milan~f~bicocca~Via Goffredo da Bussero 1~45.5186~9.207~2~4.2~261~0700-1930|=|=|=|=|0800-1300,1500-1930|C~5Bicocca~Gelateria
+~Cafezal Brunch & Specialty Coffee - Bicocca/BiM~f~bicocca~Viale Piero e Alberto Pirelli 10~45.5125~9.2098~2~4.7~234~0800-1530|=|=|=|=|0900-1500|C~5Bicocca~Brunch spot
