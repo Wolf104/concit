@@ -557,3 +557,40 @@ html[data-theme=dark] .mapwrap,html[data-theme=dark] #mapSlot,html[data-theme=da
 .maplegend span{display:inline-flex;align-items:center;gap:5px}
 .maplegend i{width:10px;height:10px;border-radius:50%;box-shadow:0 0 0 1.5px #fff,0 0 0 2.5px var(--line)}
 .mk.on{width:30px;height:40px;pointer-events:none;z-index:3}
+
+/* Voting card */
+.vprog{display:flex;gap:5px;margin:0 0 14px}
+.vprog i{flex:1;height:5px;border-radius:9px;background:var(--line)}
+.vprog i.done{background:var(--accent);opacity:.45}
+.vprog i.now{background:var(--accent)}
+.vcard{border:1px solid var(--line);border-radius:22px;overflow:hidden;background:var(--card);box-shadow:0 10px 30px var(--shade);margin-bottom:16px}
+.vhead{position:relative;padding:18px 18px 16px;background:color-mix(in srgb,var(--cc) 15%,var(--card));border-bottom:1px solid color-mix(in srgb,var(--cc) 22%,transparent);overflow:hidden}
+.vhead h2{position:relative;z-index:1;margin:8px 0 2px;font-size:28px;line-height:1.1;font-weight:700;letter-spacing:-.015em;text-wrap:balance;max-width:85%}
+.vhead .rate{position:relative;z-index:1}
+.vtags{position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:6px}
+.vtags span{font-size:12.5px;font-weight:700;padding:4px 10px;border-radius:99px;background:var(--cc);color:#fff}
+.vtags span+span{background:color-mix(in srgb,var(--cc) 22%,var(--card));color:color-mix(in srgb,var(--cc) 75%,var(--fg))}
+.vbig{position:absolute;right:-14px;bottom:-16px;width:118px;height:118px;color:var(--cc);opacity:.22}
+.vbody{padding:16px 18px 18px;display:flex;flex-direction:column;gap:14px}
+.vabout{margin:0;font-size:16px;line-height:1.5}
+.vfacts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.vfact{display:flex;gap:10px;align-items:center;padding:10px 11px;border-radius:14px;background:var(--page);border:1px solid var(--line);min-width:0}
+.vfact .vi{flex:none;width:20px;height:20px;color:var(--cc)}
+.vfact div{min-width:0;display:flex;flex-direction:column;line-height:1.2}
+.vfact b{font-size:14.5px;font-weight:700;overflow-wrap:anywhere}
+.vfact small{font-size:12px;color:var(--muted);margin-top:2px}
+.vfact.warn .vi,.vfact.warn b{color:var(--danger)}
+.vaddr{display:flex;gap:8px;align-items:flex-start;margin:0;font-size:14px;color:var(--muted)}
+.vaddr .vi{flex:none;width:17px;height:17px;margin-top:1px}
+.vlinks{display:flex;flex-wrap:wrap;gap:8px}
+.vlinks a{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border-radius:99px;border:1px solid var(--line);font-size:14px;font-weight:700;color:var(--link);text-decoration:none;background:var(--card)}
+.vlinks .vi{width:16px;height:16px}
+.vvote{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px}
+.vvote button{display:flex;align-items:center;justify-content:center;gap:8px;padding:15px 10px;border-radius:18px;font:inherit;font-size:16.5px;font-weight:700;cursor:pointer;transition:transform .12s}
+.vvote button:active{transform:scale(.97)}
+.vno{background:var(--card);border:1.5px solid var(--line);color:var(--fg)}
+.vno .vic{color:var(--danger)}
+.vyes{background:var(--accent);border:1.5px solid var(--accent);color:#fff;box-shadow:0 8px 20px rgba(47,155,255,.28)}
+.vic{width:22px;height:22px;stroke-width:2.6}
+@media (max-width:360px){.vfacts{grid-template-columns:1fr}.vhead h2{font-size:24px}}
+.vvote{position:sticky;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:5;margin:0 -8px 6px;padding:10px 8px;background:linear-gradient(to top,var(--card) 70%,transparent)}

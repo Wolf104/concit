@@ -491,15 +491,59 @@ function viewWaiting(p){
   ${solo&&!p.group_id?"":meOut?`<button class="btn plain" style="margin-top:18px" data-act="attend" data-v="1">I can make it after all</button>`:`<button class="link quiet center" data-act="attend" data-v="0">I can't make it</button>`}`;
 }
 const cap=t=>t.charAt(0).toUpperCase()+t.slice(1);
+/* The voting card: a coloured header for the type of place, the rating, why it's on the list, key facts and links. */
+const VI={
+  price:'<path d="M17 6.5A6.5 6.5 0 1 0 17 17.5M4 10.5h9M4 13.5h9"/>',
+  pin:'<path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',
+  metro:'<rect x="5" y="3" width="14" height="14" rx="3"/><path d="M9 21l1.5-4M15 21l-1.5-4M8 13h.01M16 13h.01M5 9h14"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  cal:'<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
+  walk:'<circle cx="13" cy="4.5" r="1.8"/><path d="M10 21l2-6 3 3v3M8 12l2-4 3 1 2 4 3 1"/>',
+  ticket:'<path d="M3 9V6h18v3a3 3 0 0 0 0 6v3H3v-3a3 3 0 0 0 0-6z"/>',
+  dir:'<path d="M3 11l18-8-8 18-2-8z"/>', web:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/>',
+  no:'<path d="M6 6l12 12M18 6 6 18"/>', yes:'<path d="M5 12.5l4.5 4.5L19 7.5"/>'};
+const vi=(k,c)=>`<svg class="${c||"vi"}" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${VI[k]}</svg>`;
+const EV_COL={music:"#8b5cf6",art:"#ef6a3a",theatre:"#ef6a3a",sport:"#1d8a4a",festival:"#e0408a"};
+const KIND_ICON={cafe:"coffee",eat:"eat",cheap:"eat",drink:"drinks",wine:"drinks",beer:"drinks",club:"clubs",culture:"culture"};
+const distText=d=>d<0.975?Math.round(d*1000/50)*50+" m":d.toFixed(1)+" km";
 function viewCard(p){
-  const id=nextCard(p,uid()), it=byId(id), i=p.options.indexOf(id);
+  const id=nextCard(p,uid()), it=byId(id), i=p.options.indexOf(id), n=p.options.length, ev=!!it.cat;
   const far=p.pin&&it.lat?km([null,p.pin[0],p.pin[1]],[null,it.lat,it.lng]):null;
-  const line=(it.cat?`${eventWhen(it)} · ${it.venue}`:placeLine(it))+(far!=null?` · ${far<0.975?Math.round(far*1000/50)*50+" m":far.toFixed(1)+" km"} from the pin`:"");
-  return `<div data-hero><button class="back" data-act="reset">‹ ${esc(p.group_name||"New plan")}</button><span>${esc(cap(planTitle(p)))}</span><h1>${i+1} of ${p.options.length}</h1></div>
-  <div class="place"><span class="dim">${it.cat?"Event":esc(KIND[it.kind])}</span><h2>${esc(it.name)}</h2>
-    ${it.cat?(it.priceText?`<p>${esc(it.priceText)}</p>`:""):`${starsHtml(it,"big")}<p>${esc(it.why)}</p>`}
-    <p class="dim">${esc(line)}</p></div>
-  <div class="yesno"><button class="btn plain" data-act="vote" data-id="${esc(id)}" data-v="0">No</button><button class="btn" data-act="vote" data-id="${esc(id)}" data-v="1">Yes</button></div>
+  const col=ev?(EV_COL[it.cat]||"#2f9bff"):mapCat(it)[2];
+  const icon=(WHATS.find(w=>w[0]===(ev?"event":KIND_ICON[it.kind]))||WHATS[0])[2];
+  const evCat=ev?(EV_CATS.find(c=>c[3](it))||[])[1]||"Event":"";
+  const tags=ev?[evCat]:[KIND[it.kind],...(it.cuisine||[]).map(c=>(CUISINES.find(k=>k[0]===c)||[])[1]).filter(Boolean).slice(0,2)];
+  const facts=[];
+  if(ev){
+    facts.push(["cal",eventWhen(it),it.time?it.time:"Time to be confirmed"]);
+    facts.push(["ticket",it.priceNum===0?"Free":it.priceText||"Price to be confirmed","Tickets"]);
+    facts.push(["pin",it.venue||"Venue to be confirmed",it.zone?zname(it.zone):"Milan"]);
+    if(far!=null) facts.push(["walk",distText(far),"from your pin"]);
+  } else {
+    const c=costOf(it,KIND_UNIT[it.kind]);
+    facts.push(["price",c===0?"Free":`About €${c}`,UNIT_TEXT[KIND_UNIT[it.kind]].replace(/^a /,"per ")]);
+    facts.push(far!=null?["walk",distText(far),"from your pin"]:["pin",zname(it.zone),"Area"]);
+    if((it.metro||[])[0]) facts.push(["metro",metroText(it.metro),"Nearest metro"]);
+    const ok=open(it,p.day||today);
+    facts.push(["clock",ok?"Open":"Usually closed",p.day?dayName(p.day):"today"]);
+  }
+  const links=ev?(/^https?:\/\//.test(it.src||"")?[[it.src,"web","Event page"]]:[]).concat(it.venue?[[mapsUrl(it.venue),"dir","Directions"]]:[])
+    :[[mapsUrl(it.name+" "+it.addr),"dir","Directions"]].concat(/^https?:\/\//.test(it.web||"")?[[it.web,"web",/instagram\.com/.test(it.web)?"Instagram":/facebook\.com/.test(it.web)?"Facebook":"Website"]]:[]);
+  const about=ev?"":[it.why,it.detail].filter(Boolean).map(t=>t.replace(/\.$/,"")).join(". ")+".";
+  return `<div data-hero><button class="back" data-act="reset">‹ ${esc(p.group_name||"New plan")}</button><span>${esc(cap(planTitle(p)))}</span><h1>${i+1} of ${n}</h1></div>
+  <div class="vprog" aria-hidden="true">${p.options.map((o,j)=>`<i class="${j<i?"done":j===i?"now":""}"></i>`).join("")}</div>
+  <article class="vcard" style="--cc:${col}">
+    <header class="vhead"><div class="vtags">${tags.map(t=>`<span>${esc(t)}</span>`).join("")}</div>
+      <h2>${esc(it.name)}</h2>${ev?"":starsHtml(it,"big")}
+      <svg class="vbig" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${icon}</svg></header>
+    <div class="vbody">
+      ${about.length>1?`<p class="vabout">${esc(about)}</p>`:""}
+      <div class="vfacts">${facts.map(([k,a,b])=>`<div class="vfact${k==="clock"&&a!=="Open"?" warn":""}">${vi(k)}<div><b>${esc(a)}</b><small>${esc(b)}</small></div></div>`).join("")}</div>
+      ${ev?"":`<p class="vaddr">${vi("pin")}<span>${esc(it.addr)}</span></p>`}
+      ${links.length?`<div class="vlinks">${links.map(([u,k,l])=>`<a href="${esc(u)}" target="_blank" rel="noopener">${vi(k)}${esc(l)}</a>`).join("")}</div>`:""}
+    </div>
+  </article>
+  <div class="vvote"><button class="vno" data-act="vote" data-id="${esc(id)}" data-v="0">${vi("no","vic")}<span>Not this one</span></button><button class="vyes" data-act="vote" data-id="${esc(id)}" data-v="1">${vi("yes","vic")}<span>I'm in</span></button></div>
   ${p.people.length>1||p.group_id?`<button class="link quiet center" data-act="attend" data-v="0">I can't make it</button>`:""}`;
 }
 function viewResult(p){
