@@ -264,6 +264,9 @@ function slider(id,unit,i){
 }
 const metroText=m=>m[0]?`M${m[0][0]} ${m[0][1]}`:"";
 const placeLine=p=>[zname(p.zone),costText(p),metroText(p.metro)].filter(Boolean).join(" · ");
+/* Changing the day drops picked events that aren't on that day. */
+function setDay(d){ const f=S.form; f.day=d; if(f.picks) f.picks=f.picks.filter(id=>{ const e=EVENTS.find(x=>x.id===id); return !e||(e.start<=d&&e.end>=d); }); }
+const dayName=d=>d===today?"today":d===addDays(today,1)?"tomorrow":parse(d).toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"});
 const eventWhen=e=>e.start===e.end?`${wday(e.start)} ${short(e.start)}`:(e.start<=today?`Until ${short(e.end)}`:`${short(e.start)} to ${short(e.end)}`);
 const srcUrl=k=>SRC[k]?SRC[k][1]:/^https?:\/\//.test(k||"")?k:"#";
 const mapsUrl=q=>"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(q+", Milano");
@@ -409,7 +412,7 @@ function pickPool(f){
   const unit=WHAT_UNIT[f.what], max=maxFromPrice(unit,f.price||0);
   const fits=x=>(max==null||(x.cat?(max===0?x.priceNum===0:x.priceNum==null||x.priceNum<=max):costOf(x,unit)<=max))&&(x.cat||((!rateMin(f.rating)||(x.stars||0)>=rateMin(f.rating))&&(!f.metro||(x.metro||[]).length)));
   const inArea=p=>(!z||p.zone===z)&&(!R||(pinDist(f,p)??99)<=R)&&fits(p);
-  const evs=EVENTS.filter(e=>!e.sold&&e.end>=f.day&&inArea(e));
+  const evs=EVENTS.filter(e=>!e.sold&&e.start<=f.day&&e.end>=f.day&&inArea(e));
   if(q){ const m=x=>(x.name+" "+(x.zone?zname(x.zone):"")+" "+(x.venue||"")+" "+(x.kind?KIND[x.kind]:"")+" "+(x.cuisine||[]).map(c=>(CUISINES.find(k=>k[0]===c)||[c,c])[1]+" "+c).join(" ")+" "+(x.why||"")).toLowerCase().includes(q);
     return [...PLACES.filter(p=>inArea(p)&&m(p)).sort(byRank),...evs.filter(m)]; }
   if(f.what==="event") return evs.sort((a,b)=>a.start.localeCompare(b.start));
@@ -430,11 +433,11 @@ function pickBoxHtml(f){
 const pickChipsHtml=picks=>picks.length?`<div class="picked">${picks.map(id=>`<button class="chip" data-act="pickToggle" data-id="${esc(id)}" aria-pressed="true" aria-label="Remove ${esc(byId(id).name)}">${esc(byId(id).name)} <span aria-hidden="true">×</span></button>`).join("")}</div><button class="link danger pickcancel" data-act="pickCancelAll">Cancel my selection</button>`:"";
 function pickListHtml(f,picks,pool,sub){
   return `<div class="stack picklist">${pool.map(x=>{ const on=picks.includes(x.id);
-    return `<button class="person" data-act="pickToggle" data-id="${esc(x.id)}" aria-pressed="${on}" ${!on&&picks.length>=PICK_MAX?"disabled":""}><span>${esc(x.name)}<small class="sub">${esc(sub(x))}</small>${x.cat?"":starsHtml(x)}</span><small>${on?"Added ✓":"Add"}</small></button>`; }).join("")||`<p class="empty">${S.pickQ?`No places match “${esc(S.pickQ)}”`:"Nothing here"}${S.mapFail&&S.pickArea?` in ${esc(zname(S.pickArea))}`:f.pin&&f.radius?` within ${radText(f.radius)} of the pin. Try a bigger radius`:""}.</p>`}</div>`;
+    return `<button class="person" data-act="pickToggle" data-id="${esc(x.id)}" aria-pressed="${on}" ${!on&&picks.length>=PICK_MAX?"disabled":""}><span>${esc(x.name)}<small class="sub">${esc(sub(x))}</small>${x.cat?"":starsHtml(x)}</span><small>${on?"Added ✓":"Add"}</small></button>`; }).join("")||`<p class="empty">${f.what==="event"?(S.pickQ?`No events match “${esc(S.pickQ)}” on ${esc(dayName(f.day))}`:`No events on ${esc(dayName(f.day))}`):S.pickQ?`No places match “${esc(S.pickQ)}”`:"Nothing here"}${S.mapFail&&S.pickArea?` in ${esc(zname(S.pickArea))}`:f.pin&&f.radius?` within ${radText(f.radius)} of the pin. Try a bigger radius`:""}.</p>`}</div>`;
 }
 const pickStartLabel=f=>{ const n=(f.picks||[]).filter(byId).length; return (f.group?"Send to the group":"Start the vote")+` (${n})`; };
 function viewPicker(f){
-  return `<section class="dsec"><span class="label">Your places · up to ${PICK_MAX}</span>
+  return `<section class="dsec"><span class="label">Your ${f.what==="event"?"events":"places"} · up to ${PICK_MAX}</span>
   <input type="text" id="pickQ" data-search="pick" value="${esc(S.pickQ||"")}" placeholder="Search a name" autocomplete="off" aria-label="Search places by name">
   ${S.pickSearched?"":`<button class="btn pickgo" data-act="pickSearch">Search</button>`}
   <div id="pickBox">${pickBoxHtml(f)}</div></section>`;
@@ -1118,14 +1121,14 @@ const H={
   fltSort(el){ flt().sort=el.dataset.v; render(); },
   evCal(){ S.evCalOpen=!S.evCalOpen; if(S.evCalOpen&&S.evDate) S.evMonth=S.evDate.slice(0,7); render(); },
   evMove(el){ const [y,m]=(S.evMonth||today.slice(0,7)).split("-").map(Number); S.evMonth=iso(new Date(y,m-1+Number(el.dataset.v),1)).slice(0,7); render(); },
-  day(el){ S.form.day=el.dataset.v; S.calOpen=false; render(); },
+  day(el){ setDay(el.dataset.v); S.calOpen=false; render(); },
   pickOpen(el){ const which=el?.dataset.v==="hot"?"hot":true; if(S.pickOpen===which){ S.pickOpen=false; render(); return; } S.pickOpen=which; S.pickR=pickTarget().radius||2; S.pickFresh=true; S.calOpen=false; render(); },
   pickCancel(){ S.pickOpen=false; render(); },
   pickSet(){ if(!PICK) return; const c=PICK.getCenter(), t=pickTarget(); t.pin=[+c.lat.toFixed(5),+c.lng.toFixed(5)]; t.radius=S.pickR||2; t.area=""; if(S.pickOpen==="hot") FIT=null; S.pickOpen=false; render(); },
   pinClear(el){ const t=el?.dataset.v==="hot"?flt():S.form; t.pin=null; t.radius=null; if(t!==S.form) FIT=null; render(); },
   cal(){ S.calOpen=!S.calOpen; S.calMonth=S.form.day.slice(0,7); render(); },
   calMove(el){ const [y,m]=S.calMonth.split("-").map(Number); S.calMonth=iso(new Date(y,m-1+Number(el.dataset.v),1)).slice(0,7); render(); },
-  pickDay(el){ S.form.day=el.dataset.v; S.calOpen=false; render(); },
+  pickDay(el){ setDay(el.dataset.v); S.calOpen=false; render(); },
   mode(el){ S.form.mode=el.dataset.v; S.pickOpen=false; S.dfltOpen=false; render(); scrollTo(0,0); },
   addTime(){ S.timeOpen=!S.timeOpen; S.calOpen=false; render(); const strip=document.getElementById("timeStrip"), c=strip?.querySelector(`[data-v="${S.form.time||TIME_HINT[S.form.what]||"19:00"}"]`); if(c) strip.scrollLeft=c.offsetLeft-strip.offsetLeft-(strip.clientWidth-c.offsetWidth)/2; },
   setTime(el){ S.form.time=el.dataset.v; S.timeOpen=false; render(); },
