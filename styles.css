@@ -618,3 +618,6 @@ html[data-theme=dark] .vstamp.yes{color:var(--ok);border-color:var(--ok)}
 .vdeck .vcard .vbody{flex:1}
 .vdeck .vcard .vlinks{margin-top:auto}
 .vmeasure .vcard{margin-bottom:12px}
+
+/* Opening hours tile spans the full width so long hours fit */
+.vfact.vhours b{font-variant-numeric:tabular-nums;white-space:pre-line}

@@ -42,7 +42,10 @@ const long=s=>parse(s).toLocaleDateString("en-GB",{weekday:"long"});
 const today=iso(new Date());
 const isRun=e=>(parse(e.end)-parse(e.start))/864e5>7;
 function km(a,b){const p=Math.PI/180,x=(b[2]-a[2])*p*Math.cos((a[1]+b[1])/2*p),y=(b[1]-a[1])*p;return Math.sqrt(x*x+y*y)*6371}
-const open=(p,day)=>!(p.closed||[]).includes(parse(day).getDay());
+/* Opening hours: p.hours is Monday-first, "|" between days, "=" repeats the day before, "C" closed, e.g. "C|1200-1430,1900-2230|=|...". */
+function hoursOn(p,day){ if(!p||!p.hours) return null; const a=String(p.hours).split("|"); for(let i=1;i<a.length;i++) if(a[i]==="=") a[i]=a[i-1]; return a[(parse(day).getDay()+6)%7]||null; }
+const fmtHours=h=>h==="C"?"Closed":h.split(",").map(r=>r.replace(/^(\d\d)(\d\d)-(\d\d)(\d\d)$/,"$1:$2–$3:$4")).join("\n");
+const open=(p,day)=>{ const h=hoursOn(p,day); return h?h!=="C":!(p.closed||[]).includes(parse(day).getDay()); };
 
 /* The best places for the choices made, skipping anything the group has already seen. */
 function shortlist(s,seen=[]){
@@ -572,8 +575,8 @@ function cardHtml(p,id,under){
     facts.push(["price",c===0?"Free":`About €${c}`,UNIT_TEXT[KIND_UNIT[it.kind]].replace(/^a /,"per ")]);
     facts.push(far!=null?["walk",distText(far),"from your pin"]:["pin",zname(it.zone),"Area"]);
     if((it.metro||[])[0]) facts.push(["metro",metroText(it.metro),"Nearest metro"]);
-    const ok=open(it,p.day||today);
-    facts.push(["clock",ok?"Open":"Usually closed",p.day?dayName(p.day):"today"]);
+    const d=p.day||today, h=hoursOn(it,d), when=d===today?"today":d===addDays(today,1)?"tomorrow":parse(d).toLocaleDateString("en-GB",{weekday:"long"});
+    facts.push(h?["clock",fmtHours(h),(h==="C"?"Closed ":"Open ")+when,h==="C"]:["clock",open(it,d)?"Hours not listed":"Usually closed",when,!open(it,d)]);
   }
   const links=ev?(/^https?:\/\//.test(it.src||"")?[[it.src,"web","Event page"]]:[]).concat(it.venue?[[mapsUrl(it.venue),"dir","Directions"]]:[])
     :[[mapsUrl(it.name+" "+it.addr),"dir","Directions"]].concat(/^https?:\/\//.test(it.web||"")?[[it.web,"web",/instagram\.com/.test(it.web)?"Instagram":/facebook\.com/.test(it.web)?"Facebook":"Website"]]:[]);
@@ -585,7 +588,7 @@ function cardHtml(p,id,under){
       <svg class="vbig" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${icon}</svg></header>
     <div class="vbody">
       ${about.length>1?`<p class="vabout">${esc(about)}</p>`:""}
-      <div class="vfacts">${facts.map(([k,a,b])=>`<div class="vfact${k==="clock"&&a!=="Open"?" warn":""}">${vi(k)}<div><b>${esc(a)}</b><small>${esc(b)}</small></div></div>`).join("")}</div>
+      <div class="vfacts">${facts.map(([k,a,b,w])=>`<div class="vfact${k==="clock"&&w?" warn":""}${k==="clock"?" vhours":""}">${vi(k)}<div><b>${esc(a)}</b><small>${esc(b)}</small></div></div>`).join("")}</div>
       ${ev?"":`<p class="vaddr">${vi("pin")}<span>${esc(it.addr)}</span></p>`}
       ${links.length?`<div class="vlinks">${links.map(([u,k,l])=>`<a href="${esc(u)}" target="_blank" rel="noopener">${vi(k)}${esc(l)}</a>`).join("")}</div>`:""}
     </div>
