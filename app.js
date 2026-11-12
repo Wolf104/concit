@@ -223,6 +223,35 @@ async function setAttending(go){
   catch{ S.plan=p; render(); toast("That didn't save. Try again."); }
 }
 function clearPlan(){ S.plan=null; S.code=null; setUrl(null); render(); }
+/* Voting as a deck of cards: the card flies right for yes, left for no, and the next one rises from the stack.
+   The card can also be dragged sideways to vote. */
+const calmMotion=()=>window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+let DEALING=false, LAST_CARD="";
+function dealVote(id,v){
+  if(DEALING) return;
+  const card=document.querySelector(".vcard");
+  if(!card||calmMotion()){ vote(id,v); return; }
+  DEALING=true;
+  card.classList.add("flying"); card.style.setProperty("--sy",v?1:0); card.style.setProperty("--sn",v?0:1);
+  card.style.transform=`translateX(${v?135:-135}%) translateY(30px) rotate(${v?16:-16}deg)`; card.style.opacity="0";
+  document.querySelectorAll(".vvote button").forEach(b=>b.disabled=true);
+  setTimeout(()=>{ DEALING=false; vote(id,v); },330);
+}
+function setupDeck(){
+  const card=document.querySelector(".vcard"); if(!card) return;
+  if(card.dataset.id!==LAST_CARD&&!calmMotion()){ card.classList.add("enter"); }
+  LAST_CARD=card.dataset.id;
+  let x0=null,y0=0,dx=0,drag=false;
+  card.addEventListener("pointerdown",e=>{ if(DEALING||e.button>0||e.target.closest("a,button")) return; x0=e.clientX; y0=e.clientY; dx=0; drag=false; });
+  card.addEventListener("pointermove",e=>{ if(x0==null) return; dx=e.clientX-x0;
+    if(!drag){ if(Math.abs(dx)<8) return; if(Math.abs(e.clientY-y0)>Math.abs(dx)){ x0=null; return; } drag=true; card.setPointerCapture(e.pointerId); card.classList.add("dragging"); }
+    card.style.transform=`translateX(${dx}px) rotate(${dx/22}deg)`;
+    card.style.setProperty("--sy",Math.max(0,Math.min(1,dx/90))); card.style.setProperty("--sn",Math.max(0,Math.min(1,-dx/90))); });
+  const end=()=>{ if(x0==null) return; x0=null; if(!drag) return; drag=false; card.classList.remove("dragging");
+    if(Math.abs(dx)>90){ dealVote(card.dataset.id,dx>0?1:0); }
+    else { card.style.transform=""; card.style.setProperty("--sy",0); card.style.setProperty("--sn",0); } };
+  card.addEventListener("pointerup",end); card.addEventListener("pointercancel",end);
+}
 async function vote(id,v){
   S.ver++;
   S.plan=merge(S.plan,{votes:{[uid()]:{[id]:v}}});
@@ -532,7 +561,8 @@ function viewCard(p){
   const about=ev?"":[it.why,it.detail].filter(Boolean).map(t=>t.replace(/\.$/,"")).join(". ")+".";
   return `<div data-hero><button class="back" data-act="reset">‹ ${esc(p.group_name||"New plan")}</button><span>${esc(cap(planTitle(p)))}</span><h1>${i+1} of ${n}</h1></div>
   <div class="vprog" aria-hidden="true">${p.options.map((o,j)=>`<i class="${j<i?"done":j===i?"now":""}"></i>`).join("")}</div>
-  <article class="vcard" style="--cc:${col}">
+  <div class="vdeck" data-left="${Math.min(2,n-1-i)}"><article class="vcard" style="--cc:${col}" data-id="${esc(id)}">
+    <span class="vstamp yes" aria-hidden="true">I'm in</span><span class="vstamp no" aria-hidden="true">Nope</span>
     <header class="vhead"><div class="vtags">${tags.map(t=>`<span>${esc(t)}</span>`).join("")}</div>
       <h2>${esc(it.name)}</h2>${ev?"":starsHtml(it,"big")}
       <svg class="vbig" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${icon}</svg></header>
@@ -542,7 +572,7 @@ function viewCard(p){
       ${ev?"":`<p class="vaddr">${vi("pin")}<span>${esc(it.addr)}</span></p>`}
       ${links.length?`<div class="vlinks">${links.map(([u,k,l])=>`<a href="${esc(u)}" target="_blank" rel="noopener">${vi(k)}${esc(l)}</a>`).join("")}</div>`:""}
     </div>
-  </article>
+  </article></div>
   <div class="vvote"><button class="vno" data-act="vote" data-id="${esc(id)}" data-v="0">${vi("no","vic")}<span>Not this one</span></button><button class="vyes" data-act="vote" data-id="${esc(id)}" data-v="1">${vi("yes","vic")}<span>I'm in</span></button></div>
   ${p.people.length>1||p.group_id?`<button class="link quiet center" data-act="attend" data-v="0">I can't make it</button>`:""}`;
 }
@@ -1148,6 +1178,7 @@ function viewEvents(){
   <p class="foot">Checked ${S.evChecked||CHECKED}. Confirm dates before you go.</p>`;
 }
 function render(){
+  if(DEALING){ clearTimeout(render.wait); render.wait=setTimeout(render,360); return; }
   const a=document.activeElement;
   if(render.ok&&a&&a.matches?.('input[type=text],input[type=email],input[type=password],textarea')&&a.value&&S.session){ render.later=true; return; }
   render.ok=true; render.later=false;
@@ -1159,6 +1190,7 @@ function render(){
   ht.innerHTML=h?h.innerHTML:""; h?.remove();
   document.querySelectorAll("details").forEach(d=>{ if(open.includes(d.querySelector("b").textContent)) d.open=true; });
   if(authed&&S.tab==="hotspots"&&S.hotView==="map"&&!S.mapFail) mountMap();
+  setupDeck();
   if(authed&&S.pickOpen&&!S.acct&&(S.pickOpen==="hot"?S.tab==="hotspots"&&S.fltOpen:S.tab==="decide")) mountPick();
   document.body.classList.toggle("inchat",!!(authed&&S.chatOpen&&S.tab==="groups"&&!S.acct));
   if(authed&&S.chatOpen&&S.tab==="groups"){ sizeChat(); watchChatLayout(); requestAnimationFrame(()=>sizeChat()); } else CHAT_RO?.disconnect();
@@ -1240,7 +1272,7 @@ const H={
   newGroupPlan(el){ S.form.group=el.dataset.id; S.form.linkOnly=false; S.plan=null; S.code=null; setUrl(null); S.tab="decide"; render(); scrollTo(0,0); },
   invite(el){ const g=S.groups.find(x=>x.id===el.dataset.id); if(g) shareOut(`Join ${g.name} on Concit: ${inviteUrl(g)}`,"Invite link copied"); },
   async leave(el){ if(!S.leaving){ S.leaving=true; render(); return; } S.leaving=false; try{ await rpc("leave_group",{p_group:el.dataset.id}); S.gid=null; await loadGroups(); render(); }catch{ toast("Couldn't leave the group. Try again."); } },
-  vote(el){ vote(el.dataset.id,Number(el.dataset.v)); },
+  vote(el){ dealVote(el.dataset.id,Number(el.dataset.v)); },
   finish(){ changePlan({...S.plan,finished:true}); },
   reset(){ const g=S.plan?.group_id; clearPlan(); if(g){ S.gid=g; S.tab="groups"; render(); } },
   again(){ const p=S.plan, options=shortlist(p,p.seen||p.options); if(!options.length){ toast("That's everything for these choices."); return; }
