@@ -612,3 +612,9 @@ html[data-theme=dark] .mapwrap,html[data-theme=dark] #mapSlot,html[data-theme=da
 html[data-theme=dark] .vstamp.yes{color:var(--ok);border-color:var(--ok)}
 @media (prefers-reduced-motion:reduce){.vcard.enter{animation:none}}
 .vcard.enter{transform-origin:50% 0}
+
+/* Same-size voting cards */
+.vdeck .vcard{min-height:var(--vh,0px);display:flex;flex-direction:column}
+.vdeck .vcard .vbody{flex:1}
+.vdeck .vcard .vlinks{margin-top:auto}
+.vmeasure .vcard{margin-bottom:12px}

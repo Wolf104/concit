@@ -239,7 +239,23 @@ function dealVote(id,v){
   const nxt=document.querySelector(".vcard.under"); 
   setTimeout(()=>{ DEALING=false; if(nxt) LAST_CARD="dealt:"+nxt.dataset.id; vote(id,v); },330);
 }
+/* All cards in a vote share one height: the tallest option's, measured once per plan and screen width. */
+let DECK_H={key:"",h:0};
+function sizeDeck(){
+  const deck=document.querySelector(".vdeck"), p=S.plan; if(!deck||!p) return;
+  const key=(S.code||"")+"|"+p.options.join(",")+"|"+deck.clientWidth;
+  if(DECK_H.key!==key){
+    const box=document.createElement("div"); box.className="vdeck vmeasure"; box.style.cssText=`position:absolute;left:-9999px;top:0;width:${deck.clientWidth}px;visibility:hidden;--vh:0px`;
+    box.innerHTML=p.options.filter(byId).map(id=>cardHtml(p,id,false)).join("");
+    document.body.appendChild(box);
+    DECK_H={key,h:Math.max(0,...[...box.querySelectorAll(".vcard")].map(c=>c.offsetHeight))};
+    box.remove();
+  }
+  deck.style.setProperty("--vh",DECK_H.h+"px");
+}
+addEventListener("resize",()=>{ if(document.querySelector(".vdeck")) sizeDeck(); });
 function setupDeck(){
+  sizeDeck();
   const card=document.querySelector(".vcard:not(.under)"), under=document.querySelector(".vcard.under"); if(!card) return;
   const grow=f=>{ if(under) under.style.transform=`translateY(${12*(1-f)}px) scale(${.95+.05*f})`; };
   if(card.dataset.id!==LAST_CARD&&!calmMotion()&&LAST_CARD!=="dealt:"+card.dataset.id){ card.classList.add("enter"); }
