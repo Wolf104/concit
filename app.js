@@ -848,7 +848,7 @@ const HOT_GROUPS=[["Coffee",p=>p.kind==="cafe"],["Restaurants",p=>p.kind==="eat"
 const MAPLIBRE="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/";
 const MAP_STYLE="https://tiles.openfreemap.org/styles/liberty";
 const PIN='<svg viewBox="18 10 64 84" aria-hidden="true"><path fill-rule="evenodd" d="M50 90 C50 90 22 62 22 42 A28 28 0 1 1 78 42 C78 62 50 90 50 90 Z M61.584 30.416 A16.380 16.380 0 1 0 61.584 53.584 A3.780 3.780 0 0 0 56.237 48.237 A8.820 8.820 0 1 1 56.237 35.763 A3.780 3.780 0 0 0 61.584 30.416 Z"/></svg>';
-let MAP=null, MAP_HOST=null, MAP_LIB=null, PINS={}, FIT="";
+let MAP=null, MAP_HOST=null, MAP_LIB=null, FIT="";
 function loadMapLib(){
   if(window.maplibregl) return Promise.resolve();
   if(MAP_LIB) return MAP_LIB;
@@ -859,50 +859,66 @@ function loadMapLib(){
   return MAP_LIB;
 }
 function mapFailed(){ S.mapFail=true; render(); }
-/* Pins close together on screen are grouped into a numbered circle; tapping it zooms in. */
-const CLUSTER_PX=54, CLUSTER_OFF_ZOOM=16;
-function syncPins(){
-  if(!MAP) return;
+/* Places are drawn inside the map (not as page elements), so they stay put while zooming.
+   Every place is a dot coloured by type; names appear as you zoom in, best-rated first, and never overlap. */
+const MAP_CATS=[["cafe","Coffee","#b7793b",p=>p.kind==="cafe"],["eat","Food","#ef6a3a",p=>p.kind==="eat"||p.kind==="cheap"],["drink","Bars","#8b5cf6",p=>["drink","wine","beer"].includes(p.kind)],["club","Clubs","#e0408a",p=>p.kind==="club"],["culture","Culture","#13a39a",p=>p.kind==="culture"]];
+const mapCat=p=>(MAP_CATS.find(c=>c[3](p))||MAP_CATS[1]);
+let SEL_MK=null;
+function placesGeo(list){
+  return {type:"FeatureCollection",features:list.map(p=>({type:"Feature",properties:{id:p.id,name:p.name,col:mapCat(p)[2],rank:rank(p)||3,sel:p.id===S.sel?1:0},geometry:{type:"Point",coordinates:[p.lng,p.lat]}}))};
+}
+function addPlaceLayers(map){
+  if(map.getSource("places")) return;
+  const font=(map.getLayer("poi_transit")&&map.getLayoutProperty("poi_transit","text-font"))||["Noto Sans Bold"];
+  map.addSource("places",{type:"geojson",data:placesGeo([])});
+  map.addLayer({id:"places-dot",type:"circle",source:"places",layout:{"circle-sort-key":["get","rank"]},
+    paint:{"circle-color":["get","col"],"circle-stroke-color":"#ffffff","circle-stroke-width":["interpolate",["linear"],["zoom"],11,.8,13,1.4,15,2],
+      "circle-radius":["interpolate",["linear"],["zoom"],10,2.6,11.5,3.4,13,5.2,14.5,7.5,16,9.5],"circle-opacity":["case",["==",["get","sel"],1],0,1],"circle-stroke-opacity":["case",["==",["get","sel"],1],0,1]}});
+  map.addLayer({id:"places-name",type:"symbol",source:"places",minzoom:13.2,filter:["==",["get","sel"],0],
+    layout:{"text-field":["get","name"],"text-font":font,"text-size":["interpolate",["linear"],["zoom"],13.2,10.5,16,12.5],"text-anchor":"top","text-offset":[0,.75],
+      "text-max-width":8,"symbol-sort-key":["-",5,["get","rank"]],"text-padding":3,"text-optional":true},
+    paint:{"text-color":"#0f2a44","text-halo-color":"#ffffff","text-halo-width":1.6}});
+  map.on("mouseenter","places-dot",()=>map.getCanvas().style.cursor="pointer");
+  map.on("mouseleave","places-dot",()=>map.getCanvas().style.cursor="");
+  map.on("click",e=>{
+    const r=14, hits=map.queryRenderedFeatures([[e.point.x-r,e.point.y-r],[e.point.x+r,e.point.y+r]],{layers:["places-dot"]});
+    if(!hits.length){ if(S.sel) selectPlace(null); return; }
+    const best=hits.map(h=>{ const xy=map.project(h.geometry.coordinates); return {h,d:Math.hypot(xy.x-e.point.x,xy.y-e.point.y)}; }).sort((a,b)=>a.d-b.d)[0].h;
+    selectPlace(best.properties.id);
+  });
+}
+/* Choosing a place updates the big pin and the card below the map, without redrawing the screen. */
+function selectPlace(id){
+  S.sel=id; syncPins(true);
+  const card=document.getElementById("mapCard"); if(!card) return;
+  const p=id&&byId(id);
+  card.innerHTML=p?`<div class="list picked sheet dlist">${placeRow(p).replace("<details>","<details open>")}</div>`:`<p class="hint">Tap a dot to see the place.</p>`;
+  if(p&&MAP){ const xy=MAP.project([p.lng,p.lat]), c=MAP.getContainer(), m=40;
+    if(xy.x<m||xy.y<m||xy.x>c.clientWidth-m||xy.y>c.clientHeight-m) MAP.easeTo({center:[p.lng,p.lat],duration:400}); }
+}
+/* Frame the bulk of the places: a few far-out ones (Sesto, Bicocca...) shouldn't zoom the whole map out. */
+function fitCore(list){
+  if(list.length<8) return list;
+  const med=a=>a.slice().sort((x,y)=>x-y)[a.length>>1], cy=med(list.map(p=>p.lat)), cx=med(list.map(p=>p.lng));
+  const d=p=>Math.hypot(p.lat-cy,(p.lng-cx)*.7);
+  return list.slice().sort((a,b)=>d(a)-d(b)).slice(0,Math.ceil(list.length*.9));
+}
+function syncPins(selOnly){
+  if(!MAP||!MAP.getSource||!MAP.getSource("places")) return;
   const list=PLACES.filter(p=>hotMatch(p)&&p.lat);
-  const z=MAP.getZoom(), groups=[];
-  if(z>=CLUSTER_OFF_ZOOM) list.forEach(p=>groups.push([p]));
-  else {
-    const pts=list.map(p=>({p,xy:MAP.project([p.lng,p.lat])})).sort((a,b)=>(b.p.id===S.sel)-(a.p.id===S.sel)||byRank(a.p,b.p));
-    const used=new Set();
-    for(const a of pts){
-      if(used.has(a)) continue; used.add(a);
-      const g=[a.p];
-      if(a.p.id!==S.sel) for(const b of pts){ if(used.has(b)||b.p.id===S.sel) continue; if(Math.hypot(a.xy.x-b.xy.x,a.xy.y-b.xy.y)<CLUSTER_PX){ used.add(b); g.push(b.p); } }
-      groups.push(g);
-    }
-  }
-  const want={}, seenAt={};
-  for(const g of groups){
-    if(g.length===1){ const p=g[0], k=p.lat.toFixed(5)+","+p.lng.toFixed(5); seenAt[k]=(seenAt[k]||0)+1; want[p.id]={p,n:seenAt[k]-1}; }
-    else { const ids=g.map(p=>p.id).sort(); want["c:"+g[0].id+":"+ids.join("|")]={g}; }
-  }
-  for(const k of Object.keys(PINS)) if(!want[k]){ PINS[k].remove(); delete PINS[k]; }
-  for(const [k,w] of Object.entries(want)){
-    if(!PINS[k]){
-      const el=document.createElement("button"); el.type="button";
-      if(w.p){
-        el.className="mk"; el.innerHTML=PIN; el.setAttribute("aria-label",w.p.name); el.dataset.act="pin"; el.dataset.id=w.p.id;
-        PINS[k]=new maplibregl.Marker({element:el,anchor:"bottom",offset:[w.n*14,0]}).setLngLat([w.p.lng,w.p.lat]).addTo(MAP);
-      } else {
-        const g=w.g, lat=g[0].lat, lng=g[0].lng;
-        el.className="cl"+(g.length>=20?" big":g.length>=8?" mid":""); el.textContent=g.length; el.setAttribute("aria-label",`${g.length} places here, zoom in`);
-        el.addEventListener("click",e=>{ e.stopPropagation(); const b=new maplibregl.LngLatBounds(); g.forEach(p=>b.extend([p.lng,p.lat]));
-          MAP.fitBounds(b,{padding:60,maxZoom:Math.max(MAP.getZoom()+2,CLUSTER_OFF_ZOOM),duration:450}); });
-        PINS[k]=new maplibregl.Marker({element:el,anchor:"center"}).setLngLat([lng,lat]).addTo(MAP);
-      }
-    }
-    if(w.p) PINS[k].getElement().classList.toggle("on",w.p.id===S.sel);
-  }
-  const fk=S.hot+(hotUnit()?S.hotIdx[hotUnit()]:"");
+  if(S.sel&&!list.some(p=>p.id===S.sel)) S.sel=null;
+  MAP.getSource("places").setData(placesGeo(list));
+  const p=S.sel&&byId(S.sel);
+  if(p){ if(!SEL_MK){ const el=document.createElement("div"); el.className="mk on"; el.innerHTML=PIN; SEL_MK=new maplibregl.Marker({element:el,anchor:"bottom"}); }
+    SEL_MK.getElement().querySelector("path").style.fill=mapCat(p)[2]; SEL_MK.setLngLat([p.lng,p.lat]).addTo(MAP); }
+  else if(SEL_MK) SEL_MK.remove();
+  if(selOnly) return;
+  const fk=S.hot+"|"+JSON.stringify(flt())+"|"+(S.hotCuisine||"");
   if(FIT!==fk&&list.length){
+    const first=FIT==null||FIT==="";
     FIT=fk;
-    const b=new maplibregl.LngLatBounds(); list.forEach(p=>b.extend([p.lng,p.lat]));
-    MAP.fitBounds(b,{padding:{top:56,bottom:30,left:34,right:34},maxZoom:15,duration:S.hot==="all"?0:500});
+    const b=new maplibregl.LngLatBounds(); fitCore(list).forEach(p=>b.extend([p.lng,p.lat]));
+    MAP.fitBounds(b,{padding:{top:40,bottom:30,left:30,right:30},maxZoom:15,duration:first?0:450});
   }
 }
 async function mountMap(){
@@ -917,12 +933,11 @@ async function mountMap(){
       MAP.addControl(new maplibregl.NavigationControl({showCompass:false}),"top-right");
       MAP.touchZoomRotate.disableRotation();
       MAP.on("error",e=>{ if(!MAP.isStyleLoaded()&&!S.mapOk) mapFailed(); });
-      MAP.on("load",()=>{ S.mapOk=true; });
+      MAP.on("load",()=>{ S.mapOk=true; addPlaceLayers(MAP); syncPins(); });
       zoneLabels(MAP,false); addStations(MAP);
-      MAP.on("moveend",syncPins);
       setTimeout(()=>{ if(!S.mapOk&&!S.mapFail) mapFailed(); },12000);
     }
-    MAP.resize(); syncPins();
+    MAP.resize(); if(MAP.isStyleLoaded()&&!MAP.getSource("places")) addPlaceLayers(MAP); syncPins();
   }catch{ mapFailed(); }
 }
 const hotType=p=>({all:true,cafe:p.kind==="cafe",eat:["eat","cheap"].includes(p.kind)&&hasCuisine(p,S.hotCuisine),drink:["drink","wine","beer"].includes(p.kind),club:p.kind==="club",culture:p.kind==="culture"})[S.hot];
@@ -1015,7 +1030,7 @@ function viewHot(){
     const here=list.filter(p=>p.zone===S.zone);
     if(S.mapFail) body=`<p class="head" style="margin-top:0">Tap an area to see what's there</p><div class="mapwrap">${hotMap(list)}</div><p class="glabel">${esc(zname(S.zone))}</p><div class="list sheet dlist">${here.map(placeRow).join("")}</div>`;
     else { const sel=list.find(p=>p.id===S.sel);
-      body=`<div id="mapSlot" class="mapslot"></div>${sel?`<div class="list picked sheet dlist">${placeRow(sel).replace("<details>","<details open>")}</div>`:`<p class="hint">Tap a pin to see the place.</p>`}`; }
+      body=`<div id="mapSlot" class="mapslot"></div>${S.hot==="all"?`<div class="maplegend" aria-hidden="true">${MAP_CATS.map(c=>`<span><i style="background:${c[2]}"></i>${c[1]}</span>`).join("")}</div>`:""}<div id="mapCard">${sel?`<div class="list picked sheet dlist">${placeRow(sel).replace("<details>","<details open>")}</div>`:`<p class="hint">Tap a dot to see the place.</p>`}</div>`; }
   } else {
     body=HOT_GROUPS.map(([t,f])=>{const g=list.filter(f), full=S.hot!=="all"||S.open.has(t), rows=full?g:g.slice(0,6);
       return g.length?`<p class="glabel">${t}</p><div class="sheet dlist">${rows.map(placeRow).join("")}${rows.length<g.length?`<button class="showall" data-act="showGroup" data-v="${t}">Show all ${g.length}</button>`:""}</div>`:""}).join("");
@@ -1192,7 +1207,7 @@ const H={
   hot(el){ if(HOT_UNIT[S.hot]!==HOT_UNIT[el.dataset.v]) flt().price=0; S.hot=el.dataset.v; FIT=null; render(); },
   hotView(el){ S.hotView=el.dataset.v; render(); },
   zoneMap(el){ S.zone=el.dataset.z; render(); },
-  pin(el){ S.sel=el.dataset.id; render(); },
+  pin(el){ selectPlace(el.dataset.id); },
   showGroup(el){ S.open.add(el.dataset.v); render(); },
   ev(el){ S.ev=el.dataset.v||null; S.evCalOpen=false; S.evDate=null; render(); scrollTo(0,0); },
   save(el){ const id=el.dataset.id; S.saved.has(id)?S.saved.delete(id):S.saved.add(id); persist(); render();
