@@ -282,7 +282,7 @@ async function undoVote(){
   const p=S.plan, id=p&&lastVoted(p); if(!id||DEALING) return;
   const was=p.votes[uid()][id], mine={...p.votes[uid()]}; delete mine[id];
   S.ver++; S.plan={...p,votes:{...p.votes,[uid()]:mine}};
-  RETURNING={id,v:was}; render(); scrollTo(0,0);
+  RETURNING={id,v:was}; render();
   S.inflight++;
   try{ await rpc("undo_vote",{p_code:S.code,p_place:id}); }
   catch{ toast("Couldn't undo that vote. Try again."); S.plan=merge(S.plan,{votes:{[uid()]:{[id]:was}}}); render(); }
@@ -291,7 +291,7 @@ async function undoVote(){
 async function vote(id,v){
   S.ver++;
   S.plan=merge(S.plan,{votes:{[uid()]:{[id]:v}}});
-  render(); scrollTo(0,0);
+  render(); if(!nextCard(S.plan,uid())) scrollTo(0,0);
   S.inflight++;
   try{ await rpc("cast_vote",{p_code:S.code,p_place:id,p_value:v}); }catch{ toast("That vote didn't save. Try again."); }
   S.inflight--; S.ver++; loadGroups();
@@ -613,9 +613,9 @@ function cardHtml(p,id,under){
 function viewCard(p){
   const left=p.options.filter(o=>(p.votes?.[uid()]||{})[o]===undefined), id=left[0], i=p.options.indexOf(id), n=p.options.length;
   return `<div data-hero><button class="back" data-act="reset">‹ ${esc(p.group_name||"New plan")}</button><span>${esc(cap(planTitle(p)))}</span><h1>${i+1} of ${n}</h1></div>
-  <div class="vtop"><div class="vprog" aria-hidden="true">${p.options.map((o,j)=>`<i class="${j<i?"done":j===i?"now":""}"></i>`).join("")}</div>${lastVoted(p)?`<button class="vundo" data-act="undoVote" aria-label="Undo your last vote">${UNDO_ICON}<span>Undo</span></button>`:""}</div>
+  <div class="vtop"><div class="vprog" aria-hidden="true">${p.options.map((o,j)=>`<i class="${j<i?"done":j===i?"now":""}"></i>`).join("")}</div></div>
   <div class="vdeck" data-left="${Math.min(3,left.length-1)}">${left[1]?cardHtml(p,left[1],true):""}${cardHtml(p,id,false)}</div>
-  <div class="vvote"><button class="vno" data-act="vote" data-id="${esc(id)}" data-v="0">${vi("no","vic")}<span>Not this one</span></button><button class="vyes" data-act="vote" data-id="${esc(id)}" data-v="1">${vi("yes","vic")}<span>I'm in</span></button></div>
+  <div class="vvote${lastVoted(p)?" hasundo":""}">${lastVoted(p)?`<button class="vback" data-act="undoVote" aria-label="Go back and change your last vote" title="Go back">${UNDO_ICON}</button>`:""}<button class="vno" data-act="vote" data-id="${esc(id)}" data-v="0">${vi("no","vic")}<span>Nope</span></button><button class="vyes" data-act="vote" data-id="${esc(id)}" data-v="1">${vi("yes","vic")}<span>I'm in</span></button></div>
   ${p.people.length>1||p.group_id?`<button class="link quiet center" data-act="attend" data-v="0">I can't make it</button>`:""}`;
 }
 function viewResult(p){

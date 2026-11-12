@@ -632,3 +632,9 @@ html[data-theme=dark] .vstamp.yes{color:var(--ok);border-color:var(--ok)}
 .vchange svg{width:18px;height:18px}
 .vcard.backin{animation:vBack .38s cubic-bezier(.2,.8,.3,1)}
 @keyframes vBack{from{transform:translateX(calc(var(--bx,1)*135%)) translateY(30px) rotate(calc(var(--bx,1)*16deg));opacity:0}to{transform:none;opacity:1}}
+
+/* Go-back button sits with the vote buttons, always in reach */
+.vvote.hasundo{grid-template-columns:auto 1fr 1fr}
+.vvote .vback{width:54px;padding:0;background:var(--card);border:1.5px solid var(--line);color:var(--link)}
+.vvote .vback svg{width:22px;height:22px}
+@media (max-width:360px){.vvote button span{font-size:15px}.vvote .vback{width:48px}}
