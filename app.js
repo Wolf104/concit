@@ -229,27 +229,30 @@ const calmMotion=()=>window.matchMedia&&matchMedia("(prefers-reduced-motion: red
 let DEALING=false, LAST_CARD="";
 function dealVote(id,v){
   if(DEALING) return;
-  const card=document.querySelector(".vcard");
+  const card=document.querySelector(".vcard:not(.under)");
   if(!card||calmMotion()){ vote(id,v); return; }
   DEALING=true;
   card.classList.add("flying"); card.style.setProperty("--sy",v?1:0); card.style.setProperty("--sn",v?0:1);
   card.style.transform=`translateX(${v?135:-135}%) translateY(30px) rotate(${v?16:-16}deg)`; card.style.opacity="0";
+  const under=document.querySelector(".vcard.under"); if(under){ under.style.transition="transform .33s cubic-bezier(.2,.8,.3,1)"; under.style.transform="none"; }
   document.querySelectorAll(".vvote button").forEach(b=>b.disabled=true);
-  setTimeout(()=>{ DEALING=false; vote(id,v); },330);
+  const nxt=document.querySelector(".vcard.under"); 
+  setTimeout(()=>{ DEALING=false; if(nxt) LAST_CARD="dealt:"+nxt.dataset.id; vote(id,v); },330);
 }
 function setupDeck(){
-  const card=document.querySelector(".vcard"); if(!card) return;
-  if(card.dataset.id!==LAST_CARD&&!calmMotion()){ card.classList.add("enter"); }
+  const card=document.querySelector(".vcard:not(.under)"), under=document.querySelector(".vcard.under"); if(!card) return;
+  const grow=f=>{ if(under) under.style.transform=`translateY(${12*(1-f)}px) scale(${.95+.05*f})`; };
+  if(card.dataset.id!==LAST_CARD&&!calmMotion()&&LAST_CARD!=="dealt:"+card.dataset.id){ card.classList.add("enter"); }
   LAST_CARD=card.dataset.id;
   let x0=null,y0=0,dx=0,drag=false;
   card.addEventListener("pointerdown",e=>{ if(DEALING||e.button>0||e.target.closest("a,button")) return; x0=e.clientX; y0=e.clientY; dx=0; drag=false; });
   card.addEventListener("pointermove",e=>{ if(x0==null) return; dx=e.clientX-x0;
     if(!drag){ if(Math.abs(dx)<8) return; if(Math.abs(e.clientY-y0)>Math.abs(dx)){ x0=null; return; } drag=true; card.setPointerCapture(e.pointerId); card.classList.add("dragging"); }
-    card.style.transform=`translateX(${dx}px) rotate(${dx/22}deg)`;
+    card.style.transform=`translateX(${dx}px) rotate(${dx/22}deg)`; grow(Math.min(1,Math.abs(dx)/160));
     card.style.setProperty("--sy",Math.max(0,Math.min(1,dx/90))); card.style.setProperty("--sn",Math.max(0,Math.min(1,-dx/90))); });
   const end=()=>{ if(x0==null) return; x0=null; if(!drag) return; drag=false; card.classList.remove("dragging");
     if(Math.abs(dx)>90){ dealVote(card.dataset.id,dx>0?1:0); }
-    else { card.style.transform=""; card.style.setProperty("--sy",0); card.style.setProperty("--sn",0); } };
+    else { card.style.transform=""; card.style.setProperty("--sy",0); card.style.setProperty("--sn",0); if(under){ under.style.transition="transform .25s ease"; grow(0); } } };
   card.addEventListener("pointerup",end); card.addEventListener("pointercancel",end);
 }
 async function vote(id,v){
@@ -535,8 +538,8 @@ const vi=(k,c)=>`<svg class="${c||"vi"}" viewBox="0 0 24 24" aria-hidden="true" 
 const EV_COL={music:"#8b5cf6",art:"#ef6a3a",theatre:"#ef6a3a",sport:"#1d8a4a",festival:"#e0408a"};
 const KIND_ICON={cafe:"coffee",eat:"eat",cheap:"eat",drink:"drinks",wine:"drinks",beer:"drinks",club:"clubs",culture:"culture"};
 const distText=d=>d<0.975?Math.round(d*1000/50)*50+" m":d.toFixed(1)+" km";
-function viewCard(p){
-  const id=nextCard(p,uid()), it=byId(id), i=p.options.indexOf(id), n=p.options.length, ev=!!it.cat;
+function cardHtml(p,id,under){
+  const it=byId(id), ev=!!it.cat;
   const far=p.pin&&it.lat?km([null,p.pin[0],p.pin[1]],[null,it.lat,it.lng]):null;
   const col=ev?(EV_COL[it.cat]||"#2f9bff"):mapCat(it)[2];
   const icon=(WHATS.find(w=>w[0]===(ev?"event":KIND_ICON[it.kind]))||WHATS[0])[2];
@@ -559,10 +562,8 @@ function viewCard(p){
   const links=ev?(/^https?:\/\//.test(it.src||"")?[[it.src,"web","Event page"]]:[]).concat(it.venue?[[mapsUrl(it.venue),"dir","Directions"]]:[])
     :[[mapsUrl(it.name+" "+it.addr),"dir","Directions"]].concat(/^https?:\/\//.test(it.web||"")?[[it.web,"web",/instagram\.com/.test(it.web)?"Instagram":/facebook\.com/.test(it.web)?"Facebook":"Website"]]:[]);
   const about=ev?"":[it.why,it.detail].filter(Boolean).map(t=>t.replace(/\.$/,"")).join(". ")+".";
-  return `<div data-hero><button class="back" data-act="reset">‹ ${esc(p.group_name||"New plan")}</button><span>${esc(cap(planTitle(p)))}</span><h1>${i+1} of ${n}</h1></div>
-  <div class="vprog" aria-hidden="true">${p.options.map((o,j)=>`<i class="${j<i?"done":j===i?"now":""}"></i>`).join("")}</div>
-  <div class="vdeck" data-left="${Math.min(2,n-1-i)}"><article class="vcard" style="--cc:${col}" data-id="${esc(id)}">
-    <span class="vstamp yes" aria-hidden="true">I'm in</span><span class="vstamp no" aria-hidden="true">Nope</span>
+  return `<article class="vcard${under?" under":""}" style="--cc:${col}" data-id="${esc(id)}"${under?' aria-hidden="true" inert':""}>
+    ${under?"":`<span class="vstamp yes" aria-hidden="true">I'm in</span><span class="vstamp no" aria-hidden="true">Nope</span>`}
     <header class="vhead"><div class="vtags">${tags.map(t=>`<span>${esc(t)}</span>`).join("")}</div>
       <h2>${esc(it.name)}</h2>${ev?"":starsHtml(it,"big")}
       <svg class="vbig" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${icon}</svg></header>
@@ -572,7 +573,13 @@ function viewCard(p){
       ${ev?"":`<p class="vaddr">${vi("pin")}<span>${esc(it.addr)}</span></p>`}
       ${links.length?`<div class="vlinks">${links.map(([u,k,l])=>`<a href="${esc(u)}" target="_blank" rel="noopener">${vi(k)}${esc(l)}</a>`).join("")}</div>`:""}
     </div>
-  </article></div>
+  </article>`;
+}
+function viewCard(p){
+  const left=p.options.filter(o=>(p.votes?.[uid()]||{})[o]===undefined), id=left[0], i=p.options.indexOf(id), n=p.options.length;
+  return `<div data-hero><button class="back" data-act="reset">‹ ${esc(p.group_name||"New plan")}</button><span>${esc(cap(planTitle(p)))}</span><h1>${i+1} of ${n}</h1></div>
+  <div class="vprog" aria-hidden="true">${p.options.map((o,j)=>`<i class="${j<i?"done":j===i?"now":""}"></i>`).join("")}</div>
+  <div class="vdeck" data-left="${Math.min(3,left.length-1)}">${left[1]?cardHtml(p,left[1],true):""}${cardHtml(p,id,false)}</div>
   <div class="vvote"><button class="vno" data-act="vote" data-id="${esc(id)}" data-v="0">${vi("no","vic")}<span>Not this one</span></button><button class="vyes" data-act="vote" data-id="${esc(id)}" data-v="1">${vi("yes","vic")}<span>I'm in</span></button></div>
   ${p.people.length>1||p.group_id?`<button class="link quiet center" data-act="attend" data-v="0">I can't make it</button>`:""}`;
 }

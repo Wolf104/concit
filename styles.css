@@ -595,18 +595,20 @@ html[data-theme=dark] .mapwrap,html[data-theme=dark] #mapSlot,html[data-theme=da
 @media (max-width:360px){.vfacts{grid-template-columns:1fr}.vhead h2{font-size:24px}}
 .vvote{position:sticky;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:5;margin:0 -8px 6px;padding:10px 8px;background:linear-gradient(to top,var(--card) 70%,transparent)}
 
-/* Deck of voting cards */
-.vdeck{position:relative;margin-bottom:22px}
-.vdeck::before,.vdeck::after{content:"";position:absolute;left:10px;right:10px;top:9px;bottom:-9px;border-radius:22px;background:var(--card);border:1px solid var(--line);box-shadow:0 6px 16px var(--shade);z-index:0}
-.vdeck::after{left:22px;right:22px;top:18px;bottom:-18px;opacity:.7;z-index:-1}
-.vdeck[data-left="1"]::after,.vdeck[data-left="0"]::after,.vdeck[data-left="0"]::before{display:none}
+/* Deck of voting cards: the next option sits underneath, slightly smaller, with card edges behind it. */
+.vdeck{position:relative;margin-bottom:26px}
+.vdeck::before,.vdeck::after{content:"";position:absolute;left:14px;right:14px;top:20px;bottom:-14px;border-radius:22px;background:var(--card);border:1px solid var(--line);box-shadow:0 6px 16px var(--shade);z-index:-1}
+.vdeck::after{left:26px;right:26px;top:28px;bottom:-22px;opacity:.7;z-index:-2}
+.vdeck[data-left="0"]::before,.vdeck[data-left="0"]::after,.vdeck[data-left="1"]::before,.vdeck[data-left="1"]::after,.vdeck[data-left="2"]::after{display:none}
 .vdeck .vcard{position:relative;z-index:1;margin-bottom:0;touch-action:pan-y;user-select:none;-webkit-user-select:none;transition:transform .25s ease,opacity .25s ease;will-change:transform}
+.vdeck .vcard.under{position:absolute;inset:0;z-index:0;transform:translateY(12px) scale(.95);transform-origin:50% 0;transition:none;pointer-events:none;box-shadow:0 6px 18px var(--shade)}
 .vcard.dragging{transition:none;cursor:grabbing}
 .vcard.flying{transition:transform .33s cubic-bezier(.45,.05,.7,.95),opacity .33s ease}
 .vcard.enter{animation:vEnter .34s cubic-bezier(.2,.8,.3,1)}
-@keyframes vEnter{from{transform:translateY(14px) scale(.94);opacity:.4}to{transform:none;opacity:1}}
+@keyframes vEnter{from{transform:translateY(12px) scale(.95);opacity:.5}to{transform:none;opacity:1}}
 .vstamp{position:absolute;top:22px;z-index:3;padding:6px 14px;border:3px solid;border-radius:12px;font-size:20px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;pointer-events:none;opacity:0;background:var(--card)}
 .vstamp.yes{left:18px;color:#1d8a4a;border-color:#1d8a4a;transform:rotate(-10deg);opacity:var(--sy,0)}
 .vstamp.no{right:18px;color:var(--danger);border-color:var(--danger);transform:rotate(10deg);opacity:var(--sn,0)}
 html[data-theme=dark] .vstamp.yes{color:var(--ok);border-color:var(--ok)}
 @media (prefers-reduced-motion:reduce){.vcard.enter{animation:none}}
+.vcard.enter{transform-origin:50% 0}
