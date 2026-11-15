@@ -243,22 +243,25 @@ function dealVote(id,v){
   setTimeout(()=>{ DEALING=false; if(nxt) LAST_CARD="dealt:"+nxt.dataset.id; vote(id,v); },330);
 }
 /* All cards in a vote share one height: the tallest option's, measured once per plan and screen width. */
-let DECK_H={key:"",h:0};
+/* Every card in a vote has the same height and fits on screen above the vote buttons, with no scrolling.
+   On short screens the extras drop off in order: links, address, then the description is shortened. */
+let DECK_H={key:"",h:0,fit:0};
 function sizeDeck(){
   const deck=document.querySelector(".vdeck"), p=S.plan; if(!deck||!p) return;
-  const key=(S.code||"")+"|"+p.options.join(",")+"|"+deck.clientWidth;
+  const vv=document.querySelector(".vvote"), barTop=innerHeight-(vv?(parseFloat(getComputedStyle(vv).bottom)||0)+vv.offsetHeight:90);
+  const room=Math.round(barTop-(deck.getBoundingClientRect().top+scrollY)-14);
+  const key=(S.code||"")+"|"+p.options.join(",")+"|"+deck.clientWidth+"|"+room;
   if(DECK_H.key!==key){
-    const box=document.createElement("div"); box.className="vdeck vmeasure"; box.style.cssText=`position:absolute;left:-9999px;top:0;width:${deck.clientWidth}px;visibility:hidden;--vh:0px`;
+    const box=document.createElement("div"); box.style.cssText=`position:absolute;left:-9999px;top:0;width:${deck.clientWidth}px;visibility:hidden`;
     box.innerHTML=p.options.filter(byId).map(id=>cardHtml(p,id,false)).join("");
     document.body.appendChild(box);
-    DECK_H={key,h:Math.max(0,...[...box.querySelectorAll(".vcard")].map(c=>c.offsetHeight))};
+    let fit=0, h=0;
+    for(;fit<=6;fit++){ box.className="vdeck vmeasure fit"+fit; h=Math.max(0,...[...box.querySelectorAll(".vcard")].map(c=>c.offsetHeight)); if(h<=room) break; }
+    DECK_H={key,h,fit:Math.min(fit,6)};
     box.remove();
   }
   deck.style.setProperty("--vh",DECK_H.h+"px");
-  /* Keep the whole card on screen above the vote buttons and the tab bar; long cards scroll inside. */
-  const vv=document.querySelector(".vvote"), barTop=innerHeight-(vv?(parseFloat(getComputedStyle(vv).bottom)||0)+vv.offsetHeight:90);
-  const top=deck.getBoundingClientRect().top+scrollY;
-  deck.style.setProperty("--vmax",Math.max(200,Math.round(barTop-top-14))+"px");
+  deck.classList.remove("fit1","fit2","fit3","fit4","fit5","fit6"); if(DECK_H.fit) deck.classList.add("fit"+DECK_H.fit);
 }
 addEventListener("resize",()=>{ if(document.querySelector(".vdeck")) sizeDeck(); });
 function setupDeck(){
@@ -1439,7 +1442,7 @@ function tourClick(e){
 function startPractice(){
   const P=TOUR.places.map(p=>p.id), me=uid(), f=["tour-f1","tour-f2","tour-f3"];
   const yes=(a)=>Object.fromEntries(P.map((id,k)=>[id,a.includes(k)?1:0]));
-  dropTourMap(); TOUR.stage="practice"; document.getElementById("tour")?.remove(); document.body.classList.add("inpractice");
+  dropTourMap(); TOUR.stage="practice"; document.getElementById("tour")?.remove(); document.body.classList.remove("intour"); document.body.classList.add("inpractice");
   S.practice=true; S.code=null; S.acct=false; S.tab="decide";
   S.plan={practice:true,options:P,people:[me,...f],names:Object.fromEntries(f.map((x,k)=>[x,FRIENDS[k][0]])),votes:{[f[0]]:yes([0,1]),[f[1]]:yes([1,2]),[f[2]]:yes([0,2])},
     what:"drinks",day:today,time:"21:00",group_name:"Practice group",group_id:null,mine:false,out:[],left:[]};
@@ -1448,7 +1451,7 @@ function startPractice(){
 function decoratePractice(){
   const ht=document.getElementById("heroText"); if(!ht||!S.practice) return;
   const b=ht.querySelector(".back"); if(b){ b.textContent="‹ Skip practice"; b.dataset.act="tourSkipPractice"; }
-  if(!ht.querySelector(".pbadge")) ht.insertAdjacentHTML("afterbegin",`<em class="pbadge">Practice · nothing is saved</em>`);
+  const sp=ht.querySelector("span"); if(sp&&!sp.dataset.p){ sp.dataset.p=1; sp.textContent="Practice · "+sp.textContent; }
 }
 /* After the practice: a short walk through each tab, one highlighted spot at a time. */
 const COACH=[

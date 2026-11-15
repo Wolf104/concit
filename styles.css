@@ -614,8 +614,12 @@ html[data-theme=dark] .vstamp.yes{color:var(--ok);border-color:var(--ok)}
 .vcard.enter{transform-origin:50% 0}
 
 /* Same-size voting cards */
-.vdeck .vcard{min-height:min(var(--vh,0px),var(--vmax,9999px));max-height:var(--vmax,none);display:flex;flex-direction:column}
-.vdeck .vcard .vbody{overflow-y:auto;overscroll-behavior:contain;min-height:0}
+.vdeck .vcard{min-height:var(--vh,0px);display:flex;flex-direction:column}
+.vdeck:is(.fit1,.fit2,.fit3,.fit4,.fit5,.fit6) .vlinks,.vdeck:is(.fit2,.fit3,.fit4,.fit5,.fit6) .vaddr,.vdeck:is(.fit4,.fit5,.fit6) .vabout{display:none}
+.vdeck.fit3 .vabout{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.vdeck:is(.fit5,.fit6) .vhead{padding:12px 16px 12px}.vdeck:is(.fit5,.fit6) .vhead h2{font-size:23px;margin:6px 0 2px}.vdeck:is(.fit5,.fit6) .vbig{transform:scale(.7);transform-origin:100% 100%}
+.vdeck:is(.fit5,.fit6) .vbody{padding:12px 14px 14px;gap:10px}.vdeck:is(.fit5,.fit6) .vfact{padding:8px 10px}
+.vdeck.fit6 .vfact:nth-child(n+3){display:none}
 .vdeck .vcard .vbody{flex:1}
 .vdeck .vcard .vlinks{margin-top:auto}
 .vmeasure .vcard{margin-bottom:12px}
