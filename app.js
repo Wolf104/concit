@@ -986,7 +986,7 @@ function viewHome(){
   const now=PLACES.filter(p=>p.stars&&(p.reviews||0)>=150).map(p=>({p,u:openUntil(p)})).filter(x=>x.u).sort((a,b)=>byRank(a.p,b.p)).slice(0,10);
   const evs=EVENTS.filter(e=>e.start>=today&&!isRun(e)).sort((a,b)=>a.start.localeCompare(b.start)).slice(0,4);
   const pstat=p=>p.st===2?["See result","done"]:p.st===0?["Vote","todo"]:[`${p.done} of ${p.people} voted`,""];
-  return `<div data-hero><span>${esc(cap(day))} ${part}</span><h1>${name?`Ciao ${esc(name)}, `:""}${ask.charAt(0).toLowerCase()+ask.slice(1)}</h1></div>
+  return `<div data-hero><span class="kicker">${esc(new Date().toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"}).replace(",",""))} · Milan</span><h1>What's the plan?</h1></div>
   <section class="hstart" aria-labelledby="hsH">
     <div class="hsec"><h2 id="hsH">Start a plan</h2><button class="link" data-act="homeGo" data-v="pick">I'll pick myself</button></div>
     <div class="tiles four" role="group" aria-label="What">${HOME_OCC.map(([k,l,ic])=>`<button class="tile" data-act="homeWhat" data-v="${k}" aria-pressed="${w===k}">${evIcon(ic)}<span>${l}</span></button>`).join("")}</div>
