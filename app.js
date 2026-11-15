@@ -255,6 +255,10 @@ function sizeDeck(){
     box.remove();
   }
   deck.style.setProperty("--vh",DECK_H.h+"px");
+  /* Keep the whole card on screen above the vote buttons and the tab bar; long cards scroll inside. */
+  const vv=document.querySelector(".vvote"), barTop=innerHeight-(vv?(parseFloat(getComputedStyle(vv).bottom)||0)+vv.offsetHeight:90);
+  const top=deck.getBoundingClientRect().top+scrollY;
+  deck.style.setProperty("--vmax",Math.max(200,Math.round(barTop-top-14))+"px");
 }
 addEventListener("resize",()=>{ if(document.querySelector(".vdeck")) sizeDeck(); });
 function setupDeck(){
@@ -617,7 +621,7 @@ function viewCard(p){
   <div class="vtop"><div class="vprog" aria-hidden="true">${p.options.map((o,j)=>`<i class="${j<i?"done":j===i?"now":""}"></i>`).join("")}</div></div>
   <div class="vdeck" data-left="${Math.min(3,left.length-1)}">${left[1]?cardHtml(p,left[1],true):""}${cardHtml(p,id,false)}</div>
   <div class="vvote${lastVoted(p)?" hasundo":""}"><button class="vno" data-act="vote" data-id="${esc(id)}" data-v="0">${vi("no","vic")}<span>Nope</span></button>${lastVoted(p)?`<button class="vback" data-act="undoVote" aria-label="Go back and change your last vote" title="Go back">${UNDO_ICON}</button>`:""}<button class="vyes" data-act="vote" data-id="${esc(id)}" data-v="1">${vi("yes","vic")}<span>I'm in</span></button></div>
-  ${p.practice?`<p class="fine center">Swipe the card, or tap a button. Giulia, Marco and Sofia have already voted.</p>`:p.people.length>1||p.group_id?`<button class="link quiet center" data-act="attend" data-v="0">I can't make it</button>`:""}`;
+  ${p.practice?"":p.people.length>1||p.group_id?`<button class="link quiet center" data-act="attend" data-v="0">I can't make it</button>`:""}`;
 }
 function viewResult(p){
   const r=results(p), w=r[0], total=Object.keys(p.votes||{}).filter(n=>!isOut(p,n)).length||going(p).length, back=p.group_id?(p.group_name||"Back"):"New plan";
@@ -1310,6 +1314,7 @@ function render(){
   document.getElementById("view").innerHTML=!authed?viewAuth():S.acct?viewAccount():S.tab==="home"?viewHome():S.tab==="decide"?viewDecide():S.tab==="hotspots"?viewHot():S.tab==="groups"?viewGroups():viewEvents();
   const h=document.querySelector("#view [data-hero]"), ht=document.getElementById("heroText");
   ht.innerHTML=h?h.innerHTML:""; h?.remove();
+  if(S.practice) decoratePractice();
   document.querySelectorAll("details").forEach(d=>{ if(open.includes(d.querySelector("b").textContent)) d.open=true; });
   if(authed&&S.tab==="hotspots"&&S.hotView==="map"&&!S.mapFail) mountMap();
   setupDeck();
@@ -1319,7 +1324,6 @@ function render(){
   const badge=document.getElementById("badge"), c=toVote().length; if(badge){ badge.textContent=c; badge.hidden=!c; }
   const me=document.getElementById("me"); if(me){ const mine=S.session&&AV[uid()]; me.innerHTML=mine?`<img src="${mine.img}" alt="">`:esc((S.session?.user?.user_metadata?.name||"?").trim().charAt(0).toUpperCase()); me.classList.toggle("hasav",!!mine); me.toggleAttribute("aria-current",!!S.acct); }
   document.querySelectorAll("nav button").forEach(b=>b.dataset.tab===S.tab&&!S.acct?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current"));
-  if(S.practice) decoratePractice();
   if(TOUR&&TOUR.stage==="tabs") requestAnimationFrame(paintCoach);
   if(S.focus){ const n=S.focus; S.focus=null; const d=[...document.querySelectorAll("#view details")].find(x=>[...x.querySelectorAll("summary b")].some(b=>b.textContent===n));
     if(d){ d.open=true; requestAnimationFrame(()=>d.scrollIntoView({block:"center"})); } else scrollTo(0,0); }
@@ -1356,7 +1360,7 @@ function startTour(){
   document.body.classList.add("intour"); paintTour();
 }
 function endTour(to){
-  TOUR=null; S.practice=false; hideCoach(); document.getElementById("tour")?.remove(); document.body.classList.remove("intour","inpractice");
+  dropTourMap(); TOUR=null; S.practice=false; hideCoach(); document.getElementById("tour")?.remove(); document.body.classList.remove("intour","inpractice");
   if(S.plan&&S.plan.practice){ S.plan=null; }
   try{ localStorage.setItem("concit.tour."+uid(),"1"); }catch{}
   if(!tourMeta().tour_done&&S.session){ authCall("user",{data:{tour_done:true}},"PUT",S.session.access_token).then(u=>{ if(u&&S.session) S.session.user=u; saveSession(); }).catch(()=>{}); }
@@ -1368,11 +1372,27 @@ const TICK='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="curr
 const CROSS='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';
 const FRIENDS=[["Giulia","#e0408a"],["Marco","#13a39a"],["Sofia","#b7793b"]];
 const miniStars=p=>`<span class="tstars">★ ${String(p.stars).replace(".",",")}<i>(${p.reviews>=1000?(p.reviews/1000).toFixed(1).replace(".",",")+"k":p.reviews})</i></span>`;
-/* Every place in the city as a dot, from the real data. */
+/* Every place in the city as a dot, from the real data. A drawing first, then the real map loads behind it. */
+const TMAP={la:[45.405,45.535],lo:[9.09,9.29]};
+const tmapXY=p=>[(p.lng-TMAP.lo[0])/(TMAP.lo[1]-TMAP.lo[0])*400,(TMAP.la[1]-p.lat)/(TMAP.la[1]-TMAP.la[0])*300];
 function tourMap(){
-  const pts=PLACES.filter(p=>p.lat&&p.lng), la=[45.405,45.535], lo=[9.09,9.29];
-  return `<svg class="tmapsvg" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${pts.map(p=>{ const x=(p.lng-lo[0])/(lo[1]-lo[0])*400, y=(la[1]-p.lat)/(la[1]-la[0])*300;
+  return `<svg class="tmapsvg" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${PLACES.filter(p=>p.lat&&p.lng).map(p=>{ const [x,y]=tmapXY(p);
     return x<0||x>400||y<0||y>300?"":`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1.9" fill="${mapCat(p)[2]}"/>`; }).join("")}</svg>`;
+}
+const tourStar=()=>[...PLACES].filter(x=>x.stars&&x.reviews>=2000&&x.lat).sort(byRank)[0]||PLACES[0];
+function dropTourMap(){ try{ TOUR?.map?.remove(); }catch{} if(TOUR) TOUR.map=null; }
+async function mountTourMap(){
+  const host=document.querySelector(".tmapgl"); if(!host||!TOUR) return;
+  try{ await loadMapLib(); }catch{ return; }
+  if(!TOUR||!host.isConnected) return;
+  const p=tourStar(), m=new maplibregl.Map({container:host,style:MAP_STYLE,bounds:[[9.105,45.42],[9.275,45.52]],fitBoundsOptions:{padding:{top:8,left:8,right:8,bottom:72}},interactive:false,attributionControl:{compact:true},fadeDuration:0});
+  TOUR.map=m;
+  m.on("load",()=>{ if(!host.isConnected) return;
+    m.addSource("tp",{type:"geojson",data:{type:"FeatureCollection",features:PLACES.filter(x=>x.lat&&x.lng).map(x=>({type:"Feature",properties:{c:mapCat(x)[2]},geometry:{type:"Point",coordinates:[x.lng,x.lat]}}))}});
+    m.addLayer({id:"tp",type:"circle",source:"tp",paint:{"circle-radius":2.6,"circle-color":["get","c"],"circle-stroke-width":.7,"circle-stroke-color":"#fff","circle-opacity":.95}});
+    const el=document.createElement("span"); el.className="tpin live"; el.style.setProperty("--c",mapCat(p)[2]);
+    new maplibregl.Marker({element:el,anchor:"center"}).setLngLat([p.lng,p.lat]).addTo(m);
+    const show=()=>host.closest(".tmapwrap")?.classList.add("gl"); m.once("idle",show); setTimeout(show,1200); });
 }
 const TOUR_SLIDES=[
   {k:"welcome",kick:"Welcome to Concit",title:()=>firstName()?`Hi ${esc(firstName())}, let's sort your next night out`:"Let's sort your next night out",
@@ -1388,7 +1408,7 @@ const TOUR_SLIDES=[
      <div class="tvotes">${FRIENDS.map(([n,c],k)=>`<span class="tvchip${k===2?" no":""}" style="--d:${k+1}"><i style="--c:${c}">${n[0]}</i>${n}<em>${k===2?CROSS:TICK}</em></span>`).join("")}</div>`; }},
   {k:"hotspots",kick:"Hotspots",title:()=>`${(Math.floor(PLACES.length/100)*100).toLocaleString("en-GB")}+ places, all rated`,
    body:"Restaurants, bars, cafés and clubs across Milan, with prices, opening hours and a map. Filter by area, price or cuisine.",
-   art:()=>{ const p=[...PLACES].filter(x=>x.stars&&x.reviews>=2000).sort(byRank)[0]||PLACES[0]; return `<div class="tmapwrap">${tourMap()}<span class="tpin" style="--c:${mapCat(p)[2]}"></span>
+   art:()=>{ const p=tourStar(), [px,py]=tmapXY(p); return `<div class="tmapwrap"><div class="tmapgl"></div>${tourMap()}<span class="tpin" style="--c:${mapCat(p)[2]};left:${(px/4).toFixed(1)}%;top:${(py/3).toFixed(1)}%"></span>
      <div class="tmapcard"><span class="tmc" style="--c:${mapCat(p)[2]}"></span><span><b>${esc(p.name)}</b><small>${esc(zname(p.zone))} · ${esc(costText(p))}</small></span>${miniStars(p)}</div></div>
      <div class="tchips">${["Open now","Under €15","Navigli","Sushi"].map((t,k)=>`<span style="--d:${k}">${t}</span>`).join("")}</div>`; }},
   {k:"events",kick:"Events",title:()=>"Never miss what's on",
@@ -1398,7 +1418,7 @@ const TOUR_SLIDES=[
 function paintTour(){
   const el=document.getElementById("tour"); if(!el||!TOUR||TOUR.stage!=="intro") return;
   const i=TOUR.i, sl=TOUR_SLIDES[i], ph=tourPhoto(sl.k), last=i===TOUR_SLIDES.length-1, credit=TOUR_PHOTO[sl.k]&&(CITY_PHOTOS[CITY]||{})[TOUR_PHOTO[sl.k]];
-  el.className="tour intro s-"+sl.k;
+  dropTourMap(); el.className="tour intro s-"+sl.k;
   el.innerHTML=`<div class="tbg">${ph?`<img src="${ph}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">`:""}</div>
   <div class="ttop">${PIN_SVG}<b>concit</b><button class="tskip" data-t="skip">Skip</button></div>
   <div class="tart" aria-hidden="true">${sl.art()}</div>
@@ -1407,6 +1427,7 @@ function paintTour(){
       ${i?`<button class="tprev" data-t="prev" aria-label="Back">‹</button>`:""}<button class="tnext" data-t="next">${last?"Try a practice vote":i?"Next":"Show me how"}</button></div>
     ${credit?`<a class="tcredit" href="${commonsPage(credit[0])}" target="_blank" rel="noopener">Photo: ${esc(credit[1])}, Wikimedia Commons</a>`:""}</div>`;
   el.querySelector("[data-t=next]").focus({preventScroll:true});
+  if(sl.k==="hotspots") mountTourMap();
 }
 function tourClick(e){
   const t=e.target.closest("[data-t]")?.dataset.t; if(!t||!TOUR) return;
@@ -1418,7 +1439,7 @@ function tourClick(e){
 function startPractice(){
   const P=TOUR.places.map(p=>p.id), me=uid(), f=["tour-f1","tour-f2","tour-f3"];
   const yes=(a)=>Object.fromEntries(P.map((id,k)=>[id,a.includes(k)?1:0]));
-  TOUR.stage="practice"; document.getElementById("tour")?.remove(); document.body.classList.add("inpractice");
+  dropTourMap(); TOUR.stage="practice"; document.getElementById("tour")?.remove(); document.body.classList.add("inpractice");
   S.practice=true; S.code=null; S.acct=false; S.tab="decide";
   S.plan={practice:true,options:P,people:[me,...f],names:Object.fromEntries(f.map((x,k)=>[x,FRIENDS[k][0]])),votes:{[f[0]]:yes([0,1]),[f[1]]:yes([1,2]),[f[2]]:yes([0,2])},
     what:"drinks",day:today,time:"21:00",group_name:"Practice group",group_id:null,mine:false,out:[],left:[]};

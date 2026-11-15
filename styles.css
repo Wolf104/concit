@@ -614,7 +614,8 @@ html[data-theme=dark] .vstamp.yes{color:var(--ok);border-color:var(--ok)}
 .vcard.enter{transform-origin:50% 0}
 
 /* Same-size voting cards */
-.vdeck .vcard{min-height:var(--vh,0px);display:flex;flex-direction:column}
+.vdeck .vcard{min-height:min(var(--vh,0px),var(--vmax,9999px));max-height:var(--vmax,none);display:flex;flex-direction:column}
+.vdeck .vcard .vbody{overflow-y:auto;overscroll-behavior:contain;min-height:0}
 .vdeck .vcard .vbody{flex:1}
 .vdeck .vcard .vlinks{margin-top:auto}
 .vmeasure .vcard{margin-bottom:12px}
@@ -749,14 +750,13 @@ body.intour{overflow:hidden}
 /* slide 4: tickets */
 .ttix{width:100%;display:flex;flex-direction:column;gap:10px}
 .ttk{display:flex;align-items:center;gap:12px;background:#fff;color:#0f2a44;border-radius:18px;padding:12px 14px;box-shadow:0 12px 30px rgba(0,0,0,.3);position:relative;border-left:6px solid var(--c)}
-.ttk:nth-child(2){margin-left:18px;margin-right:-6px}.ttk:nth-child(3){margin-left:6px;margin-right:6px}
+
 .ttd{width:42px;text-align:center;line-height:1.05;flex:none}.ttd i{display:block;font-style:normal;font-size:11px;font-weight:800;text-transform:uppercase;color:var(--c)}.ttd b{font-size:22px}
 .ttm{flex:1;min-width:0;display:flex;flex-direction:column}.ttm b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ttm small{font-size:12.5px;color:#5f7489;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ttp{font-size:12px;font-weight:800;color:var(--c);border-left:2px dashed #dbe5ef;padding-left:10px;white-space:nowrap}
 @media (max-height:700px){.ttext h2{font-size:26px}.ttext p{min-height:0;font-size:15px}.tfan{transform:scale(.85)}.tmsg{padding:8px 12px}}
 /* Practice vote, on the real voting screen */
 body.inpractice nav,body.inpractice #me,body.inpractice .brandbtn{pointer-events:none}
-body.inpractice nav{opacity:.45}
 #heroText em.pbadge{display:inline-block;font-style:normal;background:rgba(255,255,255,.22);border-radius:99px;padding:4px 12px;font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;margin-bottom:10px}
 /* Guided walk through the tabs */
 #coach{position:fixed;inset:0;z-index:70}
@@ -773,3 +773,9 @@ html[data-theme=dark] .cbub,html[data-theme=dark] .carrow{background:#1b2a3b;col
 .tourico{width:40px;height:40px;flex:none;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center}.tourico svg{width:20px;height:20px}
 @media (prefers-reduced-motion:reduce){.tour *,.cbub,.cring{animation:none!important;transition:none!important}}
 .tfc.f1>*,.tfc.f2>*{visibility:hidden}.tfc.f1 .tfh,.tfc.f2 .tfh{visibility:visible}.tfc.f1 .tfh>*,.tfc.f2 .tfh>*{visibility:hidden}
+.tmapgl{position:absolute;inset:0;opacity:0;transition:opacity .5s}
+.tmapwrap.gl .tmapgl{opacity:1}.tmapwrap.gl>.tmapsvg,.tmapwrap.gl>.tpin{opacity:0;transition:opacity .4s}
+.tmapwrap .tpin.live{position:static;transform:none;display:block}
+.tmapwrap .maplibregl-ctrl-attrib{font-size:10px}.tmapwrap .maplibregl-ctrl-bottom-right{top:0;bottom:auto}
+.vdeck .vcard .vhead{flex:none}
+.tmapwrap .tmapgl{position:absolute!important}
