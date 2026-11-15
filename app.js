@@ -187,7 +187,7 @@ async function loadGroups(){
   if(!S.session||document.hidden) return;
   try{
     rpc("heartbeat").catch(()=>{});
-    const g=await rpc("my_groups"); needAv((g||[]).flatMap(x=>x.members||[]));
+    const g=await rpc("my_groups"); needAv((g||[]).flatMap(x=>x.members||[])); needGroupAv(g||[]);
     if(JSON.stringify(g)!==JSON.stringify(S.groups)){ S.groups=g||[]; if(!(S.chatOpen&&S.tab==="groups"&&!S.acct)) render(); }
   }catch{}
 }
@@ -701,6 +701,37 @@ async function needAv(people){
   try{ const got=await rpc("get_avatars",{p_ids:[...new Set(want)]}); for(const [id,x] of Object.entries(got||{})) AV[id]={v:x.v,img:x.img}; saveAv(); repaintAv(); }
   catch{} finally{ AV_BUSY=false; }
 }
+/* Group photos share the same cache, keyed "g:<group id>". */
+let GAV_BUSY=false;
+async function needGroupAv(groups){
+  const want=[]; let dropped=false;
+  for(const g of groups){ const k="g:"+g.id;
+    if(g.av==null){ if(AV[k]){ delete AV[k]; dropped=true; } } else if(!AV[k]||AV[k].v!==g.av) want.push(g.id); }
+  if(dropped){ saveAv(); repaintAv(); }
+  if(!want.length||GAV_BUSY) return;
+  GAV_BUSY=true;
+  try{ const got=await rpc("get_group_avatars",{p_ids:want}); for(const [id,x] of Object.entries(got||{})) AV["g:"+id]={v:x.v,img:x.img}; saveAv(); repaintAv(); }
+  catch{} finally{ GAV_BUSY=false; }
+}
+function groupAv(g,cls="",open=true){
+  const k="g:"+g.id, a=AV[k];
+  if(a&&a.img) return open?`<img class="av gav tap ${cls}" src="${a.img}" alt="${esc(g.name)}" draggable="false" data-act="viewAv" data-id="${esc(k)}" data-name="${esc(g.name)}" role="button" tabindex="0" aria-label="View the ${esc(g.name)} group photo">`:`<img class="av gav ${cls}" src="${a.img}" alt="" draggable="false">`;
+  return avatarHtml(k,g.name,"gav "+cls,false);
+}
+async function uploadGroupAvatar(gid,file){
+  if(!file||!gid) return;
+  if(!/^image\//.test(file.type||"image/")){ toast("Choose a photo (JPEG or PNG)."); return; }
+  let img; try{ img=await loadImage(file); }catch{ toast("That photo couldn't be opened. Try a JPEG or PNG."); return; }
+  const pic=await openCropper(img,"Adjust the group photo"); if(!pic) return;
+  S.gAvBusy=gid; render();
+  try{ const v=await rpc("set_group_avatar",{p_group:gid,p_data:pic.small,p_large:pic.large}); AV["g:"+gid]={v,img:pic.small}; if(pic.large) AV_LARGE["g:"+gid]=pic.large; saveAv(); toast("Group photo saved"); }
+  catch{ toast("Couldn't save the group photo. Check your connection and try again."); }
+  finally{ S.gAvBusy=null; render(); loadGroups(); }
+}
+async function removeGroupAvatar(gid){
+  try{ await rpc("set_group_avatar",{p_group:gid,p_data:null,p_large:null}); delete AV["g:"+gid]; delete AV_LARGE["g:"+gid]; saveAv(); toast("Group photo removed"); }catch{ toast("Couldn't remove the group photo. Try again."); }
+  render(); loadGroups();
+}
 function repaintAv(){ if(S.chatOpen&&document.getElementById("chatList")) paintChat(false); else render(); }
 const AV_COLORS=["#2f9bff","#7a5af8","#ef6a5b","#16a37f","#e8912d","#d6418f","#3d8d4f","#5b6cf0"];
 function avatarHtml(id,name,cls="",open=true){
@@ -717,10 +748,10 @@ function loadImage(file){
     i.onload=()=>{ URL.revokeObjectURL(url); i.naturalWidth?ok(i):no(new Error("empty")); };
     i.onerror=()=>{ URL.revokeObjectURL(url); no(new Error("empty")); }; i.src=url; });
 }
-function openCropper(img){
+function openCropper(img,title="Adjust your photo"){
   return new Promise(done=>{
-    const wrap=document.createElement("div"); wrap.className="cropwrap"; wrap.setAttribute("role","dialog"); wrap.setAttribute("aria-modal","true"); wrap.setAttribute("aria-label","Adjust your photo");
-    wrap.innerHTML=`<div class="cropbox"><h2>Adjust your photo</h2>
+    const wrap=document.createElement("div"); wrap.className="cropwrap"; wrap.setAttribute("role","dialog"); wrap.setAttribute("aria-modal","true"); wrap.setAttribute("aria-label",title);
+    wrap.innerHTML=`<div class="cropbox"><h2>${esc(title)}</h2>
       <div class="cropstage" tabindex="0" aria-label="Photo position. Drag, or use the arrow keys; plus and minus zoom."><canvas></canvas><div class="cropring" aria-hidden="true"></div></div>
       <label class="cropzoom"><span aria-hidden="true">−</span><input type="range" min="1" max="4" step="0.01" value="1" aria-label="Zoom"><span aria-hidden="true">+</span></label>
       <p class="fine center">Drag to move · pinch or use the slider to zoom</p>
@@ -794,7 +825,7 @@ async function openPhoto(id,name){
   const key=e=>{ if(e.key==="Escape"||e.key==="Tab"){ e.preventDefault(); if(e.key==="Escape") close(); } };
   document.addEventListener("keydown",key,true);
   wrap.addEventListener("click",e=>{ if(e.target.tagName!=="IMG") close(); });
-  if(!AV_LARGE[id]){ try{ const big=await rpc("get_avatar_large",{p_id:id}); if(big&&wrap.isConnected){ AV_LARGE[id]=big; wrap.querySelector("img").src=big; } }catch{} }
+  if(!AV_LARGE[id]){ try{ const big=id.startsWith("g:")?await rpc("get_group_avatar_large",{p_id:id.slice(2)}):await rpc("get_avatar_large",{p_id:id}); if(big&&wrap.isConnected){ AV_LARGE[id]=big; wrap.querySelector("img").src=big; } }catch{} }
 }
 async function loadMyAvatar(){ try{ const v=await rpc("my_avatar"); await needAv([{id:uid(),av:v}]); }catch{} }
 
@@ -906,7 +937,7 @@ async function sendChat(){
   catch{ CHAT.msgs=CHAT.msgs.filter(x=>x!==temp); paintChat(); if(i&&!i.value) i.value=body; toast("Message not sent. Check your connection and try again."); }
 }
 function viewChat(g){
-  return `<div data-hero><button class="back" data-act="closeChat">‹ Back</button><h1>${esc(g.name)}</h1><p id="chatWho" class="who-online">${whoHtml()}</p></div>
+  return `<div data-hero><button class="back" data-act="closeChat">‹ Back</button><h1 class="withav">${groupAv(g,"mid")}<span>${esc(g.name)}</span></h1><p id="chatWho" class="who-online">${whoHtml()}</p></div>
   <div id="chatScroll" class="chatscroll"><div id="chatList" class="chat" aria-live="polite">${chatListHtml()}</div>
   <div id="chatTyping" aria-live="polite">${typingHtml()}</div></div>
   <form id="chatForm" class="chatbar" novalidate><textarea id="chatText" rows="1" maxlength="1000" placeholder="Message ${esc(g.name)}" aria-label="Message"></textarea><button class="sendbtn" type="submit" aria-label="Send"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h14M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></form>`;
@@ -915,6 +946,8 @@ function viewGroup(g){
   const n=g.members.length, on=g.members.filter(m=>m.online&&m.id!==uid()).length;
   const planStatus=p=>p.finished||(p.people>0&&p.done>=p.people)?["See result","done"]:p.me_out?["Not going","out"]:p.mine<p.options?["Vote","todo"]:[`${p.done} of ${p.people} voted`,""];
   return `<div data-hero><button class="back" data-act="allGroups">‹ Groups</button><span>${n} ${n===1?"member":"members"}${on?` · ${on} online`:""}</span><h1>${esc(g.name)}</h1></div>
+  <div class="gphoto">${groupAv(g,"big")}<div class="avbtns"><label class="btn small plain${S.gAvBusy===g.id?" busy":""}">${S.gAvBusy===g.id?"Saving…":AV["g:"+g.id]?"Change group photo":"Add a group photo"}<input type="file" class="gAvFile" data-id="${esc(g.id)}" accept="image/*" hidden ${S.gAvBusy?"disabled":""}></label>
+    ${AV["g:"+g.id]&&S.gAvBusy!==g.id?`<button class="link quiet" data-act="removeGroupAvatar" data-id="${esc(g.id)}">Remove</button>`:""}</div></div>
   <div class="gacts">
     <button class="gact" data-act="openChat" data-id="${esc(g.id)}">${evIcon('<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/>')}${g.unread?`<i class="gbadge">${g.unread}</i>`:""}<b>Chat</b><small>${g.last?esc((g.last.mine?"You":(g.last.name||"Someone").split(" ")[0])+": "+g.last.body):"Say hello"}</small></button>
     <button class="gact primary" data-act="newGroupPlan" data-id="${esc(g.id)}">${evIcon('<path d="M12 5v14M5 12h14"/>')}<b>Start a plan</b><small>Vote on where to go</small></button>
@@ -967,7 +1000,7 @@ function viewHome(){
   ${evs.length?`<section aria-labelledby="heH"><div class="hsec"><h2 id="heH">Coming up in Milan</h2><button class="link" data-act="tab" data-tab="events">Events</button></div>
   <div class="sheet glist">${evs.map(e=>{const d=parse(e.start);return `<button class="grow" data-act="homeEvent" data-id="${esc(e.id)}"><span class="hdate" style="--c:${EV_COL[e.cat]||"var(--link)"}"><i>${d.toLocaleDateString("en-GB",{month:"short"})}</i><b>${d.getDate()}</b></span><span class="gmain"><b>${esc(e.name)}</b><small>${esc([e.venue,e.time].filter(Boolean).join(" · "))}</small></span></button>`}).join("")}</div></section>`:""}
   <section aria-labelledby="hgH"><div class="hsec"><h2 id="hgH">Your groups</h2></div>
-  ${S.groups.length?`<div class="hgroups">${S.groups.slice(0,6).map(g=>`<button class="hgroup" data-act="openGroup" data-id="${esc(g.id)}">${g.unread?`<i class="gbadge">${g.unread}</i>`:""}<span class="hav" aria-hidden="true">${esc(g.name.trim().charAt(0).toUpperCase())}</span><b>${esc(g.name)}</b><small>${g.members.length} ${g.members.length===1?"person":"people"}</small></button>`).join("")}</div>`
+  ${S.groups.length?`<div class="hgroups">${S.groups.slice(0,6).map(g=>`<button class="hgroup" data-act="openGroup" data-id="${esc(g.id)}">${g.unread?`<i class="gbadge">${g.unread}</i>`:""}${groupAv(g,"hav",false)}<b>${esc(g.name)}</b><small>${g.members.length} ${g.members.length===1?"person":"people"}</small></button>`).join("")}</div>`
   :`<button class="hnew" data-act="tab" data-tab="groups"><span aria-hidden="true">+</span><span><b>Make your first group</b><small>Share a code so friends can join</small></span></button>`}</section>`;
 }
 function viewGroups(){
@@ -978,7 +1011,7 @@ function viewGroups(){
   <button class="link joinswap" data-act="joinMode" data-v="0">Create a group instead</button>`
   :`<form id="groupForm" class="group" novalidate><span class="label">New group</span><div class="inline"><input type="text" id="groupName" placeholder="Group name" maxlength="40" autocomplete="off"><button class="btn small" type="submit">Create</button></div></form>
   <button class="link joinswap" data-act="joinMode" data-v="1">Have an invite code?</button>`}
-  ${S.groups.length?`<p class="head">Your groups</p><div class="stack">${S.groups.map(x=>{const v=x.plans.filter(p=>!p.finished&&p.mine<p.options).length;return `<button class="person" data-act="openGroup" data-id="${esc(x.id)}"><span>${esc(x.name)}<small class="sub">${x.last?esc((x.last.mine?"You":x.last.name||"Someone")+": "+x.last.body):`${x.members.length} ${x.members.length===1?"member":"members"}`}</small></span><small>${x.unread?`<b class="pill">${x.unread} new</b>`:v?`${v} to vote on`:(()=>{const o=x.members.filter(m=>m.online&&m.id!==uid()).length;return o?`<span class="dot" aria-hidden="true"></span>${o} online`:"Open"})()}</small></button>`}).join("")}</div>`:`<p class="hint left">Create a group for your friends or family, then invite them. Plans you send there appear for everyone.</p>`}`;
+  ${S.groups.length?`<p class="head">Your groups</p><div class="stack">${S.groups.map(x=>{const v=x.plans.filter(p=>!p.finished&&p.mine<p.options).length;return `<button class="person gperson" data-act="openGroup" data-id="${esc(x.id)}">${groupAv(x,"mid",false)}<span class="gpname">${esc(x.name)}<small class="sub">${x.last?esc((x.last.mine?"You":x.last.name||"Someone")+": "+x.last.body):`${x.members.length} ${x.members.length===1?"member":"members"}`}</small></span><small>${x.unread?`<b class="pill">${x.unread} new</b>`:v?`${v} to vote on`:(()=>{const o=x.members.filter(m=>m.online&&m.id!==uid()).length;return o?`<span class="dot" aria-hidden="true"></span>${o} online`:"Open"})()}</small></button>`}).join("")}</div>`:`<p class="hint left">Create a group for your friends or family, then invite them. Plans you send there appear for everyone.</p>`}`;
 }
 /* Light or dark look. The choice is kept on this device; "auto" follows the phone or computer setting. */
 const themePref=()=>{ try{ return localStorage.getItem("concit.theme")||"light"; }catch{ return "light"; } };
@@ -1361,6 +1394,7 @@ const H={
   seen(el){ if(getSelection&&String(getSelection()).length) return; const id=Number(el.dataset.id); CHAT.seenOpen=CHAT.seenOpen===id?null:id; paintChat(false); },
   closeChat(){ closeChat(); },
   removeAvatar(){ removeAvatar(); },
+  removeGroupAvatar(el){ removeGroupAvatar(el.dataset.id); },
   viewAv(el){ openPhoto(el.dataset.id,el.dataset.name); },
   allGroups(){ S.chatOpen=false; CHAT.gid=null; S.gid=null; S.acct=false; S.deleting=false; S.leaving=false; render(); scrollTo(0,0); },
   account(){ S.acct=true; S.deleting=false; render(); scrollTo(0,0); },
@@ -1424,7 +1458,7 @@ function timeDone(v){
 }
 document.addEventListener("input",e=>{ if(e.target.id!=="meetTime") return; const el=e.target, atEnd=el.selectionStart===el.value.length, del=e.inputType&&e.inputType.startsWith("delete"); if(atEnd&&!del) el.value=timeTyping(el.value); el.classList.remove("bad"); });
 document.addEventListener("keydown",e=>{ if(e.key==="Enter"&&e.target.id==="meetTime") e.target.blur(); });
-document.addEventListener("change",e=>{ if(e.target.id==="meetTime"){ const t=timeDone(e.target.value); if(t===null){ e.target.classList.add("bad"); S.form.time=""; toast("Type the time like 19:30."); } else { S.form.time=t; e.target.value=t; } return; } if(e.target.id==="avFile"){ uploadAvatar(e.target.files&&e.target.files[0]); e.target.value=""; return; } if(e.target.id==="hotBudget") render(); const c=e.target.dataset.change; if(c==="area"){S.form.area=e.target.value}  if(c==="sendTo"){S.form.group=e.target.value;S.form.linkOnly=!e.target.value;persist();render()}});
+document.addEventListener("change",e=>{ if(e.target.id==="meetTime"){ const t=timeDone(e.target.value); if(t===null){ e.target.classList.add("bad"); S.form.time=""; toast("Type the time like 19:30."); } else { S.form.time=t; e.target.value=t; } return; } if(e.target.id==="avFile"){ uploadAvatar(e.target.files&&e.target.files[0]); e.target.value=""; } else if(e.target.classList?.contains("gAvFile")){ uploadGroupAvatar(e.target.dataset.id,e.target.files&&e.target.files[0]); e.target.value=""; return; } if(e.target.id==="hotBudget") render(); const c=e.target.dataset.change; if(c==="area"){S.form.area=e.target.value}  if(c==="sendTo"){S.form.group=e.target.value;S.form.linkOnly=!e.target.value;persist();render()}});
 document.addEventListener("submit",async e=>{ e.preventDefault();
   if(e.target.id==="authForm") authSubmit();
   if(e.target.id==="groupForm"){ const i=document.getElementById("groupName"), n=i.value.trim(); if(!n) return; i.value=""; i.blur(); try{ S.gid=await rpc("create_group",{p_name:n}); await loadGroups(); render(); }catch{ toast("Couldn't create the group. Try again."); } }
