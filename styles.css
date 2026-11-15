@@ -638,3 +638,38 @@ html[data-theme=dark] .vstamp.yes{color:var(--ok);border-color:var(--ok)}
 .vvote .vback{width:54px;padding:0;background:var(--card);border:1.5px solid var(--line);color:var(--link)}
 .vvote .vback svg{width:22px;height:22px}
 @media (max-width:360px){.vvote button span{font-size:15px}.vvote .vback{width:48px}}
+
+/* Home */
+.hsec{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin:0 0 10px}
+.hsec h2{margin:0;font-size:19px;font-weight:700;letter-spacing:-.01em}
+.hsec .link{font-size:14px}
+#view section{margin-bottom:28px}
+.hstart{background:var(--tint);border:1px solid var(--line);border-radius:22px;padding:16px}
+.tiles.four{grid-template-columns:repeat(4,1fr)}
+.tiles.four .tile{font-size:13px;padding:13px 2px 11px}
+.hdate{flex:none;width:46px;text-align:center;line-height:1.1}
+.hdate i{display:block;font-style:normal;font-size:12px;font-weight:700;text-transform:uppercase;color:var(--c,var(--link))}
+.hdate b{display:block;font-size:21px;font-weight:700}
+.hempty{border:1.5px dashed var(--line);border-radius:18px;padding:18px;text-align:center;display:flex;flex-direction:column;gap:4px}
+.hempty span{font-size:14px;color:var(--muted)}
+.hplaces{display:flex;gap:12px;overflow-x:auto;margin:0 calc(-1 * max(24px,env(safe-area-inset-left,0px)));padding:2px max(24px,env(safe-area-inset-left,0px)) 8px;scroll-snap-type:x mandatory;scrollbar-width:none}
+.hplaces::-webkit-scrollbar{display:none}
+.hplace{flex:none;width:190px;scroll-snap-align:start;display:flex;flex-direction:column;text-align:left;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:var(--card);color:var(--fg);font:inherit;padding:0;cursor:pointer}
+.hband{height:70px;background:var(--c);padding:10px 12px;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start}
+.hband i{font-style:normal;background:rgba(255,255,255,.93);color:#0f2a44;font-size:12px;font-weight:700;border-radius:99px;padding:2px 9px}
+.hband small{color:#fff;font-size:12px;font-weight:700}
+.hbody{padding:10px 12px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.hbody b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hbody small{font-size:13px;color:var(--muted)}
+.hgroups{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.hgroup{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 6px;border:1px solid var(--line);border-radius:18px;background:var(--card);color:var(--fg);font:inherit;cursor:pointer;min-width:0}
+.hgroup b{font-size:14px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hgroup small{font-size:12px;color:var(--muted)}
+.hgroup .gbadge{position:absolute;top:8px;right:8px}
+.hav{width:44px;height:44px;border-radius:50%;background:var(--accent);color:var(--on);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px}
+.hgroup:nth-child(3n+2) .hav{background:#8b5cf6}.hgroup:nth-child(3n) .hav{background:#13a39a}
+.hnew{display:flex;align-items:center;gap:14px;width:100%;border:1px solid var(--line);border-radius:18px;padding:14px 16px;background:var(--tint);color:var(--fg);font:inherit;text-align:left;cursor:pointer}
+.hnew>span:first-child{width:42px;height:42px;flex:none;border-radius:50%;background:var(--accent);color:var(--on);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700}
+.hnew b{display:block}.hnew small{color:var(--muted)}
+nav button span{white-space:nowrap}
+@media (max-width:370px){nav button{font-size:11.5px}}

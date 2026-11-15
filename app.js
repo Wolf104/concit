@@ -95,7 +95,7 @@ const KEY="concit.v4", SKEY="concit.session";
 const SB=window.CONCIT_CONFIG||{};
 const load=k=>{try{return JSON.parse(localStorage.getItem(k))}catch{return null}};
 const init=load(KEY)||{};
-const S={tab:"decide",plan:null,code:null,saved:new Set(init.saved||[]),session:load(SKEY),authView:"login",authBusy:false,authNote:"",email:"",pending:init.pending||null,
+const S={tab:"home",plan:null,code:null,saved:new Set(init.saved||[]),session:load(SKEY),authView:"login",authBusy:false,authNote:"",email:"",pending:init.pending||null,
   groups:[],gid:null,leaving:false,ver:0,inflight:0,
   form:{what:"drinks",day:today,area:"",group:init.group||"",idx:{coffee:4,meal:5,drink:5,entry:2,ticket:6}},hotIdx:{coffee:9,meal:12,drink:10,entry:7,ticket:9},hot:"all",hotView:"list",zone:null,sel:null,open:new Set(),mapFail:false,mapOk:false,ev:null};
 const uid=()=>S.session?.user?.id;
@@ -127,7 +127,7 @@ async function refreshSession(){
 function logout(expired){
   const t=S.session?.access_token;
   if(t&&!expired) authCall("logout",{}, "POST",t).catch(()=>{});
-  S.session=null; S.plan=null; S.code=null; S.groups=[]; S.gid=null; S.acct=false; S.deleting=false; S.authView="login"; S.authNote=expired?"Please log in again.":""; S.tab="decide"; S.chatOpen=false;
+  S.session=null; S.plan=null; S.code=null; S.groups=[]; S.gid=null; S.acct=false; S.deleting=false; S.authView="login"; S.authNote=expired?"Please log in again.":""; S.tab="home"; S.chatOpen=false;
   if(typeof CHAT!=="undefined"){ CHAT.gid=null; CHAT.msgs=[]; }
   if(!expired){ for(const k in AV) delete AV[k]; if(typeof AV_LARGE!=="undefined") for(const k in AV_LARGE) delete AV_LARGE[k]; try{localStorage.removeItem("concit.av")}catch{} }
   saveSession(); history.replaceState(null,"",location.pathname); render();
@@ -926,6 +926,50 @@ function viewGroup(g){
   <button class="gcode" data-act="copyCode" data-v="${esc(g.invite_code)}" aria-label="Copy invite code">Invite code <b class="code">${esc(g.invite_code)}</b><span>Copy</span></button>
   <button class="link quiet center danger" data-act="leave" data-id="${esc(g.id)}">${S.leaving?"Tap again to leave this group":"Leave group"}</button>`;
 }
+/* Home: start a plan, your live plans, top places open right now, what's coming up, your groups. */
+const HOME_OCC=[["eat","Dinner",WHATS[0][2]],["drinks","Drinks",WHATS[1][2]],["coffee","Coffee",WHATS[2][2]],["clubs","Night out",WHATS[3][2]]];
+const KIND_SHORT={cafe:"Coffee",eat:"Restaurant",cheap:"Cheap eats",drink:"Cocktails",wine:"Wine bar",beer:"Pub",club:"Club",culture:"Culture"};
+const hm=t=>{const v=+t.slice(0,2)*60+ +t.slice(2,4);return v};
+function openUntil(p){ // closing time today if open right now, else null
+  const h=hoursOn(p,today); if(!h||h==="C") return null;
+  const n=new Date(), now=n.getHours()*60+n.getMinutes();
+  for(const r of h.split(",")){ const [a,b]=r.split("-"); if(!b) continue; let s=hm(a), e=hm(b); if(e<=s) e+=1440;
+    if(now>=s&&now<e) return b.slice(0,2)+":"+b.slice(2); }
+  return null;
+}
+function homePlans(){
+  const out=[]; S.groups.forEach(g=>g.plans.forEach(p=>out.push({...p,gname:g.name})));
+  const st=p=>p.finished||(p.people>0&&p.done>=p.people)?2:p.me_out?3:p.mine<p.options?0:1;
+  return out.filter(p=>st(p)!==3).sort((a,b)=>st(a)-st(b)||a.day.localeCompare(b.day)).slice(0,3).map(p=>({...p,st:st(p)}));
+}
+function viewHome(){
+  const name=(S.session?.user?.user_metadata?.name||"").trim().split(" ")[0];
+  const hr=new Date().getHours(), part=hr<12?"morning":hr<18?"afternoon":"evening";
+  const day=new Date().toLocaleDateString("en-GB",{weekday:"long"});
+  const ask=hr<11?"Where's coffee?":hr<17?"What's the plan today?":"Where to tonight?";
+  const w=S.homeWhat||(hr<11?"coffee":hr<18?"eat":"drinks");
+  const cta={eat:"Find somewhere to eat",drinks:"Find drinks",coffee:"Find a coffee spot",clubs:"Plan a night out"}[w];
+  const plans=homePlans();
+  const now=PLACES.filter(p=>p.stars&&(p.reviews||0)>=150).map(p=>({p,u:openUntil(p)})).filter(x=>x.u).sort((a,b)=>byRank(a.p,b.p)).slice(0,10);
+  const evs=EVENTS.filter(e=>e.start>=today&&!isRun(e)).sort((a,b)=>a.start.localeCompare(b.start)).slice(0,4);
+  const pstat=p=>p.st===2?["See result","done"]:p.st===0?["Vote","todo"]:[`${p.done} of ${p.people} voted`,""];
+  return `<div data-hero><span>${esc(cap(day))} ${part}</span><h1>${name?`Ciao ${esc(name)}, `:""}${ask.charAt(0).toLowerCase()+ask.slice(1)}</h1></div>
+  <section class="hstart" aria-labelledby="hsH">
+    <div class="hsec"><h2 id="hsH">Start a plan</h2><button class="link" data-act="homeGo" data-v="pick">I'll pick myself</button></div>
+    <div class="tiles four" role="group" aria-label="What">${HOME_OCC.map(([k,l,ic])=>`<button class="tile" data-act="homeWhat" data-v="${k}" aria-pressed="${w===k}">${evIcon(ic)}<span>${l}</span></button>`).join("")}</div>
+    <button class="btn" data-act="homeGo" data-v="auto">${cta}</button>
+  </section>
+  <section aria-labelledby="hpH"><div class="hsec"><h2 id="hpH">Your plans</h2>${plans.length?`<button class="link" data-act="tab" data-tab="groups">Groups</button>`:""}</div>
+  ${plans.length?`<div class="sheet glist">${plans.map(p=>{const [t,c]=pstat(p);return `<button class="grow" data-act="openPlan" data-code="${esc(p.code)}"><span class="hdate"><i>${parse(p.day).toLocaleDateString("en-GB",{weekday:"short"})}</i><b>${parse(p.day).getDate()}</b></span><span class="gmain"><b>${esc((WHAT_TEXT[p.what]||"Plan")+(p.time?` at ${p.time}`:""))}</b><small>${esc(p.gname)}${p.st===1?" · waiting for others":""}</small></span><span class="gstat ${c}">${esc(t)}</span></button>`}).join("")}</div>`
+  :`<div class="hempty"><b>No plans yet</b><span>${S.groups.length?"Start one above and your group votes on where to go.":"Start one above, or make a group so friends can vote too."}</span></div>`}</section>
+  ${now.length?`<section aria-labelledby="hnH"><div class="hsec"><h2 id="hnH">Open now, top rated</h2><button class="link" data-act="tab" data-tab="hotspots">Hotspots</button></div>
+  <div class="hplaces">${now.map(({p,u})=>{const c=mapCat(p);return `<button class="hplace" data-act="homePlace" data-id="${esc(p.id)}" style="--c:${c[2]}"><span class="hband"><i>${esc(p.cuisine&&p.cuisine[0]&&CUISINE_TEXT[p.cuisine[0]]||KIND_SHORT[p.kind]||"")}</i><small>Open till ${u}</small></span><span class="hbody"><b>${esc(p.name)}</b><small>${esc(zname(p.zone))} · ${esc(costText(p).replace(/ (a|an) .*$/,""))}</small>${starsHtml(p,"small")}</span></button>`}).join("")}</div></section>`:""}
+  ${evs.length?`<section aria-labelledby="heH"><div class="hsec"><h2 id="heH">Coming up in Milan</h2><button class="link" data-act="tab" data-tab="events">Events</button></div>
+  <div class="sheet glist">${evs.map(e=>{const d=parse(e.start);return `<button class="grow" data-act="homeEvent" data-id="${esc(e.id)}"><span class="hdate" style="--c:${EV_COL[e.cat]||"var(--link)"}"><i>${d.toLocaleDateString("en-GB",{month:"short"})}</i><b>${d.getDate()}</b></span><span class="gmain"><b>${esc(e.name)}</b><small>${esc([e.venue,e.time].filter(Boolean).join(" · "))}</small></span></button>`}).join("")}</div></section>`:""}
+  <section aria-labelledby="hgH"><div class="hsec"><h2 id="hgH">Your groups</h2></div>
+  ${S.groups.length?`<div class="hgroups">${S.groups.slice(0,6).map(g=>`<button class="hgroup" data-act="openGroup" data-id="${esc(g.id)}">${g.unread?`<i class="gbadge">${g.unread}</i>`:""}<span class="hav" aria-hidden="true">${esc(g.name.trim().charAt(0).toUpperCase())}</span><b>${esc(g.name)}</b><small>${g.members.length} ${g.members.length===1?"person":"people"}</small></button>`).join("")}</div>`
+  :`<button class="hnew" data-act="tab" data-tab="groups"><span aria-hidden="true">+</span><span><b>Make your first group</b><small>Share a code so friends can join</small></span></button>`}</section>`;
+}
 function viewGroups(){
   const g=S.groups.find(x=>x.id===S.gid);
   if(g) return S.chatOpen&&CHAT.gid===g.id?viewChat(g):viewGroup(g);
@@ -1227,7 +1271,7 @@ function render(){
   const open=[...document.querySelectorAll("details[open] b")].map(b=>b.textContent);
   const authed=S.session&&S.authView!=="newpass";
   document.body.classList.toggle("noauth",!authed);
-  document.getElementById("view").innerHTML=!authed?viewAuth():S.acct?viewAccount():S.tab==="decide"?viewDecide():S.tab==="hotspots"?viewHot():S.tab==="groups"?viewGroups():viewEvents();
+  document.getElementById("view").innerHTML=!authed?viewAuth():S.acct?viewAccount():S.tab==="home"?viewHome():S.tab==="decide"?viewDecide():S.tab==="hotspots"?viewHot():S.tab==="groups"?viewGroups():viewEvents();
   const h=document.querySelector("#view [data-hero]"), ht=document.getElementById("heroText");
   ht.innerHTML=h?h.innerHTML:""; h?.remove();
   document.querySelectorAll("details").forEach(d=>{ if(open.includes(d.querySelector("b").textContent)) d.open=true; });
@@ -1239,10 +1283,27 @@ function render(){
   const badge=document.getElementById("badge"), c=toVote().length; if(badge){ badge.textContent=c; badge.hidden=!c; }
   const me=document.getElementById("me"); if(me){ const mine=S.session&&AV[uid()]; me.innerHTML=mine?`<img src="${mine.img}" alt="">`:esc((S.session?.user?.user_metadata?.name||"?").trim().charAt(0).toUpperCase()); me.classList.toggle("hasav",!!mine); me.toggleAttribute("aria-current",!!S.acct); }
   document.querySelectorAll("nav button").forEach(b=>b.dataset.tab===S.tab&&!S.acct?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current"));
+  if(S.focus){ const n=S.focus; S.focus=null; const d=[...document.querySelectorAll("#view details")].find(x=>[...x.querySelectorAll("summary b")].some(b=>b.textContent===n));
+    if(d){ d.open=true; requestAnimationFrame(()=>d.scrollIntoView({block:"center"})); } else scrollTo(0,0); }
+}
+/* Tapping a tab always opens that tab's main page, closing whatever was open inside it. */
+function resetTab(t){
+  S.pickOpen=false; S.calOpen=false;
+  if(t==="decide"){ if(S.plan||S.code){ S.plan=null; S.code=null; setUrl(null); } S.dfltOpen=false; }
+  else if(t==="hotspots"){ S.hot="all"; S.hotView="list"; S.sel=null; S.zone=null; S.fltOpen=false; S.hotCuisine=""; S.open=new Set(); }
+  else if(t==="events"){ S.ev=null; S.evCalOpen=false; S.evDate=null; }
+  else if(t==="groups"){ if(S.chatOpen) typing(false); S.chatOpen=false; CHAT.gid=null; S.gid=null; S.joinMode=false; S.leaving=false; }
 }
 const H={
-  home(){ if(!S.session) return; S.acct=false; S.deleting=false; S.pickOpen=false; if(S.plan||S.code) clearPlan(); S.tab="decide"; try{location.hash="decide"}catch{} render(); scrollTo(0,0); },
-  tab(el){ S.acct=false; S.deleting=false; S.tab=el.dataset.tab; try{location.hash=S.tab}catch{} render(); scrollTo(0,0); },
+  home(){ if(!S.session) return; S.acct=false; S.deleting=false; S.pickOpen=false; resetTab("home"); S.tab="home"; try{location.hash="home"}catch{} render(); scrollTo(0,0); },
+  tab(el){ S.acct=false; S.deleting=false; S.tab=el.dataset.tab; resetTab(S.tab); try{location.hash=S.tab}catch{} render(); scrollTo(0,0); },
+  homeWhat(el){ S.homeWhat=el.dataset.v; render(); },
+  homeGo(el){ const w=S.homeWhat||(new Date().getHours()<11?"coffee":new Date().getHours()<18?"eat":"drinks"); resetTab("decide");
+    if(WHAT_UNIT[S.form.what]!==WHAT_UNIT[w]) S.form.price=0; S.form.what=w; S.form.mode=el.dataset.v; S.tab="decide"; try{location.hash="decide"}catch{} render(); scrollTo(0,0); },
+  homePlace(el){ const p=PLACES.find(x=>x.id===el.dataset.id); if(!p) return; resetTab("hotspots"); S.tab="hotspots";
+    const g=HOT_GROUPS.find(([,f])=>f(p)); if(g) S.open.add(g[0]); S.focus=p.name; try{location.hash="hotspots"}catch{} render(); },
+  homeEvent(el){ const e=EVENTS.find(x=>x.id===el.dataset.id); if(!e) return; resetTab("events"); S.tab="events";
+    const c=EV_CATS.find(c=>c[3](e)); S.ev=c?c[0]:null; S.focus=e.name; try{location.hash="events"}catch{} render(); },
   what(el){ const was=S.form.what; S.form.what=el.dataset.v; if(WHAT_UNIT[was]!==WHAT_UNIT[el.dataset.v]) S.form.price=0; render(); },
   cuisine(el){ S.form.cuisine=el.dataset.v; render(); },
   hotCuisine(el){ S.hotCuisine=el.dataset.v; render(); },
@@ -1377,8 +1438,8 @@ document.addEventListener("submit",async e=>{ e.preventDefault();
 document.addEventListener("keydown",e=>{ if((e.key==="Enter"||e.key===" ")&&e.target.matches?.("g[data-act]")){e.preventDefault();H.zoneMap(e.target)}
   if((e.key==="Enter"||e.key===" ")&&e.target.matches?.("img[data-act=viewAv]")){e.preventDefault();H.viewAv(e.target)} });
 document.addEventListener("focusout",()=>setTimeout(()=>{if(render.later)render()},0));
-addEventListener("hashchange",()=>{const t=location.hash.slice(1);if(["decide","hotspots","events","groups"].includes(t)&&t!==S.tab){S.tab=t;render()}});
-{const t=location.hash.slice(1);if(["decide","hotspots","events","groups"].includes(t))S.tab=t}
+addEventListener("hashchange",()=>{const t=location.hash.slice(1);if(["home","decide","hotspots","events","groups"].includes(t)&&t!==S.tab){S.tab=t;render()}});
+{const t=location.hash.slice(1);if(["home","decide","hotspots","events","groups"].includes(t))S.tab=t}
 
 async function loadEvents(){
   try{
