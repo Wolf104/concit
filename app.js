@@ -1318,6 +1318,7 @@ function render(){
   const h=document.querySelector("#view [data-hero]"), ht=document.getElementById("heroText");
   ht.innerHTML=h?h.innerHTML:""; h?.remove();
   if(S.practice) decoratePractice();
+  document.body.classList.toggle("voting",!!document.querySelector("#view .vdeck"));
   document.querySelectorAll("details").forEach(d=>{ if(open.includes(d.querySelector("b").textContent)) d.open=true; });
   if(authed&&S.tab==="hotspots"&&S.hotView==="map"&&!S.mapFail) mountMap();
   setupDeck();
