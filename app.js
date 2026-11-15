@@ -282,13 +282,14 @@ async function undoVote(){
   const p=S.plan, id=p&&lastVoted(p); if(!id||DEALING) return;
   const was=p.votes[uid()][id], mine={...p.votes[uid()]}; delete mine[id];
   S.ver++; S.plan={...p,votes:{...p.votes,[uid()]:mine}};
-  RETURNING={id,v:was}; render();
+  RETURNING={id,v:was}; render(); if(S.practice) return;
   S.inflight++;
   try{ await rpc("undo_vote",{p_code:S.code,p_place:id}); }
   catch{ toast("Couldn't undo that vote. Try again."); S.plan=merge(S.plan,{votes:{[uid()]:{[id]:was}}}); render(); }
   S.inflight--; S.ver++; loadGroups();
 }
 async function vote(id,v){
+  if(S.practice){ S.plan=merge(S.plan,{votes:{[uid()]:{[id]:v}}}); render(); if(!nextCard(S.plan,uid())) scrollTo(0,0); return; }
   S.ver++;
   S.plan=merge(S.plan,{votes:{[uid()]:{[id]:v}}});
   render(); if(!nextCard(S.plan,uid())) scrollTo(0,0);
@@ -616,7 +617,7 @@ function viewCard(p){
   <div class="vtop"><div class="vprog" aria-hidden="true">${p.options.map((o,j)=>`<i class="${j<i?"done":j===i?"now":""}"></i>`).join("")}</div></div>
   <div class="vdeck" data-left="${Math.min(3,left.length-1)}">${left[1]?cardHtml(p,left[1],true):""}${cardHtml(p,id,false)}</div>
   <div class="vvote${lastVoted(p)?" hasundo":""}"><button class="vno" data-act="vote" data-id="${esc(id)}" data-v="0">${vi("no","vic")}<span>Nope</span></button>${lastVoted(p)?`<button class="vback" data-act="undoVote" aria-label="Go back and change your last vote" title="Go back">${UNDO_ICON}</button>`:""}<button class="vyes" data-act="vote" data-id="${esc(id)}" data-v="1">${vi("yes","vic")}<span>I'm in</span></button></div>
-  ${p.people.length>1||p.group_id?`<button class="link quiet center" data-act="attend" data-v="0">I can't make it</button>`:""}`;
+  ${p.practice?`<p class="fine center">Swipe the card, or tap a button. Giulia, Marco and Sofia have already voted.</p>`:p.people.length>1||p.group_id?`<button class="link quiet center" data-act="attend" data-v="0">I can't make it</button>`:""}`;
 }
 function viewResult(p){
   const r=results(p), w=r[0], total=Object.keys(p.votes||{}).filter(n=>!isOut(p,n)).length||going(p).length, back=p.group_id?(p.group_name||"Back"):"New plan";
@@ -635,7 +636,7 @@ function viewResult(p){
     <p class="pollwin">${TROPHY_ICON}<span>Winner: <b>${esc(it.name)}</b></span></p>
   </section>
   <div class="win"><p class="ok">${w.yes} of ${total} said yes</p>${p.time?`<p><b>Meet at ${esc(p.time)}</b> · ${esc(dayText(p.day))}</p>`:""}<p>${esc(where)}</p><p class="dim">${esc(sub)}</p></div>
-  <div class="stack"><button class="btn" data-act="copy">Copy the details</button><a class="btn plain" href="${mapsUrl(it.name+" "+where)}" target="_blank" rel="noopener">Directions</a></div>`;
+  ${p.practice?`<p class="note">That's how every plan works. Your friends vote on their phones, and the place with the most yeses wins.</p><div class="stack"><button class="btn" data-act="tourCoach">Show me around the app</button><button class="btn plain" data-act="tourAgain">Vote again</button></div>`:`<div class="stack"><button class="btn" data-act="copy">Copy the details</button><a class="btn plain" href="${mapsUrl(it.name+" "+where)}" target="_blank" rel="noopener">Directions</a></div>`}`;
 }
 const GROUP_ICON='<svg class="pollicon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 19.5c0-3.4 2.7-5.8 6-5.8s6 2.4 6 5.8"/><circle cx="16.6" cy="9" r="2.6"/><path d="M16 13.8c2.8.2 5 2.3 5 5.2"/></svg>';
 const TROPHY_ICON='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 6H5a2 2 0 0 0 2 4h1M16 6h3a2 2 0 0 1-2 4h-1M12 13v4M8.5 20h7M10 17h4"/></svg>';
@@ -643,8 +644,9 @@ function viewDecide(){
   const p=S.plan;
   if(!p) return viewSetup();
   if((p.left||[]).includes(uid())&&!p.people.includes(uid())) return viewLeft(p);
-  if(p.finished||(allDone(p)&&p.people.length>1)) return viewResult(p)+planManage(p);
-  if(p.people.includes(uid())&&!isOut(p,uid())&&nextCard(p,uid())) return viewCard(p)+planManage(p);
+  const pm=p.practice?"":planManage(p);
+  if(p.finished||(allDone(p)&&p.people.length>1)) return viewResult(p)+pm;
+  if(p.people.includes(uid())&&!isOut(p,uid())&&nextCard(p,uid())) return viewCard(p)+pm;
   return viewWaiting(p)+planManage(p);
 }
 /* Delete (whoever made the plan) or leave (everyone else). Both need a second tap to confirm. */
@@ -1031,7 +1033,7 @@ function viewAccount(){
     <p class="fine">Shown next to your messages and in your groups. Only people in your groups can see it.</p></div>
   <form id="nameForm" class="group" novalidate><span class="label">Your name</span><div class="inline"><input type="text" id="myName" value="${esc(name)}" maxlength="30" autocomplete="name"><button class="btn small" type="submit">Save</button></div></form>
   <div class="group"><span class="label">Appearance</span><div class="themeseg">${seg("setTheme",themePref(),[["light","Light"],["dark","Dark"],["auto","Match device"]],"Appearance")}</div><p class="fine">Saved on this device.</p></div>
-  <div class="group"><span class="label">Help</span><button class="person tourrow" data-act="replayTour"><span class="tourico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg></span><span>Show me around again<small class="sub">Replay the welcome, practice vote and tips</small></span></button></div>
+  <div class="group"><span class="label">Help</span><button class="person tourrow" data-act="replayTour"><span class="tourico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg></span><span>Show me around again<small class="sub">Replay the welcome, practice vote and tour of the app</small></span></button></div>
   <div class="group"><span class="label">Your data</span><a class="person" href="privacy.html"><span>Privacy notice<small class="sub">What Concit keeps and why</small></span><small>Read</small></a></div>
   <button class="btn plain" data-act="logout">Log out</button>
   <button class="link quiet center danger" data-act="deleteAccount">${S.deleting?"Tap again to delete for good":"Delete my account"}</button>
@@ -1317,7 +1319,8 @@ function render(){
   const badge=document.getElementById("badge"), c=toVote().length; if(badge){ badge.textContent=c; badge.hidden=!c; }
   const me=document.getElementById("me"); if(me){ const mine=S.session&&AV[uid()]; me.innerHTML=mine?`<img src="${mine.img}" alt="">`:esc((S.session?.user?.user_metadata?.name||"?").trim().charAt(0).toUpperCase()); me.classList.toggle("hasav",!!mine); me.toggleAttribute("aria-current",!!S.acct); }
   document.querySelectorAll("nav button").forEach(b=>b.dataset.tab===S.tab&&!S.acct?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current"));
-  if(authed&&!TOUR) requestAnimationFrame(showTip);
+  if(S.practice) decoratePractice();
+  if(TOUR&&TOUR.stage==="tabs") requestAnimationFrame(paintCoach);
   if(S.focus){ const n=S.focus; S.focus=null; const d=[...document.querySelectorAll("#view details")].find(x=>[...x.querySelectorAll("summary b")].some(b=>b.textContent===n));
     if(d){ d.open=true; requestAnimationFrame(()=>d.scrollIntoView({block:"center"})); } else scrollTo(0,0); }
 }
@@ -1325,7 +1328,6 @@ function render(){
    Runs once for accounts created after it launched: three welcome cards, a practice vote, then one tip
    the first time each tab opens. "Show me around again" in Your account replays it. */
 const TOUR_SINCE=Date.parse("2026-11-15T17:00:00Z");
-const tipKey=()=>"concit.tips."+uid();
 const tourMeta=()=>S.session?.user?.user_metadata||{};
 function tourDue(){
   const u=S.session?.user; if(!u||tourMeta().tour_done) return false;
@@ -1333,102 +1335,141 @@ function tourDue(){
   const made=Date.parse(u.created_at||""); return made>=TOUR_SINCE;
 }
 let TOUR=null;
-const TOUR_CARDS=[
-  ["Decide together","Pick what you fancy, add your group, and everyone swipes yes or no. Concit finds the place you all agree on."],
-  ["1,100+ places in Milan","Hotspots has restaurants, bars, cafés and clubs, all rated, with opening hours, prices and a map."],
-  ["Never miss what's on","Concerts, exhibitions, markets and matches, all in Events. Save the ones you like or turn one into a plan."]];
+const firstName=()=>(S.session?.user?.user_metadata?.name||"").trim().split(" ")[0];
+const TOUR_PHOTO={welcome:"culture",decide:"activities",events:"music"};
+const tourPhoto=k=>{ const f=((CITY_PHOTOS[CITY]||{})[TOUR_PHOTO[k]]||[])[0]; return f?commonsImg(f,1000):""; };
+/* Places for the slides and the practice vote: well reviewed bars in different areas. */
 function tourPlaces(){
-  const pick=[], want=["eat","drink","eat","drink"];
-  const pool=PLACES.filter(p=>p.stars&&(p.reviews||0)>=300&&p.why).sort(byRank);
-  for(const k of want){ const p=pool.find(x=>(k==="drink"?["drink","wine","beer"].includes(x.kind):["eat","cheap"].includes(x.kind))&&!pick.includes(x)); if(p) pick.push(p); }
-  return pick.length?pick:PLACES.slice(0,4);
+  const pool=PLACES.filter(p=>["drink","wine","beer"].includes(p.kind)&&p.stars&&(p.reviews||0)>=300&&p.why).sort(byRank), out=[], zones=new Set();
+  for(const p of pool){ if(zones.has(p.zone)) continue; zones.add(p.zone); out.push(p); if(out.length===4) break; }
+  return out.length>=2?out:PLACES.slice(0,4);
 }
 function startTour(){
-  try{ localStorage.setItem(tipKey(),JSON.stringify([])); }catch{}
-  TOUR={stage:"cards",i:0,v:0,yes:[],places:tourPlaces()};
-  let el=document.getElementById("tour"); if(!el){ el=document.createElement("div"); el.id="tour"; el.setAttribute("role","dialog"); el.setAttribute("aria-modal","true"); el.setAttribute("aria-label","Welcome to Concit"); document.body.appendChild(el); el.addEventListener("click",tourClick); }
+  hideCoach(); TOUR={stage:"intro",i:0,places:tourPlaces()};
+  Object.keys(TOUR_PHOTO).forEach(k=>{ const u=tourPhoto(k); if(u){ const im=new Image(); im.referrerPolicy="no-referrer"; im.src=u; } });
+  let el=document.getElementById("tour");
+  if(!el){ el=document.createElement("div"); el.id="tour"; el.setAttribute("role","dialog"); el.setAttribute("aria-modal","true"); el.setAttribute("aria-label","Welcome to Concit"); document.body.appendChild(el);
+    el.addEventListener("click",tourClick);
+    let x0=null; el.addEventListener("pointerdown",e=>{ x0=e.target.closest("button,a")?null:e.clientX; });
+    el.addEventListener("pointerup",e=>{ if(x0==null||!TOUR||TOUR.stage!=="intro") return; const dx=e.clientX-x0; x0=null;
+      if(dx<-50&&TOUR.i<TOUR_SLIDES.length-1){ TOUR.i++; paintTour(); } else if(dx>50&&TOUR.i>0){ TOUR.i--; paintTour(); } }); }
   document.body.classList.add("intour"); paintTour();
 }
 function endTour(to){
-  TOUR=null; document.getElementById("tour")?.remove(); document.body.classList.remove("intour");
+  TOUR=null; S.practice=false; hideCoach(); document.getElementById("tour")?.remove(); document.body.classList.remove("intour","inpractice");
+  if(S.plan&&S.plan.practice){ S.plan=null; }
   try{ localStorage.setItem("concit.tour."+uid(),"1"); }catch{}
   if(!tourMeta().tour_done&&S.session){ authCall("user",{data:{tour_done:true}},"PUT",S.session.access_token).then(u=>{ if(u&&S.session) S.session.user=u; saveSession(); }).catch(()=>{}); }
-  if(to==="decide"){ S.acct=false; S.tab="decide"; resetTab("decide"); try{location.hash="decide"}catch{} }
-  else if(to==="home"){ S.acct=false; S.tab="home"; try{location.hash="home"}catch{} }
+  S.acct=false; S.tab=to==="decide"?"decide":"home"; resetTab(S.tab); try{location.hash=S.tab}catch{}
   render(); scrollTo(0,0);
 }
-const PIN_SVG='<svg width="24" height="28" viewBox="0 0 26 30" aria-hidden="true"><path d="M13 1C6.4 1 1 6.2 1 12.6 1 21.2 13 29 13 29s12-7.8 12-16.4C25 6.2 19.6 1 13 1z" fill="#fff"/><path d="M17.6 10.2a5.6 5.6 0 1 0 0 5.6" fill="none" stroke="#2f9bff" stroke-width="3" stroke-linecap="round"/></svg>';
-function tourArt(i){
-  if(i===0){ const p=TOUR.places[1]||TOUR.places[0]||{}; return `<div class="tart stack"><div class="tback"></div><div class="tcard"><div class="tband" style="--c:${mapCat(p)[2]||"#8b5cf6"}"><i>${esc(KIND_SHORT[p.kind]||"")} · ${esc(zname(p.zone)||"")}</i><b>${esc(p.name||"")}</b></div><div class="tbody">${p.stars?starsHtml(p):""}<small>${esc(p.kind?costText(p):"")}</small></div><div class="tvote"><span>Nope</span><span class="on">I'm in</span></div></div></div>`; }
-  if(i===1){ const cols=MAP_CATS.map(c=>c[2]); const pts=[[12,14],[28,24],[42,10],[64,20],[80,13],[18,40],[54,36],[74,50],[88,33],[34,57],[9,67],[60,63],[83,73],[45,80],[24,85],[70,88]];
-    return `<div class="tart map"><i class="road r1"></i><i class="road r2"></i><i class="canal"></i>${pts.map((q,k)=>`<span class="tdot" style="left:${q[0]}%;top:${q[1]}%;background:${cols[k%cols.length]}"></span>`).join("")}<div class="tmapcard"><b>${esc((TOUR.places[0]||{}).name||"")}</b><small>${esc(zname((TOUR.places[0]||{}).zone)||"")} · ${(TOUR.places[0]||{}).stars?`★ ${(+TOUR.places[0].stars).toFixed(1)}`:""}</small></div></div>`; }
-  const evs=EVENTS.filter(e=>e.start>=today&&!isRun(e)).sort((a,b)=>a.start.localeCompare(b.start)).slice(0,4);
-  return `<div class="tart evs">${evs.map(e=>{const d=parse(e.start);return `<div class="tev"><span class="hdate" style="--c:${EV_COL[e.cat]||"var(--link)"}"><i>${d.toLocaleDateString("en-GB",{month:"short"})}</i><b>${d.getDate()}</b></span><span><b>${esc(e.name)}</b><small>${esc(e.venue||"")}</small></span></div>`}).join("")}</div>`;
+const PIN_SVG='<svg width="22" height="26" viewBox="0 0 26 30" aria-hidden="true"><path d="M13 1C6.4 1 1 6.2 1 12.6 1 21.2 13 29 13 29s12-7.8 12-16.4C25 6.2 19.6 1 13 1z" fill="#fff"/><path d="M17.6 10.2a5.6 5.6 0 1 0 0 5.6" fill="none" stroke="#2f9bff" stroke-width="3" stroke-linecap="round"/></svg>';
+const TICK='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+const CROSS='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+const FRIENDS=[["Giulia","#e0408a"],["Marco","#13a39a"],["Sofia","#b7793b"]];
+const miniStars=p=>`<span class="tstars">★ ${String(p.stars).replace(".",",")}<i>(${p.reviews>=1000?(p.reviews/1000).toFixed(1).replace(".",",")+"k":p.reviews})</i></span>`;
+/* Every place in the city as a dot, from the real data. */
+function tourMap(){
+  const pts=PLACES.filter(p=>p.lat&&p.lng), la=[45.405,45.535], lo=[9.09,9.29];
+  return `<svg class="tmapsvg" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${pts.map(p=>{ const x=(p.lng-lo[0])/(lo[1]-lo[0])*400, y=(la[1]-p.lat)/(la[1]-la[0])*300;
+    return x<0||x>400||y<0||y>300?"":`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1.9" fill="${mapCat(p)[2]}"/>`; }).join("")}</svg>`;
 }
+const TOUR_SLIDES=[
+  {k:"welcome",kick:"Welcome to Concit",title:()=>firstName()?`Hi ${esc(firstName())}, let's sort your next night out`:"Let's sort your next night out",
+   body:"No more endless group chats about where to go. Concit helps you and your friends pick a place in Milan in a minute.",
+   art:()=>{ const p=TOUR.places[0]||{}; return `<div class="tchat">
+     <div class="tmsg l" style="--d:0"><b style="--c:${FRIENDS[0][1]}">${FRIENDS[0][0]}</b>Where are we going tonight?</div>
+     <div class="tmsg r" style="--d:1">No idea, you choose</div>
+     <div class="tmsg l" style="--d:2"><b style="--c:${FRIENDS[1][1]}">${FRIENDS[1][0]}</b>Anywhere is fine with me</div>
+     <div class="tsorted" style="--d:3"><span class="tsico">${PIN_SVG}</span><span><small>Sorted with Concit</small><b>${esc(p.name||"")}, 21:00</b></span></div></div>`; }},
+  {k:"decide",kick:"Decide",title:()=>"Everyone swipes, Concit picks",
+   body:"Choose what you fancy and send it to your group. Each of you says yes or no to a few places, and the one you all like wins.",
+   art:()=>{ const P=TOUR.places; return `<div class="tfan">${[2,1,0].map(k=>{const p=P[k]||P[0]; return `<div class="tfc f${k}"><div class="tfh" style="--c:${mapCat(p)[2]}"><i>${esc(KIND_SHORT[p.kind]||"")} · ${esc(zname(p.zone))}</i><b>${esc(p.name)}</b></div><div class="tfb">${miniStars(p)}<small>${esc(costText(p))}</small></div></div>`;}).join("")}</div>
+     <div class="tvotes">${FRIENDS.map(([n,c],k)=>`<span class="tvchip${k===2?" no":""}" style="--d:${k+1}"><i style="--c:${c}">${n[0]}</i>${n}<em>${k===2?CROSS:TICK}</em></span>`).join("")}</div>`; }},
+  {k:"hotspots",kick:"Hotspots",title:()=>`${(Math.floor(PLACES.length/100)*100).toLocaleString("en-GB")}+ places, all rated`,
+   body:"Restaurants, bars, cafés and clubs across Milan, with prices, opening hours and a map. Filter by area, price or cuisine.",
+   art:()=>{ const p=[...PLACES].filter(x=>x.stars&&x.reviews>=2000).sort(byRank)[0]||PLACES[0]; return `<div class="tmapwrap">${tourMap()}<span class="tpin" style="--c:${mapCat(p)[2]}"></span>
+     <div class="tmapcard"><span class="tmc" style="--c:${mapCat(p)[2]}"></span><span><b>${esc(p.name)}</b><small>${esc(zname(p.zone))} · ${esc(costText(p))}</small></span>${miniStars(p)}</div></div>
+     <div class="tchips">${["Open now","Under €15","Navigli","Sushi"].map((t,k)=>`<span style="--d:${k}">${t}</span>`).join("")}</div>`; }},
+  {k:"events",kick:"Events",title:()=>"Never miss what's on",
+   body:"Concerts, exhibitions, matches and markets, updated for Milan. Save the ones you like, or turn one into a group plan.",
+   art:()=>{ const evs=EVENTS.filter(e=>e.start>=today&&!isRun(e)).sort((a,b)=>a.start.localeCompare(b.start)).slice(0,3);
+     return `<div class="ttix">${evs.map((e,k)=>{const d=parse(e.start); return `<div class="ttk" style="--d:${k};--c:${EV_COL[e.cat]||"#2f9bff"}"><span class="ttd"><i>${d.toLocaleDateString("en-GB",{month:"short"})}</i><b>${d.getDate()}</b></span><span class="ttm"><b>${esc(e.name)}</b><small>${esc(e.venue||"")}${e.time?" · "+esc(e.time):""}</small></span><span class="ttp">${e.priceNum===0?"Free":esc((e.priceText||"").replace(/^From /,"from "))}</span></div>`;}).join("")}</div>`; }}];
 function paintTour(){
-  const el=document.getElementById("tour"); if(!el||!TOUR) return;
-  if(TOUR.stage==="cards"){ const i=TOUR.i, [t,b]=TOUR_CARDS[i];
-    el.className="tour cards";
-    el.innerHTML=`<div class="ttop">${PIN_SVG}<b>concit</b><button class="tskip" data-t="skip">Skip</button></div>
-    <div class="tstage">${tourArt(i)}</div>
-    <div class="tsheet"><div class="tpips" aria-label="Step ${i+1} of 3">${[0,1,2].map(k=>`<i class="${k===i?"on":""}"></i>`).join("")}</div>
-      <h2>${t}</h2><p>${b}</p><button class="btn" data-t="next">${i===2?"Try a practice vote":"Next"}</button></div>`;
-    el.querySelector("[data-t=next]").focus({preventScroll:true}); return; }
-  const P=TOUR.places, i=TOUR.v, done=i>=P.length;
-  el.className="tour practice";
-  if(!done){ const p=P[i];
-    el.innerHTML=`<div class="tphead"><span class="tbadge">Practice · nothing is saved</span><button class="tskip" data-t="skip">Skip</button><small>Dinner and drinks with your friends</small><h2>${i+1} of ${P.length}</h2></div>
-    <div class="tpsheet"><div class="tprog">${P.map((_,k)=>`<i class="${k<i?"done":k===i?"on":""}"></i>`).join("")}</div>
-      <div class="tpcard${TOUR.anim?" "+TOUR.anim:""}"><div class="tband big" style="--c:${mapCat(p)[2]}"><i>${esc(p.cuisine&&p.cuisine[0]&&CUISINE_TEXT[p.cuisine[0]]||KIND_SHORT[p.kind]||"")}</i><b>${esc(p.name)}</b></div>
-        <div class="tbody">${starsHtml(p)}<p>${esc(p.why||"")}</p><div class="tfacts"><span><small>Price</small><b>${esc(costText(p).replace(/ (a|an) .*$/,""))}</b></span><span><small>Area</small><b>${esc(zname(p.zone))}</b></span></div></div></div>
-      <p class="fine center">Your friends vote on the same places on their phones.</p>
-      <div class="yesno"><button class="btn plain" data-t="no">Nope</button><button class="btn" data-t="yes">I'm in</button></div></div>`;
-    TOUR.anim=null; return; }
-  const w=P[TOUR.yes.length?TOUR.yes[0]:0];
-  el.innerHTML=`<div class="tphead"><span class="tbadge">Practice · nothing is saved</span><small>Practice plan</small><h2>We have a winner</h2></div>
-  <div class="tpsheet"><div class="twin"><small>THE GROUP PICKED</small><b>${esc(w.name)}</b><span>${esc(KIND_SHORT[w.kind]||"")} · ${esc(zname(w.zone))} · ${esc(costText(w).replace(/ (a|an) .*$/,""))}</span><em>${TOUR.yes.length?"You and 3 pretend friends said yes":"Nobody got a yes, so the top-rated place wins"}</em></div>
-    <div class="tnote"><b>That's all there is to it</b><span>In a real plan Concit sends the options to your group, everyone votes, and the place with the most yeses wins. You'll see who's going and get directions.</span></div>
-    <div class="tend"><button class="btn" data-t="real">Start a real plan</button><button class="btn plain" data-t="again">Try again</button><button class="link center" data-t="home">Go to Home</button></div></div>`;
-  el.querySelector("[data-t=real]").focus({preventScroll:true});
+  const el=document.getElementById("tour"); if(!el||!TOUR||TOUR.stage!=="intro") return;
+  const i=TOUR.i, sl=TOUR_SLIDES[i], ph=tourPhoto(sl.k), last=i===TOUR_SLIDES.length-1, credit=TOUR_PHOTO[sl.k]&&(CITY_PHOTOS[CITY]||{})[TOUR_PHOTO[sl.k]];
+  el.className="tour intro s-"+sl.k;
+  el.innerHTML=`<div class="tbg">${ph?`<img src="${ph}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">`:""}</div>
+  <div class="ttop">${PIN_SVG}<b>concit</b><button class="tskip" data-t="skip">Skip</button></div>
+  <div class="tart" aria-hidden="true">${sl.art()}</div>
+  <div class="ttext"><span class="tkick">${sl.kick}</span><h2>${sl.title()}</h2><p>${sl.body}</p>
+    <div class="tctl"><div class="tpips" role="img" aria-label="Step ${i+1} of ${TOUR_SLIDES.length}">${TOUR_SLIDES.map((_,k)=>`<i class="${k===i?"on":k<i?"done":""}"></i>`).join("")}</div>
+      ${i?`<button class="tprev" data-t="prev" aria-label="Back">‹</button>`:""}<button class="tnext" data-t="next">${last?"Try a practice vote":i?"Next":"Show me how"}</button></div>
+    ${credit?`<a class="tcredit" href="${commonsPage(credit[0])}" target="_blank" rel="noopener">Photo: ${esc(credit[1])}, Wikimedia Commons</a>`:""}</div>`;
+  el.querySelector("[data-t=next]").focus({preventScroll:true});
 }
 function tourClick(e){
   const t=e.target.closest("[data-t]")?.dataset.t; if(!t||!TOUR) return;
   if(t==="skip") return endTour("home");
-  if(t==="next"){ if(TOUR.i<2) TOUR.i++; else TOUR.stage="practice"; return paintTour(); }
-  if(t==="yes"||t==="no"){ if(t==="yes") TOUR.yes.push(TOUR.v); const card=document.querySelector(".tpcard");
-    if(card&&!matchMedia("(prefers-reduced-motion: reduce)").matches){ card.classList.add(t==="yes"?"flyr":"flyl"); setTimeout(()=>{ TOUR.v++; TOUR.anim="enter"; paintTour(); },230); } else { TOUR.v++; paintTour(); } return; }
-  if(t==="again"){ TOUR.v=0; TOUR.yes=[]; return paintTour(); }
-  if(t==="real") return endTour("decide");
-  if(t==="home") return endTour("home");
+  if(t==="prev"&&TOUR.i>0){ TOUR.i--; return paintTour(); }
+  if(t==="next"){ if(TOUR.i<TOUR_SLIDES.length-1){ TOUR.i++; return paintTour(); } return startPractice(); }
 }
-/* One tip the first time each tab opens, for people who went through the tutorial. */
-const TIPS={
-  home:[".hstart .tiles","Start here","Pick what you fancy and tap Find. Concit suggests places and your group votes on them."],
-  decide:[".tiles","What are you up for?","Choose a type, then the day and area. Send it to a group and everyone votes."],
-  hotspots:["[data-act=hotView][data-v=map]","See what's near you","Switch to Map to see every place as a coloured dot. Tap one for its rating, price and hours."],
-  events:[".evtiles","Find something on","Pick a category, or use the calendar to see what's on a particular day."],
-  groups:["#groupForm, #codeForm","Bring your friends","Make a group, then share its code. Plans you send there reach everyone."]};
-let TIP_PLACE=null;
-function hideTip(){ document.querySelector(".tipbub")?.remove(); document.querySelectorAll(".tiptarget").forEach(x=>x.classList.remove("tiptarget")); if(TIP_PLACE) removeEventListener("resize",TIP_PLACE); TIP_PLACE=null; }
-function showTip(){
-  if(!S.session||TOUR||S.acct||document.body.classList.contains("cropping")) return hideTip();
-  let seen; try{ seen=JSON.parse(localStorage.getItem(tipKey())); }catch{} if(!Array.isArray(seen)) return hideTip();
-  const key=S.tab, tip=TIPS[key];
-  if(!tip||seen.includes(key)||(key==="decide"&&(S.plan||S.code))||(key==="events"&&S.ev)||(key==="groups"&&S.gid)) return hideTip();
-  const target=tip[0].split(", ").map(q=>document.querySelector("#view "+q)).find(Boolean); if(!target) return hideTip();
-  document.querySelectorAll(".tiptarget").forEach(x=>x!==target&&x.classList.remove("tiptarget")); target.classList.add("tiptarget");
-  let b=document.querySelector(".tipbub");
-  if(!b||b.dataset.key!==key){ hideTip(); target.classList.add("tiptarget");
-    b=document.createElement("div"); b.className="tipbub"; b.dataset.key=key; b.setAttribute("role","dialog"); b.setAttribute("aria-label","Tip");
-    b.innerHTML=`<b>${tip[1]}</b><span>${tip[2]}</span><div><small>Tip for ${key==="hotspots"?"Hotspots":cap(key)}</small><button class="btn small">Got it</button></div>`;
-    document.body.appendChild(b);
-    b.querySelector("button").addEventListener("click",()=>{ seen.push(key); try{ localStorage.setItem(tipKey(),JSON.stringify(seen)); }catch{} hideTip(); }); }
-  if(TIP_PLACE) removeEventListener("resize",TIP_PLACE);
-  TIP_PLACE=()=>{ const t=document.querySelector(".tiptarget"); if(!t) return; const r=t.getBoundingClientRect(), w=Math.min(300,innerWidth-32), x=Math.max(16,Math.min(innerWidth-w-16,r.left+r.width/2-w/2));
-    b.style.width=w+"px"; b.style.left=x+"px"; b.style.top=(r.bottom+scrollY+12)+"px"; b.style.setProperty("--ax",Math.max(16,Math.min(w-24,r.left+r.width/2-x-8))+"px"); };
-  TIP_PLACE(); addEventListener("resize",TIP_PLACE);
+/* The practice vote is the real voting screen with a pretend plan: nothing is sent or saved. */
+function startPractice(){
+  const P=TOUR.places.map(p=>p.id), me=uid(), f=["tour-f1","tour-f2","tour-f3"];
+  const yes=(a)=>Object.fromEntries(P.map((id,k)=>[id,a.includes(k)?1:0]));
+  TOUR.stage="practice"; document.getElementById("tour")?.remove(); document.body.classList.add("inpractice");
+  S.practice=true; S.code=null; S.acct=false; S.tab="decide";
+  S.plan={practice:true,options:P,people:[me,...f],names:Object.fromEntries(f.map((x,k)=>[x,FRIENDS[k][0]])),votes:{[f[0]]:yes([0,1]),[f[1]]:yes([1,2]),[f[2]]:yes([0,2])},
+    what:"drinks",day:today,time:"21:00",group_name:"Practice group",group_id:null,mine:false,out:[],left:[]};
+  render(); scrollTo(0,0);
 }
-
+function decoratePractice(){
+  const ht=document.getElementById("heroText"); if(!ht||!S.practice) return;
+  const b=ht.querySelector(".back"); if(b){ b.textContent="‹ Skip practice"; b.dataset.act="tourSkipPractice"; }
+  if(!ht.querySelector(".pbadge")) ht.insertAdjacentHTML("afterbegin",`<em class="pbadge">Practice · nothing is saved</em>`);
+}
+/* After the practice: a short walk through each tab, one highlighted spot at a time. */
+const COACH=[
+  ["home",".hstart","Home","Start here","Pick what you fancy and tap Find. Your plans, places open now and what's on are all below."],
+  ["decide","#view .tiles","Decide","Make a plan","Choose a type, then the day, area and price. Send it to a group and everyone votes like you just did."],
+  ["hotspots","#view .seg","Hotspots","Browse every place","Switch between a list and a map. Filters narrow it by area, price or cuisine."],
+  ["events","#view .evtiles","Events","Find something on","Pick a category, or open the calendar to see what's on a particular day."],
+  ["groups","#view #groupForm","Groups","Bring your friends","Make a group and share its code. Plans you send there reach everyone, and you can chat too."],
+  [null,"#me","Your account","That's the tour","Change your name, photo and theme here. You can replay this tour from here any time."]];
+function startCoach(){ document.getElementById("tour")?.remove(); S.practice=false; S.plan=null; document.body.classList.remove("inpractice"); TOUR={...TOUR,stage:"tabs",step:0}; coachGo(); }
+function coachGo(){
+  const [tab]=COACH[TOUR.step]; if(tab){ S.tab=tab; resetTab(tab); try{location.hash=tab}catch{} }
+  S.acct=false; render(); scrollTo(0,0);
+}
+function hideCoach(){ document.getElementById("coach")?.remove(); removeEventListener("resize",placeCoach); removeEventListener("scroll",placeCoach); }
+function paintCoach(){
+  if(!TOUR||TOUR.stage!=="tabs") return;
+  const k=TOUR.step, [,sel,name,title,text]=COACH[k], last=k===COACH.length-1, target=document.querySelector(sel);
+  let c=document.getElementById("coach");
+  if(!c){ c=document.createElement("div"); c.id="coach"; c.setAttribute("role","dialog"); c.setAttribute("aria-modal","true"); c.setAttribute("aria-label","Tour"); document.body.appendChild(c);
+    c.addEventListener("click",e=>{ const t=e.target.closest("[data-c]")?.dataset.c; if(!t) return;
+      if(t==="skip") return endTour("home"); if(t==="next"){ if(TOUR.step<COACH.length-1){ TOUR.step++; coachGo(); } else endTour("home"); } });
+    addEventListener("resize",placeCoach); addEventListener("scroll",placeCoach,{passive:true}); }
+  c.innerHTML=`<div class="cring"></div><div class="cbub"><i class="carrow"></i><div class="chead"><span>${name}</span><small>${k+1} of ${COACH.length}</small></div>
+    <b>${title}</b><p>${text}</p><div class="cprog">${COACH.map((_,j)=>`<i class="${j<=k?"on":""}"></i>`).join("")}</div>
+    <div class="cbtns">${last?"":`<button class="link quiet" data-c="skip">End tour</button>`}<button class="btn small" data-c="next">${last?"Finish":"Got it"}</button></div></div>`;
+  if(target){ const r=target.getBoundingClientRect(); if(r.top<90||r.bottom>innerHeight-110) scrollTo(0,Math.max(0,scrollY+r.top-110)); }
+  placeCoach(); c.querySelector("[data-c=next]").focus({preventScroll:true});
+}
+function placeCoach(){
+  const c=document.getElementById("coach"); if(!c||!TOUR||TOUR.stage!=="tabs") return;
+  const t=document.querySelector(COACH[TOUR.step][1]), ring=c.querySelector(".cring"), bub=c.querySelector(".cbub"), arrow=c.querySelector(".carrow");
+  const navTop=(document.querySelector("nav div")?.getBoundingClientRect().top||innerHeight)-10;
+  const w=Math.min(340,innerWidth-32); bub.style.width=w+"px";
+  if(!t){ ring.style.display="none"; arrow.style.display="none"; bub.style.left=(innerWidth-w)/2+"px"; bub.style.top=Math.max(80,navTop-bub.offsetHeight-8)+"px"; return; }
+  const r=t.getBoundingClientRect(), pad=6, top=Math.max(4,r.top-pad), bot=Math.min(innerHeight-4,r.bottom+pad);
+  ring.style.display=""; Object.assign(ring.style,{left:(r.left-pad)+"px",top:top+"px",width:(r.width+pad*2)+"px",height:Math.max(0,bot-top)+"px",borderRadius:t.id==="me"?"50%":"20px"});
+  const h=bub.offsetHeight, x=Math.max(16,Math.min(innerWidth-w-16,r.left+r.width/2-w/2)), ax=Math.max(18,Math.min(w-34,r.left+r.width/2-x-8));
+  let y, up;
+  if(bot+14+h<=navTop){ y=bot+14; up=true; } else if(top-14-h>=8){ y=top-14-h; up=false; } else { y=navTop-h; up=null; }
+  bub.style.left=x+"px"; bub.style.top=y+"px"; arrow.style.display=up===null?"none":""; arrow.style.left=ax+"px"; arrow.className="carrow "+(up?"up":"down");
+}
 /* Tapping a tab always opens that tab's main page, closing whatever was open inside it. */
 function resetTab(t){
   S.pickOpen=false; S.calOpen=false;
@@ -1505,6 +1546,9 @@ const H={
   closeChat(){ closeChat(); },
   removeAvatar(){ removeAvatar(); },
   replayTour(){ S.acct=false; S.tab="home"; render(); startTour(); },
+  tourSkipPractice(){ if(TOUR) startCoach(); else { S.practice=false; S.plan=null; render(); } },
+  tourCoach(){ if(TOUR) startCoach(); },
+  tourAgain(){ if(S.plan?.practice){ const v={...S.plan.votes}; delete v[uid()]; S.plan={...S.plan,votes:v}; LAST_CARD=""; render(); scrollTo(0,0); } },
   removeGroupAvatar(el){ removeGroupAvatar(el.dataset.id); },
   viewAv(el){ openPhoto(el.dataset.id,el.dataset.name); },
   allGroups(){ S.chatOpen=false; CHAT.gid=null; S.gid=null; S.acct=false; S.deleting=false; S.leaving=false; render(); scrollTo(0,0); },
@@ -1620,7 +1664,6 @@ async function afterLogin(){
   else if(p?.plan) await openPlan(p.plan);
   render();
   if(!p?.plan&&tourDue()) startTour();
-  else showTip();
 }
 /* Links from confirmation and password-reset emails arrive in the address hash. */
 function sessionFromHash(){
