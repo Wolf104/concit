@@ -1031,6 +1031,7 @@ function viewAccount(){
     <p class="fine">Shown next to your messages and in your groups. Only people in your groups can see it.</p></div>
   <form id="nameForm" class="group" novalidate><span class="label">Your name</span><div class="inline"><input type="text" id="myName" value="${esc(name)}" maxlength="30" autocomplete="name"><button class="btn small" type="submit">Save</button></div></form>
   <div class="group"><span class="label">Appearance</span><div class="themeseg">${seg("setTheme",themePref(),[["light","Light"],["dark","Dark"],["auto","Match device"]],"Appearance")}</div><p class="fine">Saved on this device.</p></div>
+  <div class="group"><span class="label">Help</span><button class="person tourrow" data-act="replayTour"><span class="tourico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg></span><span>Show me around again<small class="sub">Replay the welcome, practice vote and tips</small></span></button></div>
   <div class="group"><span class="label">Your data</span><a class="person" href="privacy.html"><span>Privacy notice<small class="sub">What Concit keeps and why</small></span><small>Read</small></a></div>
   <button class="btn plain" data-act="logout">Log out</button>
   <button class="link quiet center danger" data-act="deleteAccount">${S.deleting?"Tap again to delete for good":"Delete my account"}</button>
@@ -1316,9 +1317,118 @@ function render(){
   const badge=document.getElementById("badge"), c=toVote().length; if(badge){ badge.textContent=c; badge.hidden=!c; }
   const me=document.getElementById("me"); if(me){ const mine=S.session&&AV[uid()]; me.innerHTML=mine?`<img src="${mine.img}" alt="">`:esc((S.session?.user?.user_metadata?.name||"?").trim().charAt(0).toUpperCase()); me.classList.toggle("hasav",!!mine); me.toggleAttribute("aria-current",!!S.acct); }
   document.querySelectorAll("nav button").forEach(b=>b.dataset.tab===S.tab&&!S.acct?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current"));
+  if(authed&&!TOUR) requestAnimationFrame(showTip);
   if(S.focus){ const n=S.focus; S.focus=null; const d=[...document.querySelectorAll("#view details")].find(x=>[...x.querySelectorAll("summary b")].some(b=>b.textContent===n));
     if(d){ d.open=true; requestAnimationFrame(()=>d.scrollIntoView({block:"center"})); } else scrollTo(0,0); }
 }
+/* ---------- First-run tutorial ----------
+   Runs once for accounts created after it launched: three welcome cards, a practice vote, then one tip
+   the first time each tab opens. "Show me around again" in Your account replays it. */
+const TOUR_SINCE=Date.parse("2026-11-15T17:00:00Z");
+const tipKey=()=>"concit.tips."+uid();
+const tourMeta=()=>S.session?.user?.user_metadata||{};
+function tourDue(){
+  const u=S.session?.user; if(!u||tourMeta().tour_done) return false;
+  try{ if(localStorage.getItem("concit.tour."+u.id)) return false; }catch{}
+  const made=Date.parse(u.created_at||""); return made>=TOUR_SINCE;
+}
+let TOUR=null;
+const TOUR_CARDS=[
+  ["Decide together","Pick what you fancy, add your group, and everyone swipes yes or no. Concit finds the place you all agree on."],
+  ["1,100+ places in Milan","Hotspots has restaurants, bars, cafés and clubs, all rated, with opening hours, prices and a map."],
+  ["Never miss what's on","Concerts, exhibitions, markets and matches, all in Events. Save the ones you like or turn one into a plan."]];
+function tourPlaces(){
+  const pick=[], want=["eat","drink","eat","drink"];
+  const pool=PLACES.filter(p=>p.stars&&(p.reviews||0)>=300&&p.why).sort(byRank);
+  for(const k of want){ const p=pool.find(x=>(k==="drink"?["drink","wine","beer"].includes(x.kind):["eat","cheap"].includes(x.kind))&&!pick.includes(x)); if(p) pick.push(p); }
+  return pick.length?pick:PLACES.slice(0,4);
+}
+function startTour(){
+  try{ localStorage.setItem(tipKey(),JSON.stringify([])); }catch{}
+  TOUR={stage:"cards",i:0,v:0,yes:[],places:tourPlaces()};
+  let el=document.getElementById("tour"); if(!el){ el=document.createElement("div"); el.id="tour"; el.setAttribute("role","dialog"); el.setAttribute("aria-modal","true"); el.setAttribute("aria-label","Welcome to Concit"); document.body.appendChild(el); el.addEventListener("click",tourClick); }
+  document.body.classList.add("intour"); paintTour();
+}
+function endTour(to){
+  TOUR=null; document.getElementById("tour")?.remove(); document.body.classList.remove("intour");
+  try{ localStorage.setItem("concit.tour."+uid(),"1"); }catch{}
+  if(!tourMeta().tour_done&&S.session){ authCall("user",{data:{tour_done:true}},"PUT",S.session.access_token).then(u=>{ if(u&&S.session) S.session.user=u; saveSession(); }).catch(()=>{}); }
+  if(to==="decide"){ S.acct=false; S.tab="decide"; resetTab("decide"); try{location.hash="decide"}catch{} }
+  else if(to==="home"){ S.acct=false; S.tab="home"; try{location.hash="home"}catch{} }
+  render(); scrollTo(0,0);
+}
+const PIN_SVG='<svg width="24" height="28" viewBox="0 0 26 30" aria-hidden="true"><path d="M13 1C6.4 1 1 6.2 1 12.6 1 21.2 13 29 13 29s12-7.8 12-16.4C25 6.2 19.6 1 13 1z" fill="#fff"/><path d="M17.6 10.2a5.6 5.6 0 1 0 0 5.6" fill="none" stroke="#2f9bff" stroke-width="3" stroke-linecap="round"/></svg>';
+function tourArt(i){
+  if(i===0){ const p=TOUR.places[1]||TOUR.places[0]||{}; return `<div class="tart stack"><div class="tback"></div><div class="tcard"><div class="tband" style="--c:${mapCat(p)[2]||"#8b5cf6"}"><i>${esc(KIND_SHORT[p.kind]||"")} · ${esc(zname(p.zone)||"")}</i><b>${esc(p.name||"")}</b></div><div class="tbody">${p.stars?starsHtml(p):""}<small>${esc(p.kind?costText(p):"")}</small></div><div class="tvote"><span>Nope</span><span class="on">I'm in</span></div></div></div>`; }
+  if(i===1){ const cols=MAP_CATS.map(c=>c[2]); const pts=[[12,14],[28,24],[42,10],[64,20],[80,13],[18,40],[54,36],[74,50],[88,33],[34,57],[9,67],[60,63],[83,73],[45,80],[24,85],[70,88]];
+    return `<div class="tart map"><i class="road r1"></i><i class="road r2"></i><i class="canal"></i>${pts.map((q,k)=>`<span class="tdot" style="left:${q[0]}%;top:${q[1]}%;background:${cols[k%cols.length]}"></span>`).join("")}<div class="tmapcard"><b>${esc((TOUR.places[0]||{}).name||"")}</b><small>${esc(zname((TOUR.places[0]||{}).zone)||"")} · ${(TOUR.places[0]||{}).stars?`★ ${(+TOUR.places[0].stars).toFixed(1)}`:""}</small></div></div>`; }
+  const evs=EVENTS.filter(e=>e.start>=today&&!isRun(e)).sort((a,b)=>a.start.localeCompare(b.start)).slice(0,4);
+  return `<div class="tart evs">${evs.map(e=>{const d=parse(e.start);return `<div class="tev"><span class="hdate" style="--c:${EV_COL[e.cat]||"var(--link)"}"><i>${d.toLocaleDateString("en-GB",{month:"short"})}</i><b>${d.getDate()}</b></span><span><b>${esc(e.name)}</b><small>${esc(e.venue||"")}</small></span></div>`}).join("")}</div>`;
+}
+function paintTour(){
+  const el=document.getElementById("tour"); if(!el||!TOUR) return;
+  if(TOUR.stage==="cards"){ const i=TOUR.i, [t,b]=TOUR_CARDS[i];
+    el.className="tour cards";
+    el.innerHTML=`<div class="ttop">${PIN_SVG}<b>concit</b><button class="tskip" data-t="skip">Skip</button></div>
+    <div class="tstage">${tourArt(i)}</div>
+    <div class="tsheet"><div class="tpips" aria-label="Step ${i+1} of 3">${[0,1,2].map(k=>`<i class="${k===i?"on":""}"></i>`).join("")}</div>
+      <h2>${t}</h2><p>${b}</p><button class="btn" data-t="next">${i===2?"Try a practice vote":"Next"}</button></div>`;
+    el.querySelector("[data-t=next]").focus({preventScroll:true}); return; }
+  const P=TOUR.places, i=TOUR.v, done=i>=P.length;
+  el.className="tour practice";
+  if(!done){ const p=P[i];
+    el.innerHTML=`<div class="tphead"><span class="tbadge">Practice · nothing is saved</span><button class="tskip" data-t="skip">Skip</button><small>Dinner and drinks with your friends</small><h2>${i+1} of ${P.length}</h2></div>
+    <div class="tpsheet"><div class="tprog">${P.map((_,k)=>`<i class="${k<i?"done":k===i?"on":""}"></i>`).join("")}</div>
+      <div class="tpcard${TOUR.anim?" "+TOUR.anim:""}"><div class="tband big" style="--c:${mapCat(p)[2]}"><i>${esc(p.cuisine&&p.cuisine[0]&&CUISINE_TEXT[p.cuisine[0]]||KIND_SHORT[p.kind]||"")}</i><b>${esc(p.name)}</b></div>
+        <div class="tbody">${starsHtml(p)}<p>${esc(p.why||"")}</p><div class="tfacts"><span><small>Price</small><b>${esc(costText(p).replace(/ (a|an) .*$/,""))}</b></span><span><small>Area</small><b>${esc(zname(p.zone))}</b></span></div></div></div>
+      <p class="fine center">Your friends vote on the same places on their phones.</p>
+      <div class="yesno"><button class="btn plain" data-t="no">Nope</button><button class="btn" data-t="yes">I'm in</button></div></div>`;
+    TOUR.anim=null; return; }
+  const w=P[TOUR.yes.length?TOUR.yes[0]:0];
+  el.innerHTML=`<div class="tphead"><span class="tbadge">Practice · nothing is saved</span><small>Practice plan</small><h2>We have a winner</h2></div>
+  <div class="tpsheet"><div class="twin"><small>THE GROUP PICKED</small><b>${esc(w.name)}</b><span>${esc(KIND_SHORT[w.kind]||"")} · ${esc(zname(w.zone))} · ${esc(costText(w).replace(/ (a|an) .*$/,""))}</span><em>${TOUR.yes.length?"You and 3 pretend friends said yes":"Nobody got a yes, so the top-rated place wins"}</em></div>
+    <div class="tnote"><b>That's all there is to it</b><span>In a real plan Concit sends the options to your group, everyone votes, and the place with the most yeses wins. You'll see who's going and get directions.</span></div>
+    <div class="tend"><button class="btn" data-t="real">Start a real plan</button><button class="btn plain" data-t="again">Try again</button><button class="link center" data-t="home">Go to Home</button></div></div>`;
+  el.querySelector("[data-t=real]").focus({preventScroll:true});
+}
+function tourClick(e){
+  const t=e.target.closest("[data-t]")?.dataset.t; if(!t||!TOUR) return;
+  if(t==="skip") return endTour("home");
+  if(t==="next"){ if(TOUR.i<2) TOUR.i++; else TOUR.stage="practice"; return paintTour(); }
+  if(t==="yes"||t==="no"){ if(t==="yes") TOUR.yes.push(TOUR.v); const card=document.querySelector(".tpcard");
+    if(card&&!matchMedia("(prefers-reduced-motion: reduce)").matches){ card.classList.add(t==="yes"?"flyr":"flyl"); setTimeout(()=>{ TOUR.v++; TOUR.anim="enter"; paintTour(); },230); } else { TOUR.v++; paintTour(); } return; }
+  if(t==="again"){ TOUR.v=0; TOUR.yes=[]; return paintTour(); }
+  if(t==="real") return endTour("decide");
+  if(t==="home") return endTour("home");
+}
+/* One tip the first time each tab opens, for people who went through the tutorial. */
+const TIPS={
+  home:[".hstart .tiles","Start here","Pick what you fancy and tap Find. Concit suggests places and your group votes on them."],
+  decide:[".tiles","What are you up for?","Choose a type, then the day and area. Send it to a group and everyone votes."],
+  hotspots:["[data-act=hotView][data-v=map]","See what's near you","Switch to Map to see every place as a coloured dot. Tap one for its rating, price and hours."],
+  events:[".evtiles","Find something on","Pick a category, or use the calendar to see what's on a particular day."],
+  groups:["#groupForm, #codeForm","Bring your friends","Make a group, then share its code. Plans you send there reach everyone."]};
+let TIP_PLACE=null;
+function hideTip(){ document.querySelector(".tipbub")?.remove(); document.querySelectorAll(".tiptarget").forEach(x=>x.classList.remove("tiptarget")); if(TIP_PLACE) removeEventListener("resize",TIP_PLACE); TIP_PLACE=null; }
+function showTip(){
+  if(!S.session||TOUR||S.acct||document.body.classList.contains("cropping")) return hideTip();
+  let seen; try{ seen=JSON.parse(localStorage.getItem(tipKey())); }catch{} if(!Array.isArray(seen)) return hideTip();
+  const key=S.tab, tip=TIPS[key];
+  if(!tip||seen.includes(key)||(key==="decide"&&(S.plan||S.code))||(key==="events"&&S.ev)||(key==="groups"&&S.gid)) return hideTip();
+  const target=tip[0].split(", ").map(q=>document.querySelector("#view "+q)).find(Boolean); if(!target) return hideTip();
+  document.querySelectorAll(".tiptarget").forEach(x=>x!==target&&x.classList.remove("tiptarget")); target.classList.add("tiptarget");
+  let b=document.querySelector(".tipbub");
+  if(!b||b.dataset.key!==key){ hideTip(); target.classList.add("tiptarget");
+    b=document.createElement("div"); b.className="tipbub"; b.dataset.key=key; b.setAttribute("role","dialog"); b.setAttribute("aria-label","Tip");
+    b.innerHTML=`<b>${tip[1]}</b><span>${tip[2]}</span><div><small>Tip for ${key==="hotspots"?"Hotspots":cap(key)}</small><button class="btn small">Got it</button></div>`;
+    document.body.appendChild(b);
+    b.querySelector("button").addEventListener("click",()=>{ seen.push(key); try{ localStorage.setItem(tipKey(),JSON.stringify(seen)); }catch{} hideTip(); }); }
+  if(TIP_PLACE) removeEventListener("resize",TIP_PLACE);
+  TIP_PLACE=()=>{ const t=document.querySelector(".tiptarget"); if(!t) return; const r=t.getBoundingClientRect(), w=Math.min(300,innerWidth-32), x=Math.max(16,Math.min(innerWidth-w-16,r.left+r.width/2-w/2));
+    b.style.width=w+"px"; b.style.left=x+"px"; b.style.top=(r.bottom+scrollY+12)+"px"; b.style.setProperty("--ax",Math.max(16,Math.min(w-24,r.left+r.width/2-x-8))+"px"); };
+  TIP_PLACE(); addEventListener("resize",TIP_PLACE);
+}
+
 /* Tapping a tab always opens that tab's main page, closing whatever was open inside it. */
 function resetTab(t){
   S.pickOpen=false; S.calOpen=false;
@@ -1394,6 +1504,7 @@ const H={
   seen(el){ if(getSelection&&String(getSelection()).length) return; const id=Number(el.dataset.id); CHAT.seenOpen=CHAT.seenOpen===id?null:id; paintChat(false); },
   closeChat(){ closeChat(); },
   removeAvatar(){ removeAvatar(); },
+  replayTour(){ S.acct=false; S.tab="home"; render(); startTour(); },
   removeGroupAvatar(el){ removeGroupAvatar(el.dataset.id); },
   viewAv(el){ openPhoto(el.dataset.id,el.dataset.name); },
   allGroups(){ S.chatOpen=false; CHAT.gid=null; S.gid=null; S.acct=false; S.deleting=false; S.leaving=false; render(); scrollTo(0,0); },
@@ -1508,6 +1619,8 @@ async function afterLogin(){
   if(p?.join){ setUrl(null); await joinByCode(p.join); }
   else if(p?.plan) await openPlan(p.plan);
   render();
+  if(!p?.plan&&tourDue()) startTour();
+  else showTip();
 }
 /* Links from confirmation and password-reset emails arrive in the address hash. */
 function sessionFromHash(){
