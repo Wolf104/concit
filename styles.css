@@ -939,3 +939,5 @@ body.overscroll nav::before{display:none}
 .srow .seg[aria-label="When"] button:nth-child(2){padding-inline:13px}
 .srow .seg[aria-label="When"] button{white-space:nowrap}
 @media (max-width:360px){.srow .seg[aria-label="When"]{display:flex;gap:0}.srow .seg[aria-label="When"] button,.srow .seg[aria-label="When"] button:nth-child(2){flex:1 1 auto;padding-inline:4px;font-size:12.5px}}
+/* Every page is tall enough to open with the logo row tucked above the screen. */
+.app{min-height:calc(100vh - 56px)}

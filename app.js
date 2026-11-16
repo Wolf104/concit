@@ -325,7 +325,7 @@ async function openPlan(code){
     S.code=code; S.plan=p; S.tab="decide"; S.guestLeaving=false;
     if(isGuest()){ try{ localStorage.setItem("concit.guestplan",code); }catch{} }
     if(new URLSearchParams(location.search).get("plan")!==code) setUrl(`plan=${code}`);
-    render(); scrollTo(0,0);
+    render(); pageTop();
   }catch{ toast("Couldn't open that plan. Check your connection."); }
 }
 async function newPlan(p,group){
@@ -343,12 +343,12 @@ function armConfirm(){ S.confirm=S.code; render(); clearTimeout(armConfirm.t); a
 async function closePlan(rpcName,msg){
   const code=S.code; S.confirm=null;
   try{ await rpc(rpcName,{p_code:code}); }catch{ toast("That didn't work. Check your connection and try again."); render(); return; }
-  S.code=null; S.plan=null; setUrl(null); render(); scrollTo(0,0); toast(msg); loadGroups();
+  S.code=null; S.plan=null; setUrl(null); render(); pageTop(); toast(msg); loadGroups();
 }
 async function setAttending(go){
   const p=S.plan; if(!p||!S.code) return;
   const me=uid(), out=(p.out||[]).filter(n=>n!==me);
-  S.ver++; S.plan={...p,out:go?out:[...out,me],votes:go?p.votes:Object.fromEntries(Object.entries(p.votes||{}).filter(([n])=>n!==me))}; render(); scrollTo(0,0);
+  S.ver++; S.plan={...p,out:go?out:[...out,me],votes:go?p.votes:Object.fromEntries(Object.entries(p.votes||{}).filter(([n])=>n!==me))}; render(); pageTop();
   try{ await rpc("set_attending",{p_code:S.code,p_going:go}); if(!go) pushSend(S.code,"done"); toast(go?"You're back in. Time to vote.":"Got it, you're not going."); loadGroups(); }
   catch{ S.plan=p; render(); toast("That didn't save. Try again."); }
 }
@@ -423,10 +423,10 @@ async function undoVote(){
   S.inflight--; S.ver++; loadGroups();
 }
 async function vote(id,v){
-  if(S.practice){ S.plan=merge(S.plan,{votes:{[uid()]:{[id]:v}}}); render(); if(!nextCard(S.plan,uid())) scrollTo(0,0); return; }
+  if(S.practice){ S.plan=merge(S.plan,{votes:{[uid()]:{[id]:v}}}); render(); if(!nextCard(S.plan,uid())) pageTop(); return; }
   S.ver++;
   S.plan=merge(S.plan,{votes:{[uid()]:{[id]:v}}});
-  render(); if(!nextCard(S.plan,uid())) scrollTo(0,0);
+  render(); if(!nextCard(S.plan,uid())) pageTop();
   S.inflight++;
   const code=S.code;
   try{ await rpc("cast_vote",{p_code:code,p_place:id,p_value:v}); if(S.plan&&allDone(S.plan)) pushSend(code,"done"); }catch{ toast("That vote didn't save. Try again."); }
@@ -1171,8 +1171,8 @@ async function loadChat(first){
   }catch{ if(first&&!CHAT.loaded){ CHAT.loaded=true; paintChat(); toast("Couldn't load messages. Check your connection."); } }
   finally{ CHAT.busy=false; }
 }
-function openChat(gid){ if(CHAT.gid!==gid){ CHAT.gid=gid; CHAT.msgs=[]; CHAT.last=0; CHAT.loaded=false; CHAT.people=[]; CHAT.typingSent=0; CHAT.readKey=""; CHAT.open=null; CHAT.reply=null; CHAT.reacts=[]; CHAT.reactKey=""; } S.chatOpen=true; render(); scrollTo(0,0); sizeChat(); chatToBottom(); loadChat(true); }
-function closeChat(){ typing(false); S.chatOpen=false; CHAT.gid=null; S.gid=null; render(); scrollTo(0,0); loadGroups(); }
+function openChat(gid){ if(CHAT.gid!==gid){ CHAT.gid=gid; CHAT.msgs=[]; CHAT.last=0; CHAT.loaded=false; CHAT.people=[]; CHAT.typingSent=0; CHAT.readKey=""; CHAT.open=null; CHAT.reply=null; CHAT.reacts=[]; CHAT.reactKey=""; } S.chatOpen=true; render(); pageTop(); sizeChat(); chatToBottom(); loadChat(true); }
+function closeChat(){ typing(false); S.chatOpen=false; CHAT.gid=null; S.gid=null; render(); pageTop(); loadGroups(); }
 async function sendChat(image){
   const i=document.getElementById("chatText"), body=(i?.value||"").trim(); if((!body&&!image)||!CHAT.gid) return;
   const reply=CHAT.reply||null;
@@ -1678,7 +1678,7 @@ function render(){
   document.querySelectorAll("nav button").forEach(b=>b.dataset.tab===S.tab&&!S.acct?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current"));
   if(TOUR&&TOUR.stage==="tabs") requestAnimationFrame(paintCoach);
   if(S.focus){ const n=S.focus; S.focus=null; const d=[...document.querySelectorAll("#view details")].find(x=>[...x.querySelectorAll("summary b")].some(b=>b.textContent===n));
-    if(d){ d.open=true; requestAnimationFrame(()=>d.scrollIntoView({block:"center"})); } else scrollTo(0,0); }
+    if(d){ d.open=true; requestAnimationFrame(()=>d.scrollIntoView({block:"center"})); } else pageTop(); }
 }
 /* ---------- First-run tutorial ----------
    Runs once for accounts created after it launched: three welcome cards, a practice vote, then one tip
@@ -1690,7 +1690,20 @@ function tourDue(){
   try{ if(localStorage.getItem("concit.tour."+u.id)) return false; }catch{}
   const made=Date.parse(u.created_at||""); return made>=TOUR_SINCE;
 }
-function homeTop(){ scrollTo(0,0); }
+/* Pages open with the logo and account button tucked just above the screen, so the headline comes first.
+   Pulling the page down brings them into view. Chat, the login screen and the guided tour start at the very top. */
+function topOffset(){
+  let touring=false; try{ touring=!!(TOUR&&TOUR.stage==="tabs"); }catch{}
+  const cl=document.body.classList;
+  if(!S.session||touring||cl.contains("noauth")||cl.contains("inchat")) return 0;
+  const t=document.getElementById("heroText"), b=document.querySelector(".brandbtn");
+  if(!t||!b||getComputedStyle(b).display==="none") return 0;
+  /* Phones with a status-bar area hide the row behind it; elsewhere go a few pixels further so no sliver of it shows. */
+  const pad=parseFloat(getComputedStyle(document.querySelector(".hero")).paddingTop)||0, extra=pad<=20?6:0;
+  return Math.max(0,Math.min(t.offsetTop+extra,document.documentElement.scrollHeight-innerHeight));
+}
+function pageTop(){ scrollTo(0,topOffset()); }
+function homeTop(){ pageTop(); }
 try{ history.scrollRestoration="manual"; }catch{}
 let TOUR=null;
 const firstName=()=>(S.session?.user?.user_metadata?.name||"").trim().split(" ")[0];
@@ -1797,7 +1810,7 @@ function startPractice(){
   S.practice=true; S.code=null; S.acct=false; S.tab="decide";
   S.plan={practice:true,options:P,people:[me,...f],names:Object.fromEntries(f.map((x,k)=>[x,FRIENDS[k][0]])),votes:{[f[0]]:yes([0,1]),[f[1]]:yes([1,2]),[f[2]]:yes([0,2])},
     what:"drinks",day:today,time:"21:00",group_name:"Practice group",group_id:null,mine:false,out:[],left:[]};
-  render(); scrollTo(0,0);
+  render(); pageTop();
 }
 function decoratePractice(){
   const ht=document.getElementById("heroText"); if(!ht||!S.practice) return;
@@ -1811,11 +1824,11 @@ const COACH=[
   ["hotspots","#view .seg","Hotspots","Browse every place","Switch between a list and a map. Filters narrow it by area, price or cuisine."],
   ["events","#view .evtiles","Events","Find something on","Pick a category, or open the calendar to see what's on a particular day."],
   ["groups","#view #groupsTop","Groups","Bring your friends","Make a group and share its code. Plans you send there reach everyone, and you can chat too."],
-  [null,"#me","Your account","That's the tour","Change your name, photo and theme here. You can replay this tour from here any time."]];
+  [null,"#me","Your account","That's the tour","Change your name, photo and theme here, and replay this tour. It sits just above each screen: pull the page down to find it."]];
 function startCoach(){ document.getElementById("tour")?.remove(); S.practice=false; S.plan=null; document.body.classList.remove("inpractice"); TOUR={...TOUR,stage:"tabs",step:0}; coachGo(); }
 function coachGo(){
   const [tab]=COACH[TOUR.step]; if(tab){ S.tab=tab; resetTab(tab); try{location.hash=tab}catch{} }
-  S.acct=false; render(); scrollTo(0,0);
+  S.acct=false; render(); pageTop();
 }
 function hideCoach(){ document.getElementById("coach")?.remove(); removeEventListener("resize",placeCoach); removeEventListener("scroll",placeCoach); }
 function paintCoach(){
@@ -1854,13 +1867,13 @@ function resetTab(t){
   else if(t==="groups"){ if(S.chatOpen) typing(false); S.chatOpen=false; CHAT.gid=null; S.gid=null; S.joinMode=false; S.groupNew=false; S.leaving=false; }
 }
 const H={
-  guestGate(){ S.guestLeaving=false; S.plan=null; S.code=null; setUrl(null); S.acct=false; render(); scrollTo(0,0); },
+  guestGate(){ S.guestLeaving=false; S.plan=null; S.code=null; setUrl(null); S.acct=false; render(); pageTop(); },
   guestLogin(){ if(!S.guestLeaving){ S.guestLeaving=true; render(); return; } S.guestLeaving=false; try{ localStorage.removeItem("concit.guestplan"); }catch{} logout(); },
-  home(){ if(!S.session) return; if(isGuest()){ S.acct=false; render(); scrollTo(0,0); return; } S.acct=false; S.deleting=false; S.pickOpen=false; resetTab("home"); S.tab="home"; try{location.hash="home"}catch{} render(); homeTop(); },
-  tab(el){ S.acct=false; S.deleting=false; S.tab=el.dataset.tab; resetTab(S.tab); try{location.hash=S.tab}catch{} render(); if(S.tab==="home") homeTop(); else scrollTo(0,0); },
+  home(){ if(!S.session) return; if(isGuest()){ S.acct=false; render(); pageTop(); return; } S.acct=false; S.deleting=false; S.pickOpen=false; resetTab("home"); S.tab="home"; try{location.hash="home"}catch{} render(); homeTop(); },
+  tab(el){ S.acct=false; S.deleting=false; S.tab=el.dataset.tab; resetTab(S.tab); try{location.hash=S.tab}catch{} render(); if(S.tab==="home") homeTop(); else pageTop(); },
   homeWhat(el){ S.homeWhat=el.dataset.v; render(); },
   homeGo(el){ const w=S.homeWhat||(new Date().getHours()<11?"coffee":new Date().getHours()<18?"eat":"drinks"); resetTab("decide");
-    if(WHAT_UNIT[S.form.what]!==WHAT_UNIT[w]) S.form.price=0; S.form.what=w; S.form.mode=el.dataset.v; S.tab="decide"; try{location.hash="decide"}catch{} render(); scrollTo(0,0); },
+    if(WHAT_UNIT[S.form.what]!==WHAT_UNIT[w]) S.form.price=0; S.form.what=w; S.form.mode=el.dataset.v; S.tab="decide"; try{location.hash="decide"}catch{} render(); pageTop(); },
   homePlace(el){ const p=PLACES.find(x=>x.id===el.dataset.id); if(!p) return; resetTab("hotspots"); S.tab="hotspots";
     const g=HOT_GROUPS.find(([,f])=>f(p)); if(g) S.open.add(g[0]); S.focus=p.name; try{location.hash="hotspots"}catch{} render(); },
   homeEvent(el){ const e=EVENTS.find(x=>x.id===el.dataset.id); if(!e) return; resetTab("events"); S.tab="events";
@@ -1893,7 +1906,7 @@ const H={
   cal(){ S.calOpen=!S.calOpen; S.calMonth=S.form.day.slice(0,7); render(); },
   calMove(el){ const [y,m]=S.calMonth.split("-").map(Number); S.calMonth=iso(new Date(y,m-1+Number(el.dataset.v),1)).slice(0,7); render(); },
   pickDay(el){ setDay(el.dataset.v); S.calOpen=false; render(); },
-  mode(el){ S.form.mode=el.dataset.v; S.pickOpen=false; S.dfltOpen=false; render(); scrollTo(0,0); },
+  mode(el){ S.form.mode=el.dataset.v; S.pickOpen=false; S.dfltOpen=false; render(); pageTop(); },
   addTime(){ S.timeOpen=!S.timeOpen; S.calOpen=false; render(); const strip=document.getElementById("timeStrip"), c=strip?.querySelector(`[data-v="${S.form.time||TIME_HINT[S.form.what]||"19:00"}"]`); if(c) strip.scrollLeft=c.offsetLeft-strip.offsetLeft-(strip.clientWidth-c.offsetWidth)/2; },
   setTime(el){ S.form.time=el.dataset.v; S.timeOpen=false; render(); },
   pickCancelAll(){ S.form.picks=[]; updatePicks(); toast("Selection cleared."); },
@@ -1919,8 +1932,8 @@ const H={
   asGuest(){ S.noGuest=false; S.authView="login"; S.authNote=""; render(); },
   logout(){ logout(); },
   openPlan(el){ openPlan(el.dataset.code); },
-  openGroup(el){ S.leaving=false; S.groupNew=false; if(!openChatLink(el.dataset.id)){ S.chatOpen=false; CHAT.gid=null; S.gid=el.dataset.id; S.tab="groups"; render(); scrollTo(0,0); } },
-  groupInfo(){ typing(false); S.chatOpen=false; S.leaving=false; render(); scrollTo(0,0); },
+  openGroup(el){ S.leaving=false; S.groupNew=false; if(!openChatLink(el.dataset.id)){ S.chatOpen=false; CHAT.gid=null; S.gid=el.dataset.id; S.tab="groups"; render(); pageTop(); } },
+  groupInfo(){ typing(false); S.chatOpen=false; S.leaving=false; render(); pageTop(); },
   groupNew(){ S.groupNew=!S.groupNew; S.joinMode=false; render(); if(S.groupNew) document.getElementById("groupName")?.focus(); },
   msgTap(el){ if(getSelection&&String(getSelection()).length) return; const id=Number(el.dataset.id); CHAT.open=CHAT.open===id?null:id; paintChat(false); if(CHAT.open) requestAnimationFrame(()=>document.querySelector(".msg.open .mbar")?.scrollIntoView({block:"nearest"})); },
   react(el){ reactTo(Number(el.dataset.id),el.dataset.v); },
@@ -1932,29 +1945,29 @@ const H={
   openChat(el){ openChat(el.dataset.id); },
   closeChat(){ closeChat(); },
   removeAvatar(){ removeAvatar(); },
-  sights(el){ S.sights=true; S.sightKind="all"; S.acct=false; render(); const id=el.dataset.id, t=id&&document.getElementById("sight-"+id); if(t) requestAnimationFrame(()=>scrollTo(0,Math.max(0,t.getBoundingClientRect().top+scrollY-(document.querySelector(".hero")?.offsetHeight?12:12)))); else scrollTo(0,0); },
-  sightsBack(){ S.sights=false; render(); scrollTo(0,0); },
+  sights(el){ S.sights=true; S.sightKind="all"; S.acct=false; render(); const id=el.dataset.id, t=id&&document.getElementById("sight-"+id); if(t) requestAnimationFrame(()=>scrollTo(0,Math.max(0,t.getBoundingClientRect().top+scrollY-(document.querySelector(".hero")?.offsetHeight?12:12)))); else pageTop(); },
+  sightsBack(){ S.sights=false; render(); pageTop(); },
   sightKind(el){ S.sightKind=el.dataset.v; render(); },
   replayTour(){ S.acct=false; S.tab="home"; render(); startTour(); },
   tourSkipPractice(){ if(TOUR) startCoach(); else { S.practice=false; S.plan=null; render(); } },
   tourCoach(){ if(TOUR) startCoach(); },
-  tourAgain(){ if(S.plan?.practice){ const v={...S.plan.votes}; delete v[uid()]; S.plan={...S.plan,votes:v}; LAST_CARD=""; render(); scrollTo(0,0); } },
+  tourAgain(){ if(S.plan?.practice){ const v={...S.plan.votes}; delete v[uid()]; S.plan={...S.plan,votes:v}; LAST_CARD=""; render(); pageTop(); } },
   removeGroupAvatar(el){ removeGroupAvatar(el.dataset.id); },
   viewAv(el){ openPhoto(el.dataset.id,el.dataset.name); },
-  allGroups(){ S.chatOpen=false; CHAT.gid=null; S.gid=null; S.acct=false; S.deleting=false; S.leaving=false; render(); scrollTo(0,0); },
-  account(){ S.acct=true; S.stats=false; S.deleting=false; render(); scrollTo(0,0); },
-  openStats(){ S.stats=true; S.statsData=null; render(); scrollTo(0,0); loadStats(); },
-  closeStats(){ S.stats=false; render(); scrollTo(0,0); },
+  allGroups(){ S.chatOpen=false; CHAT.gid=null; S.gid=null; S.acct=false; S.deleting=false; S.leaving=false; render(); pageTop(); },
+  account(){ S.acct=true; S.stats=false; S.deleting=false; render(); pageTop(); },
+  openStats(){ S.stats=true; S.statsData=null; render(); pageTop(); loadStats(); },
+  closeStats(){ S.stats=false; render(); pageTop(); },
   statDays(el){ S.statDays=Number(el.dataset.v)||14; loadStats(); },
   setTheme(el){ setTheme(el.dataset.v); render(); },
-  closeAccount(){ S.acct=false; S.deleting=false; render(); scrollTo(0,0); },
+  closeAccount(){ S.acct=false; S.deleting=false; render(); pageTop(); },
   joinMode(el){ S.joinMode=el.dataset.v==="1"; render(); document.getElementById(S.joinMode?"joinCode":"groupName")?.focus(); },
   async deleteAccount(el){ if(!S.deleting){ S.deleting=true; render(); return; }
     el.disabled=true; el.textContent="Deleting";
     try{ await rpc("delete_account"); }catch{ S.deleting=false; render(); toast("Couldn't delete your account. Try again."); return; }
     try{localStorage.removeItem(KEY)}catch{} S.saved.clear(); S.acct=false; S.deleting=false;
     logout(true); S.authNote="Your account and its data have been deleted."; render(); },
-  newGroupPlan(el){ S.form.group=el.dataset.id; S.form.linkOnly=false; S.plan=null; S.code=null; setUrl(null); S.tab="decide"; render(); scrollTo(0,0); },
+  newGroupPlan(el){ S.form.group=el.dataset.id; S.form.linkOnly=false; S.plan=null; S.code=null; setUrl(null); S.tab="decide"; render(); pageTop(); },
   invite(el){ const g=S.groups.find(x=>x.id===el.dataset.id); if(g) track("share","group"); if(g) shareOut(`Join ${g.name} on Concit: ${inviteUrl(g)}`,"Invite link copied"); },
   async leave(el){ if(!S.leaving){ S.leaving=true; render(); return; } S.leaving=false; try{ await rpc("leave_group",{p_group:el.dataset.id}); S.gid=null; await loadGroups(); render(); }catch{ toast("Couldn't leave the group. Try again."); } },
   vote(el){ dealVote(el.dataset.id,Number(el.dataset.v)); },
@@ -1974,7 +1987,7 @@ const H={
   zoneMap(el){ S.zone=el.dataset.z; render(); },
   pin(el){ selectPlace(el.dataset.id); },
   showGroup(el){ S.open.add(el.dataset.v); render(); },
-  ev(el){ S.ev=el.dataset.v||null; S.evCalOpen=false; S.evDate=null; S.evType=""; render(); scrollTo(0,0); },
+  ev(el){ S.ev=el.dataset.v||null; S.evCalOpen=false; S.evDate=null; S.evType=""; render(); pageTop(); },
   evType(el){ S.evType=el.dataset.v; render(); },
   save(el){ const id=el.dataset.id; S.saved.has(id)?S.saved.delete(id):S.saved.add(id); persist(); render();
   }
