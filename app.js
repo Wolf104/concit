@@ -1342,6 +1342,9 @@ function tourDue(){
   try{ if(localStorage.getItem("concit.tour."+u.id)) return false; }catch{}
   const made=Date.parse(u.created_at||""); return made>=TOUR_SINCE;
 }
+/* Home opens with the white card at the top of the screen, so Start a plan is the first thing you see. */
+function homeTop(){ if(S.tab!=="home"||S.acct||TOUR) return scrollTo(0,0); const a=document.querySelector(".app"); if(!a) return; requestAnimationFrame(()=>scrollTo(0,Math.max(0,a.getBoundingClientRect().top+scrollY-14))); }
+try{ history.scrollRestoration="manual"; }catch{}
 let TOUR=null;
 const firstName=()=>(S.session?.user?.user_metadata?.name||"").trim().split(" ")[0];
 const TOUR_PHOTO={welcome:"culture",decide:"activities",events:"music"};
@@ -1369,7 +1372,7 @@ function endTour(to){
   try{ localStorage.setItem("concit.tour."+uid(),"1"); }catch{}
   if(!tourMeta().tour_done&&S.session){ authCall("user",{data:{tour_done:true}},"PUT",S.session.access_token).then(u=>{ if(u&&S.session) S.session.user=u; saveSession(); }).catch(()=>{}); }
   S.acct=false; S.tab=to==="decide"?"decide":"home"; resetTab(S.tab); try{location.hash=S.tab}catch{}
-  render(); scrollTo(0,0);
+  render(); homeTop();
 }
 const PIN_SVG='<svg width="22" height="26" viewBox="0 0 26 30" aria-hidden="true"><path d="M13 1C6.4 1 1 6.2 1 12.6 1 21.2 13 29 13 29s12-7.8 12-16.4C25 6.2 19.6 1 13 1z" fill="#fff"/><path d="M17.6 10.2a5.6 5.6 0 1 0 0 5.6" fill="none" stroke="#2f9bff" stroke-width="3" stroke-linecap="round"/></svg>';
 const TICK='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
@@ -1504,8 +1507,8 @@ function resetTab(t){
   else if(t==="groups"){ if(S.chatOpen) typing(false); S.chatOpen=false; CHAT.gid=null; S.gid=null; S.joinMode=false; S.leaving=false; }
 }
 const H={
-  home(){ if(!S.session) return; S.acct=false; S.deleting=false; S.pickOpen=false; resetTab("home"); S.tab="home"; try{location.hash="home"}catch{} render(); scrollTo(0,0); },
-  tab(el){ S.acct=false; S.deleting=false; S.tab=el.dataset.tab; resetTab(S.tab); try{location.hash=S.tab}catch{} render(); scrollTo(0,0); },
+  home(){ if(!S.session) return; S.acct=false; S.deleting=false; S.pickOpen=false; resetTab("home"); S.tab="home"; try{location.hash="home"}catch{} render(); homeTop(); },
+  tab(el){ S.acct=false; S.deleting=false; S.tab=el.dataset.tab; resetTab(S.tab); try{location.hash=S.tab}catch{} render(); if(S.tab==="home") homeTop(); else scrollTo(0,0); },
   homeWhat(el){ S.homeWhat=el.dataset.v; render(); },
   homeGo(el){ const w=S.homeWhat||(new Date().getHours()<11?"coffee":new Date().getHours()<18?"eat":"drinks"); resetTab("decide");
     if(WHAT_UNIT[S.form.what]!==WHAT_UNIT[w]) S.form.price=0; S.form.what=w; S.form.mode=el.dataset.v; S.tab="decide"; try{location.hash="decide"}catch{} render(); scrollTo(0,0); },
@@ -1688,7 +1691,7 @@ async function afterLogin(){
   if(p?.join){ setUrl(null); await joinByCode(p.join); }
   else if(p?.plan) await openPlan(p.plan);
   render();
-  if(!p?.plan&&tourDue()) startTour();
+  if(!p?.plan&&tourDue()) startTour(); else homeTop();
 }
 /* Links from confirmation and password-reset emails arrive in the address hash. */
 function sessionFromHash(){
