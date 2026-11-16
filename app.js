@@ -157,7 +157,7 @@ function logout(expired){
   if(t&&!expired&&PUSH.endpoint) rpc("push_unsubscribe",{p_endpoint:PUSH.endpoint},false).catch(()=>{});
   PUSH.on=false; PUSH.endpoint=null;
   if(t&&!expired) authCall("logout",{}, "POST",t).catch(()=>{});
-  S.session=null; S.plan=null; S.code=null; S.groups=[]; S.gid=null; S.acct=false; S.deleting=false; S.authView="login"; S.noGuest=false; S.admin=false; S.stats=false; S.statsData=null; OPENED_AT=0; S.authNote=expired?"Please log in again.":""; S.tab="home"; S.chatOpen=false;
+  S.session=null; S.plan=null; S.code=null; S.groups=[]; S.gid=null; S.acct=false; S.deleting=false; S.authView="login"; S.noGuest=false; S.admin=false; S.stats=false; S.statsData=null; OPENED_AT=0; S.guestNote=""; S.pendingJoin=null; S.guestLeaving=false; S.authNote=expired?"Please log in again.":""; S.tab="home"; S.chatOpen=false;
   if(typeof CHAT!=="undefined"){ CHAT.gid=null; CHAT.msgs=[]; }
   if(!expired){ for(const k in AV) delete AV[k]; if(typeof AV_LARGE!=="undefined") for(const k in AV_LARGE) delete AV_LARGE[k]; try{localStorage.removeItem("concit.av")}catch{} }
   saveSession(); history.replaceState(null,"",location.pathname); render();
@@ -322,7 +322,8 @@ async function openPlan(code){
     const p=await rpc("get_plan",{p_code:code});
     if(!p){ toast("That plan link doesn't work any more. Start a new plan."); setUrl(null); return; }
     p.options=p.options.filter(byId);
-    S.code=code; S.plan=p; S.tab="decide";
+    S.code=code; S.plan=p; S.tab="decide"; S.guestLeaving=false;
+    if(isGuest()){ try{ localStorage.setItem("concit.guestplan",code); }catch{} }
     if(new URLSearchParams(location.search).get("plan")!==code) setUrl(`plan=${code}`);
     render(); scrollTo(0,0);
   }catch{ toast("Couldn't open that plan. Check your connection."); }
@@ -683,7 +684,7 @@ function viewWaiting(p){
   const g=going(p), done=g.filter(n=>votedAll(p,n)).length, solo=p.people.length===1, meOut=isOut(p,uid());
   const nameOf=n=>n===uid()?"You":(p.names?.[n]||"Someone");
   const status=n=>isOut(p,n)?`<span class="out">Not going</span>`:votedAll(p,n)?`<span class="ok">Done</span>`:`<span>Voting</span>`;
-  return `<div data-hero><button class="back" data-act="reset">‹ ${esc(p.group_name||"New plan")}</button><span>${esc(cap(planTitle(p)))}</span><h1>${solo?"Invite your friends":meOut?"You're not going":`${done} of ${g.length} voted`}</h1></div>
+  return `<div data-hero><button class="back" data-act="reset">‹ ${esc(p.group_name||(isGuest()?"Back":"New plan"))}</button><span>${esc(cap(planTitle(p)))}</span><h1>${solo?"Invite your friends":meOut?"You're not going":`${done} of ${g.length} voted`}</h1></div>
   ${meOut?`<p class="note">You said you can't make it, so you won't be asked to vote.</p>`:""}
   ${p.group_id?"":`<div class="group"><button class="btn" data-act="share">Share link</button></div>`}
   <div class="rows">${[...g,...p.people.filter(n=>isOut(p,n))].map(n=>`<div class="rowstat"><span>${esc(nameOf(n))}</span>${status(n)}</div>`).join("")}</div>
@@ -747,7 +748,7 @@ function cardHtml(p,id,under){
 }
 function viewCard(p){
   const left=p.options.filter(o=>(p.votes?.[uid()]||{})[o]===undefined), id=left[0], i=p.options.indexOf(id), n=p.options.length;
-  return `<div data-hero><button class="back" data-act="reset">‹ ${esc(p.group_name||"New plan")}</button><span>${esc(cap(planTitle(p)))}</span><h1>${i+1} of ${n}</h1></div>
+  return `<div data-hero><button class="back" data-act="reset">‹ ${esc(p.group_name||(isGuest()?"Back":"New plan"))}</button><span>${esc(cap(planTitle(p)))}</span><h1>${i+1} of ${n}</h1></div>
   <div class="vtop"><div class="vprog" aria-hidden="true">${p.options.map((o,j)=>`<i class="${j<i?"done":j===i?"now":""}"></i>`).join("")}</div></div>
   <div class="vdeck" data-left="${Math.min(3,left.length-1)}">${left[1]?cardHtml(p,left[1],true):""}${cardHtml(p,id,false)}</div>
   <div class="vvote${lastVoted(p)?" hasundo":""}"><button class="vno" data-act="vote" data-id="${esc(id)}" data-v="0">${vi("no","vic")}<span>Nope</span></button>${lastVoted(p)?`<button class="vback" data-act="undoVote" aria-label="Go back and change your last vote" title="Go back">${UNDO_ICON}</button>`:""}<button class="vyes" data-act="vote" data-id="${esc(id)}" data-v="1">${vi("yes","vic")}<span>I'm in</span></button></div>
@@ -767,7 +768,7 @@ function bookLink(it,p){
   return `<a class="btn" href="${esc(it.web)}" target="_blank" rel="noopener" data-track="book_tap" data-ref="${esc(it.id)}" data-name="${esc(it.name)}" data-plan="${esc(S.code||"")}">${label}</a><p class="fine center booknote">${esc(note)}</p>`;
 }
 function viewResult(p){
-  const r=results(p), w=r[0], total=Object.keys(p.votes||{}).filter(n=>!isOut(p,n)).length||going(p).length, back=p.group_id?(p.group_name||"Back"):"New plan";
+  const r=results(p), w=r[0], total=Object.keys(p.votes||{}).filter(n=>!isOut(p,n)).length||going(p).length, back=p.group_id?(p.group_name||"Back"):isGuest()?"Back":"New plan";
   if(!w||w.yes===0) return `<div data-hero><button class="back" data-act="reset">‹ ${esc(back)}</button><span>Nobody said yes to any of these</span><h1>No match this round</h1></div>
     <button class="btn" data-act="again">Try 5 more</button>`;
   const it=w.item, where=it.cat?it.venue:`${it.addr}`, sub=it.cat?eventWhen(it):[metroText(it.metro),zname(it.zone)].filter(Boolean).join(" · ");
@@ -787,14 +788,29 @@ function viewResult(p){
 }
 const GROUP_ICON='<svg class="pollicon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 19.5c0-3.4 2.7-5.8 6-5.8s6 2.4 6 5.8"/><circle cx="16.6" cy="9" r="2.6"/><path d="M16 13.8c2.8.2 5 2.3 5 5.2"/></svg>';
 const TROPHY_ICON='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 6H5a2 2 0 0 0 2 4h1M16 6h3a2 2 0 0 1-2 4h-1M12 13v4M8.5 20h7M10 17h4"/></svg>';
+/* Guests (people who voted from a link without an account) only ever see the plan they were invited to.
+   Everything else asks them to create an account, which keeps their votes. */
+const guestPlan=()=>{ try{ return localStorage.getItem("concit.guestplan")||""; }catch{ return ""; } };
+const keepFormHtml=()=>`<form id="keepForm" novalidate><label class="field"><span class="label">Email</span><input type="email" id="keepEmail" autocomplete="email"></label><label class="field"><span class="label">Password</span><input type="password" id="keepPass" autocomplete="new-password"></label><button class="btn" type="submit">${S.keepBusy?"One moment":"Create my account"}</button></form>`;
+function viewGuestGate(){
+  const code=guestPlan();
+  return `<div data-hero><span>You're voting as a guest</span><h1>Want to plan your own?</h1></div>
+  ${S.guestNote?`<p class="note">${esc(S.guestNote)}</p>`:""}
+  ${code?`<div class="group"><button class="person" data-act="openPlan" data-code="${esc(code)}"><span>Your plan<small class="sub">Vote, or see the result</small></span><small>Open</small></button></div>`:""}
+  <div class="guestbox"><b>Create a free account</b><p class="fine">Start your own plans, make groups with your friends, chat, and browse Milan's places and events. Your votes come with you.</p>${keepFormHtml()}</div>
+  <button class="link center" data-act="guestLogin">${S.guestLeaving?"Tap again to log in. Your guest votes stay behind.":"I already have an account"}</button>
+  <p class="fine center">See how Concit handles your data in the <a href="privacy.html">privacy notice</a>.</p>`;
+}
+const guestCta=()=>`<div class="guestcta"><span><b>Planning your own night?</b><small>Make plans, groups and more with a free account.</small></span><button class="link" data-act="guestGate">Create account</button></div>`;
 function viewDecide(){
   const p=S.plan;
-  if(!p) return viewSetup();
+  if(!p) return isGuest()?viewGuestGate():viewSetup();
   if((p.left||[]).includes(uid())&&!p.people.includes(uid())) return viewLeft(p);
   const pm=p.practice?"":planManage(p);
-  if(p.finished||(allDone(p)&&p.people.length>1)) return viewResult(p)+pm;
+  const cta=isGuest()&&!p.practice?guestCta():"";
+  if(p.finished||(allDone(p)&&p.people.length>1)) return viewResult(p)+cta+pm;
   if(p.people.includes(uid())&&!isOut(p,uid())&&nextCard(p,uid())) return viewCard(p)+pm;
-  return viewWaiting(p)+planManage(p);
+  return viewWaiting(p)+cta+planManage(p);
 }
 /* Delete (whoever made the plan) or leave (everyone else). Both need a second tap to confirm. */
 function planManage(p){
@@ -1303,6 +1319,12 @@ function setTheme(v){ try{ localStorage.setItem("concit.theme",v); }catch{} appl
 applyTheme(); THEME_MQ&&THEME_MQ.addEventListener&&THEME_MQ.addEventListener("change",()=>themePref()==="auto"&&applyTheme());
 function viewAccount(){
   const u=S.session?.user||{}, name=u.user_metadata?.name||"";
+  if(isGuest()) return `<div data-hero><button class="back" data-act="closeAccount">‹ Back</button><span>You're voting as a guest</span><h1>Guest</h1></div>
+  <div class="guestbox"><b>Create a free account</b><p class="fine">Keep your votes, start your own plans and log in on any device.</p>${keepFormHtml()}</div>
+  <form id="nameForm" class="group" novalidate><span class="label">Your name</span><div class="inline"><input type="text" id="myName" value="${esc(name)}" maxlength="30" autocomplete="name"><button class="btn small" type="submit">Save</button></div></form>
+  <div class="group"><span class="label">Your data</span><a class="person" href="privacy.html"><span>Privacy notice<small class="sub">What Concit keeps and why</small></span><small>Read</small></a></div>
+  <button class="btn plain" data-act="logout">Leave guest mode</button><p class="fine center">Leaving guest mode on this device means you can't get back to these votes.</p>
+  <button class="link quiet center danger" data-act="deleteAccount">${S.deleting?"Tap again to delete for good":"Delete my guest data"}</button>`;
   return `<div data-hero><button class="back" data-act="closeAccount">‹ Back</button><h1>Your account</h1></div>
   ${isGuest()?`<div class="guestbox"><b>You're voting as a guest</b><p class="fine">Your votes and plans are tied to this device. Add an email and password to keep them and log in anywhere.</p>
     <form id="keepForm" novalidate><label class="field"><span class="label">Email</span><input type="email" id="keepEmail" autocomplete="email"></label><label class="field"><span class="label">Password</span><input type="password" id="keepPass" autocomplete="new-password"></label><button class="btn small" type="submit">${S.keepBusy?"One moment":"Create my account"}</button></form></div>`
@@ -1634,7 +1656,9 @@ function render(){
   if(render.ok&&a&&a.matches?.('input[type=text],input[type=email],input[type=password],textarea')&&a.value&&S.session){ render.later=true; return; }
   render.ok=true; render.later=false;
   const open=[...document.querySelectorAll("details[open] b")].map(b=>b.textContent);
-  const authed=S.session&&S.authView!=="newpass";
+  const authed=S.session&&S.authView!=="newpass", guest=authed&&isGuest();
+  if(guest){ S.tab="decide"; S.stats=false; S.chatOpen=false; S.sights=false; }
+  document.body.classList.toggle("guest",!!guest);
   document.body.classList.toggle("noauth",!authed);
   if(!authed) requestAnimationFrame(mountCaptcha); else trackTab();
   document.getElementById("view").innerHTML=!authed?viewAuth():S.acct?(S.stats&&S.admin?viewStats():viewAccount()):S.tab==="home"?viewHome():S.tab==="decide"?viewDecide():S.tab==="hotspots"?viewHot():S.tab==="groups"?viewGroups():viewEvents();
@@ -1662,7 +1686,7 @@ function render(){
 const TOUR_SINCE=Date.parse("2026-11-15T17:00:00Z");
 const tourMeta=()=>S.session?.user?.user_metadata||{};
 function tourDue(){
-  const u=S.session?.user; if(!u||tourMeta().tour_done) return false;
+  const u=S.session?.user; if(!u||u.is_anonymous||tourMeta().tour_done) return false;
   try{ if(localStorage.getItem("concit.tour."+u.id)) return false; }catch{}
   const made=Date.parse(u.created_at||""); return made>=TOUR_SINCE;
 }
@@ -1830,7 +1854,9 @@ function resetTab(t){
   else if(t==="groups"){ if(S.chatOpen) typing(false); S.chatOpen=false; CHAT.gid=null; S.gid=null; S.joinMode=false; S.groupNew=false; S.leaving=false; }
 }
 const H={
-  home(){ if(!S.session) return; S.acct=false; S.deleting=false; S.pickOpen=false; resetTab("home"); S.tab="home"; try{location.hash="home"}catch{} render(); homeTop(); },
+  guestGate(){ S.guestLeaving=false; S.plan=null; S.code=null; setUrl(null); S.acct=false; render(); scrollTo(0,0); },
+  guestLogin(){ if(!S.guestLeaving){ S.guestLeaving=true; render(); return; } S.guestLeaving=false; try{ localStorage.removeItem("concit.guestplan"); }catch{} logout(); },
+  home(){ if(!S.session) return; if(isGuest()){ S.acct=false; render(); scrollTo(0,0); return; } S.acct=false; S.deleting=false; S.pickOpen=false; resetTab("home"); S.tab="home"; try{location.hash="home"}catch{} render(); homeTop(); },
   tab(el){ S.acct=false; S.deleting=false; S.tab=el.dataset.tab; resetTab(S.tab); try{location.hash=S.tab}catch{} render(); if(S.tab==="home") homeTop(); else scrollTo(0,0); },
   homeWhat(el){ S.homeWhat=el.dataset.v; render(); },
   homeGo(el){ const w=S.homeWhat||(new Date().getHours()<11?"coffee":new Date().getHours()<18?"eat":"drinks"); resetTab("decide");
@@ -1993,7 +2019,8 @@ document.addEventListener("submit",async e=>{ e.preventDefault();
     try{
       const u=await authCall("user",{email},"PUT",S.session.access_token);
       if((u.email||"").toLowerCase()!==email.toLowerCase()){ toast("Check your inbox to confirm that email, then set a password with Forgot your password."); }
-      else { const u2=await authCall("user",{password:pass},"PUT",S.session.access_token); S.session.user=u2&&u2.id?u2:u; await refreshSession().catch(()=>{}); saveSession(); track("guest_upgrade"); toast("Account created. You can log in anywhere now."); }
+      else { const u2=await authCall("user",{password:pass},"PUT",S.session.access_token); S.session.user=u2&&u2.id?u2:u; await refreshSession().catch(()=>{}); saveSession(); track("guest_upgrade"); try{ localStorage.removeItem("concit.guestplan"); }catch{} S.guestNote=""; S.acct=false; if(!S.plan) S.tab="home"; toast("Account created. The whole app is yours now.");
+        const j=S.pendingJoin; S.pendingJoin=null; if(j){ S.keepBusy=false; await loadGroups(); await joinByCode(j); return; } }
     }catch(err){ toast(authMessage(err.message)); }
     S.keepBusy=false; render(); return; }
   if(e.target.id==="renameForm"){ const i=document.getElementById("groupRename"), n=i.value.trim().replace(/\s+/g," "), gid=e.target.dataset.id, g=S.groups.find(x=>x.id===gid); i.blur(); if(!n||!g||n===g.name){ render(); return; }
@@ -2045,8 +2072,10 @@ async function afterLogin(){
   rpc("is_admin").then(v=>{ S.admin=!!v; if(S.acct) render(); }).catch(()=>{});
   await Promise.all([loadPlaces(),loadEvents(),loadGroups(),loadMyAvatar()]);
   const p=S.pending; S.pending=null; persist();
-  if(p?.join){ setUrl(null); await joinByCode(p.join); }
+  if(p?.join&&isGuest()){ setUrl(null); S.pendingJoin=p.join; S.guestNote="Create an account to join that group."; }
+  else if(p?.join){ setUrl(null); await joinByCode(p.join); }
   else if(p?.plan) await openPlan(p.plan);
+  else if(isGuest()&&guestPlan()) await openPlan(guestPlan());
   render();
   const pc=S.pendingChat; S.pendingChat=null;
   if(pc&&!p?.plan&&!p?.join&&openChatLink(pc)) return;
