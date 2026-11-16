@@ -832,3 +832,10 @@ details.ev[open]{background:color-mix(in srgb,var(--tint) 45%,transparent)}
 .chips.etypes .chip svg{width:15px;height:15px;flex:none}
 .chips.etypes .chip i{font-style:normal;font-size:12px;opacity:.65;font-weight:600}
 @media (prefers-reduced-motion:reduce){.ephoto.wait{animation:none}}
+.hotbar select.csel{max-width:170px}
+@media (max-width:370px){.hotbar .count{display:none}}
+.hotbar .pill{flex:none;white-space:nowrap}.hotbar .pill span{overflow:visible}
+.hotbar select.csel{flex:0 1 150px;max-width:150px}
+.hotbar .count{white-space:nowrap;flex:none}
+@media (max-width:400px){.hotbar select.csel.on~.count{display:none}}
+.hotbar select.csel.on{flex:0 1 auto;max-width:215px}
