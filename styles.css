@@ -905,3 +905,7 @@ body.inchat #heroText .back{margin-bottom:9px;padding:4px 48px 4px 0}
 .ginvite .link{flex:none;font-size:14px}.ginvite .gmain small .code{font-weight:700}
 .msg.theirs .mbar{width:max-content;max-width:calc(100vw - 104px)}
 .quote{max-height:4.2em}
+/* Chat header: keep clear of the iPhone status bar (the earlier chat rule reset the top padding). */
+body.inchat .hero{padding-top:max(14px,calc(env(safe-area-inset-top,0px) + 6px))}
+/* Photos keep a fixed box while loading and after, so the chat doesn't jump as they arrive. */
+.mphoto,.mphoto.wait{width:240px;height:240px;max-height:none}
