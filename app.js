@@ -102,10 +102,36 @@ const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify({saved:[...S.save
 const saveSession=()=>{try{S.session?localStorage.setItem(SKEY,JSON.stringify(S.session)):localStorage.removeItem(SKEY)}catch{}};
 
 /* ---------- Accounts ---------- */
-const AUTH_ERRORS=[["invalid login","That email or password isn't right."],["already registered","That email already has an account. Log in instead."],["not confirmed","Confirm your email first, using the link we sent you."],["rate limit","Too many emails sent just now. Try again in a while."],["password","Choose a stronger password of at least 8 characters."],["email","Check that email address."]];
+const AUTH_ERRORS=[["captcha","The security check didn't pass. Wait a moment and try again."],["invalid login","That email or password isn't right."],["already registered","That email already has an account. Log in instead."],["not confirmed","Confirm your email first, using the link we sent you."],["rate limit","Too many emails sent just now. Try again in a while."],["password","Choose a stronger password of at least 8 characters."],["email","Check that email address."]];
 /* Someone who opens a plan link without being logged in can vote as a guest: just a name, no email or password. */
 const isGuest=()=>!!S.session?.user?.is_anonymous;
 const authMode=()=>S.authView==="login"&&S.pending?.plan&&!S.noGuest?"guest":S.authView;
+/* Bot check (Cloudflare Turnstile) on the logged-out screens. It is usually invisible. Each answer works once,
+   so a fresh one is fetched after every attempt. If the check can't load, requests go without it. */
+const CAP={token:"",id:null,loading:null,failed:false};
+function loadCaptcha(){
+  if(!SB.turnstileKey) return Promise.resolve(false);
+  if(window.turnstile) return Promise.resolve(true);
+  if(!CAP.loading) CAP.loading=new Promise(ok=>{ const el=document.createElement("script"); el.src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"; el.async=true;
+    el.onload=()=>ok(!!window.turnstile); el.onerror=()=>{ CAP.failed=true; CAP.loading=null; ok(false); }; document.head.appendChild(el); });
+  return CAP.loading;
+}
+async function mountCaptcha(){
+  const box=document.getElementById("cfBox"); if(!box||!SB.turnstileKey) return;
+  if(!await loadCaptcha()||!box.isConnected||box.dataset.on) return;
+  box.dataset.on="1"; CAP.token=""; CAP.failed=false;
+  try{ CAP.id=turnstile.render(box,{sitekey:SB.turnstileKey,appearance:"interaction-only",size:"flexible",theme:document.documentElement.dataset.theme==="dark"?"dark":"light",
+    callback:t=>{ CAP.token=t; },"expired-callback":()=>{ CAP.token=""; try{ turnstile.reset(CAP.id); }catch{} },"error-callback":()=>{ CAP.token=""; CAP.failed=true; return true; }}); }catch{ CAP.failed=true; }
+}
+/* Wait briefly for an answer, hand it over, and ask for the next one. */
+async function captchaToken(){
+  if(!SB.turnstileKey) return "";
+  for(let n=0;n<40&&!CAP.token&&!CAP.failed;n++) await new Promise(r=>setTimeout(r,250));
+  const t=CAP.token; CAP.token="";
+  if(t) setTimeout(()=>{ try{ if(document.getElementById("cfBox")?.isConnected) turnstile.reset(CAP.id); }catch{} },300);
+  return t;
+}
+const withCap=(body,t)=>t?{...body,gotrue_meta_security:{captcha_token:t}}:body;
 function authMessage(m){ const t=String(m||"").toLowerCase(), f=AUTH_ERRORS.find(([k])=>t.includes(k)); return f?f[1]:"That didn't work. Check your connection and try again."; }
 async function authCall(path,body,method="POST",token){
   const r=await fetch(`${SB.url}/auth/v1/${path}`,{method,headers:{apikey:SB.anonKey,"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},body:body?JSON.stringify(body):undefined});
@@ -147,16 +173,17 @@ async function authSubmit(){
   const btn=document.querySelector("#authForm button[type=submit]"), label=btn.textContent;
   S.authBusy=true; btn.disabled=true; btn.textContent="One moment"; document.activeElement?.blur();
   try{
+    const cap=view==="newpass"?"":await captchaToken();
     if(view==="guest"){
-      try{ setSession(await authCall("signup",{data:{name:name.slice(0,30)}})); }
+      try{ setSession(await authCall("signup",withCap({data:{name:name.slice(0,30)}},cap))); }
       catch(e){ if(/anonymous|disabled|not enabled/i.test(e.message)){ S.noGuest=true; S.authBusy=false; S.authNote="Guest voting isn't available right now. Log in or create an account to vote."; render(); return; } throw e; }
     }
-    if(view==="login") setSession(await authCall("token?grant_type=password",{email,password:pass}));
+    if(view==="login") setSession(await authCall("token?grant_type=password",withCap({email,password:pass},cap)));
     if(view==="signup"){
-      const j=await authCall(`signup?redirect_to=${redirectTo()}`,{email,password:pass,data:{name}});
+      const j=await authCall(`signup?redirect_to=${redirectTo()}`,withCap({email,password:pass,data:{name}},cap));
       if(j.access_token) setSession(j); else { S.authView="login"; S.authNote=`We sent a link to ${email}. Open it to finish, then log in.`; }
     }
-    if(view==="reset"){ await authCall(`recover?redirect_to=${redirectTo()}`,{email}); S.authView="login"; S.authNote=`If ${email} has an account, a reset link is on its way.`; }
+    if(view==="reset"){ await authCall(`recover?redirect_to=${redirectTo()}`,withCap({email},cap)); S.authView="login"; S.authNote=`If ${email} has an account, a reset link is on its way.`; }
     if(view==="newpass"){ await authCall("user",{password:pass},"PUT",S.session.access_token); S.authView="login"; S.fromEmail=null; toast("Password updated"); }
     S.authBusy=false;
     if(S.session){ await afterLogin(); return; }
@@ -751,6 +778,7 @@ function viewAuth(){
   ${S.authNote?`<p class="note">${esc(S.authNote)}</p>`:""}
   <form id="authForm" novalidate>
     <label class="field"><span class="label">Your name</span><input type="text" id="name" autocomplete="name" maxlength="30" placeholder="So your friends know who voted" ${b?"disabled":""}></label>
+    <div id="cfBox" class="cfbox"></div>
     <button class="btn" type="submit" ${b?"disabled":""}>${b?"One moment":"Vote now"}</button>
   </form>
   <div class="links"><p class="fine">No account needed. Your friends see your name and how you vote. <a href="privacy.html">Privacy notice</a></p>
@@ -763,6 +791,7 @@ function viewAuth(){
     ${v==="signup"?f("name","text","Your name","name"):""}
     ${v==="newpass"?"":f("email","email","Email","email",S.email)}
     ${v==="reset"?"":f("password","password",v==="newpass"?"New password":"Password",v==="login"?"current-password":"new-password")}
+    ${v==="newpass"?"":`<div id="cfBox" class="cfbox"></div>`}
     <button class="btn" type="submit" ${b?"disabled":""}>${b?"One moment":main}</button>
   </form>
   <div class="links">
@@ -1568,6 +1597,7 @@ function render(){
   const open=[...document.querySelectorAll("details[open] b")].map(b=>b.textContent);
   const authed=S.session&&S.authView!=="newpass";
   document.body.classList.toggle("noauth",!authed);
+  if(!authed) requestAnimationFrame(mountCaptcha);
   document.getElementById("view").innerHTML=!authed?viewAuth():S.acct?viewAccount():S.tab==="home"?viewHome():S.tab==="decide"?viewDecide():S.tab==="hotspots"?viewHot():S.tab==="groups"?viewGroups():viewEvents();
   const h=document.querySelector("#view [data-hero]"), ht=document.getElementById("heroText");
   ht.innerHTML=h?h.innerHTML:""; h?.remove();
