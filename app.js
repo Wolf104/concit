@@ -264,9 +264,12 @@ if("serviceWorker" in navigator) navigator.serviceWorker.addEventListener("messa
    A short list of actions is recorded in Concit's own database (see supabase/analytics.sql): opening the app, the first
    look at each screen, and taps on booking, directions and share buttons. Nothing is recorded during the tutorial. */
 const SEEN_TABS=new Set(); let OPENED_AT=0;
-function track(ev,ref,props){
+async function track(ev,ref,props){
   let touring=false; try{ touring=!!TOUR; }catch{}
   if(!S.session||S.practice||touring||!SB.url) return;
+  /* After the app has been in the background the login token may have run out: renew it first, or the record is refused. */
+  try{ if((S.session.expires_at||0)*1000-Date.now()<60e3) await refreshSession(); }catch{ return; }
+  if(!S.session) return;
   try{ fetch(`${SB.url}/rest/v1/rpc/track`,{method:"POST",keepalive:true,headers:{apikey:SB.anonKey,Authorization:`Bearer ${S.session.access_token}`,"Content-Type":"application/json"},body:JSON.stringify({p_event:ev,p_ref:ref||null,p_props:props||{}})}).catch(()=>{}); }catch{}
 }
 function trackOpen(){ if(!S.session||Date.now()-OPENED_AT<30*60e3) return; if(OPENED_AT) SEEN_TABS.clear(); OPENED_AT=Date.now(); track("app_open",null,{installed:!!(matchMedia("(display-mode: standalone)").matches||navigator.standalone)}); }
@@ -367,7 +370,8 @@ function dealVote(id,v){
   const under=document.querySelector(".vcard.under"); if(under){ under.style.transition="transform .33s cubic-bezier(.2,.8,.3,1)"; under.style.transform="none"; }
   document.querySelectorAll(".vvote button").forEach(b=>b.disabled=true);
   const nxt=document.querySelector(".vcard.under"); 
-  setTimeout(()=>{ DEALING=false; if(nxt) LAST_CARD="dealt:"+nxt.dataset.id; vote(id,v); },330);
+  const code=S.code;
+  setTimeout(()=>{ DEALING=false; if(S.code!==code||!S.plan) return; if(nxt) LAST_CARD="dealt:"+nxt.dataset.id; vote(id,v); },330);
 }
 /* All cards in a vote share one height: the tallest option's, measured once per plan and screen width. */
 /* Every card in a vote has the same height and fits on screen above the vote buttons, with no scrolling.
@@ -423,6 +427,7 @@ async function undoVote(){
   S.inflight--; S.ver++; loadGroups();
 }
 async function vote(id,v){
+  if(!S.plan||!(S.plan.options||[]).includes(id)) return;
   if(S.practice){ S.plan=merge(S.plan,{votes:{[uid()]:{[id]:v}}}); render(); if(!nextCard(S.plan,uid())) pageTop(); return; }
   S.ver++;
   S.plan=merge(S.plan,{votes:{[uid()]:{[id]:v}}});
@@ -1699,7 +1704,7 @@ function topOffset(){
   const t=document.getElementById("heroText"), b=document.querySelector(".brandbtn");
   if(!t||!b||getComputedStyle(b).display==="none") return 0;
   /* Phones with a status-bar area hide the row behind it; elsewhere go a few pixels further so no sliver of it shows. */
-  const pad=parseFloat(getComputedStyle(document.querySelector(".hero")).paddingTop)||0, extra=pad<=20?6:0;
+  const pad=parseFloat(getComputedStyle(document.querySelector(".hero")).paddingTop)||0, extra=pad<=20?10:0;
   return Math.max(0,Math.min(t.offsetTop+extra,document.documentElement.scrollHeight-innerHeight));
 }
 function pageTop(){ scrollTo(0,topOffset()); }

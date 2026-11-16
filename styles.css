@@ -951,3 +951,8 @@ body.overscroll nav::before{display:none}
 .hempty{padding:13px 16px}
 .hband{height:64px}
 .hbody{padding:9px 12px 11px}
+/* A picked place with a long name wraps inside its chip instead of pushing the page sideways. */
+.picked .chip{flex:0 1 auto;max-width:100%;min-width:0;text-align:left;border-radius:16px;overflow-wrap:anywhere}
+
+/* A voted card flies off the side of the screen: it must never widen the page while it does. */
+.app{overflow-x:clip}
