@@ -28,7 +28,6 @@ const CUISINES=[["","Any"],["pizza","Pizza"],["pasta","Pasta"],["milanese","Mila
 const CUISINE_TEXT=Object.fromEntries(CUISINES);
 const hasCuisine=(p,c)=>!c||(p.cuisine||[]).includes(c);
 const cuisineSelect=(act,val,any)=>`<select class="csel${val?" on":""}" data-cs="${act}" aria-label="Cuisine">${CUISINES.map(([k,l])=>`<option value="${k}" ${(val||"")===k?"selected":""}>${k?l:any}</option>`).join("")}</select>`;
-const cuisineChips=(act,val)=>`<div class="chips sub" role="group" aria-label="Cuisine">${CUISINES.map(([k,l])=>`<button class="chip" data-act="${act}" data-v="${k}" aria-pressed="${(val||"")===k}">${l}</button>`).join("")}</div>`;
 const AREAS=["brera","duomo","garibaldi","isola","lambrate","navigli","nolo","romana","venezia","sarpi","tortona"];
 
 /* ---------- Logic ---------- */
@@ -256,12 +255,12 @@ function sizeDeck(){
     box.innerHTML=p.options.filter(byId).map(id=>cardHtml(p,id,false)).join("");
     document.body.appendChild(box);
     let fit=0, h=0;
-    for(;fit<=6;fit++){ box.className="vdeck vmeasure fit"+fit; h=Math.max(0,...[...box.querySelectorAll(".vcard")].map(c=>c.offsetHeight)); if(h<=room) break; }
-    DECK_H={key,h,fit:Math.min(fit,6)};
+    for(;fit<=8;fit++){ box.className="vdeck vmeasure fit"+fit; h=Math.max(0,...[...box.querySelectorAll(".vcard")].map(c=>c.offsetHeight)); if(h<=room) break; }
+    DECK_H={key,h,fit:Math.min(fit,8)};
     box.remove();
   }
   deck.style.setProperty("--vh",DECK_H.h+"px");
-  deck.classList.remove("fit1","fit2","fit3","fit4","fit5","fit6"); if(DECK_H.fit) deck.classList.add("fit"+DECK_H.fit);
+  deck.classList.remove("fit1","fit2","fit3","fit4","fit5","fit6","fit7","fit8"); if(DECK_H.fit) deck.classList.add("fit"+DECK_H.fit);
 }
 addEventListener("resize",()=>{ if(document.querySelector(".vdeck")) sizeDeck(); });
 function setupDeck(){
@@ -336,12 +335,12 @@ function slider(id,unit,i){
   return `<div class="group"><div class="sliderhead"><span class="label">${LABEL[unit]}</span><b id="${id}Val">${stepText(unit,i)}</b></div><input type="range" id="${id}" data-slider="${unit}" min="0" max="${STEPS[unit].length}" step="1" value="${i}" aria-label="${LABEL[unit]}"></div>`;
 }
 const metroText=m=>m[0]?`M${m[0][0]} ${m[0][1]}`:"";
-const placeLine=p=>[zname(p.zone),costText(p),metroText(p.metro)].filter(Boolean).join(" · ");
 /* Changing the day drops picked events that aren't on that day. */
 function setDay(d){ const f=S.form; f.day=d; if(f.picks) f.picks=f.picks.filter(id=>{ const e=EVENTS.find(x=>x.id===id); return !e||(e.start<=d&&e.end>=d); }); }
 const dayName=d=>d===today?"today":d===addDays(today,1)?"tomorrow":parse(d).toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"});
 const eventWhen=e=>e.start===e.end?`${wday(e.start)} ${short(e.start)}`:(e.start<=today?`Until ${short(e.end)}`:`${short(e.start)} to ${short(e.end)}`);
 const srcUrl=k=>SRC[k]?SRC[k][1]:/^https?:\/\//.test(k||"")?k:"#";
+const dot=t=>{ t=(t||"").trim(); return t&&!/[.!?…]$/.test(t)?t+".":t; };
 const mapsUrl=q=>"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(q+", Milano");
 
 const WHAT_TEXT={coffee:"Coffee",eat:"Food",drinks:"Drinks",clubs:"Clubs",culture:"Culture",event:"An event"};
@@ -377,10 +376,6 @@ function viewPinPicker(){
 function pinButton(t,which){
   return `<div class="where"><button class="wherebtn" data-act="pickOpen" data-v="${which}"><span class="wpin">${PIN}</span><span>${t.pin?esc(pinText(t.pin,t.radius)):"Anywhere in Milan"}</span><small>${t.pin?"Change":"Drop a pin"}</small></button>
     ${t.pin?`<button class="wclear" data-act="pinClear" data-v="${which}" aria-label="Remove pin">×</button>`:""}</div>`;
-}
-function viewWhere(f){
-  if(S.mapFail) return `<div class="group"><select id="area" data-change="area" aria-label="Area"><option value="">Anywhere in Milan</option>${AREAS.map(z=>`<option value="${z}" ${f.area===z?"selected":""}>${esc(zname(z))}</option>`).join("")}</select></div>`;
-  return `<div class="group">${S.pickOpen===true?viewPinPicker():pinButton(f,"form")}</div>`;
 }
 let PICK=null, PICK_HOST=null;
 /* Milan metro lines by station (M1–M5, including the full M4 opened in 2024). Names are matched to the map's station labels. */
@@ -516,7 +511,6 @@ function viewPicker(f){
   <div id="pickBox">${pickBoxHtml(f)}</div></section>`;
 }
 /* Meet times to pick from: every half hour from 07:00 through to 03:00. */
-const TIMES=[...Array(41)].map((_,i)=>{ const m=420+i*30; return `${String(Math.floor(m/60)%24).padStart(2,"0")}:${m%60?"30":"00"}`; });
 const TIME_HINT={coffee:"10:00",eat:"20:00",drinks:"19:00",clubs:"23:00",culture:"15:00"};
 const WHATS=[
   ["eat","Restaurants",'<path d="M7 3v8M4.5 3v4.5a2.5 2.5 0 0 0 5 0V3M7 11v10M17 3c-1.7 1.2-2.5 3.5-2.5 6v4H17zM17 13v8"/>'],
@@ -690,10 +684,6 @@ function viewAuth(){
 }
 
 /* ---------- Groups ---------- */
-function planRow(p){
-  const status=p.finished||(p.people>0&&p.done>=p.people)?"See result":p.me_out?"Not going":p.mine<p.options?"Vote":`${p.done} of ${p.people} voted`;
-  return `<button class="person" data-act="openPlan" data-code="${esc(p.code)}"><span>${esc(planTitle(p))}<small class="sub">Started by ${esc(p.by||"someone")}</small></span><small>${status}</small></button>`;
-}
 /* ---------- Profile pictures ---------- */
 /* Pictures are small JPEGs fetched once per version and cached on this device. */
 const AV=(()=>{try{return JSON.parse(localStorage.getItem("concit.av"))||{}}catch{return {}}})();
@@ -866,13 +856,6 @@ const chatTime=t=>{const d=new Date(t), now=new Date(), same=d.toDateString()===
   return same?d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}):d.toLocaleDateString("en-GB",{day:"numeric",month:"short"})+" "+d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});};
 const linkify=t=>esc(t).replace(/https?:\/\/[^\s<]+/g,u=>`<a href="${u}" target="_blank" rel="noopener">${u}</a>`);
 /* Who has opened the chat since this message arrived. */
-function seenText(m){
-  if(m.pending) return "Sending…";
-  const others=CHAT.people, by=others.filter(p=>(p.read||0)>=m.id).map(p=>p.name);
-  if(!others.length) return "Sent";
-  if(!by.length) return "Not seen yet";
-  return by.length===others.length&&others.length>1?"Seen by everyone":"Seen by "+nameList(by);
-}
 /* Read receipts as tiny profile pictures of the people who have seen the message. */
 function seenHtml(m){
   if(m.pending) return `<span class="seentxt">Sending…</span>`;
@@ -1216,7 +1199,7 @@ function viewFilters(part){
 }
 function placeRow(p){
   return `<details><summary><div><b>${esc(p.name)}</b><small>${esc(zname(p.zone))} · ${esc(costText(p))}</small>${starsHtml(p)}</div></summary>
-  <div class="more"><p>${esc(p.why)}. ${esc(p.detail)}</p><p class="dim">${esc(p.addr)}${p.metro[0]?" · "+esc(metroText(p.metro)):""}</p>
+  <div class="more"><p>${esc([p.why,p.detail].map(dot).filter(Boolean).join(" "))}</p><p class="dim">${esc(p.addr)}${p.metro[0]?" · "+esc(metroText(p.metro)):""}</p>
   <div class="actions"><a href="${mapsUrl(p.name+" "+p.addr)}" target="_blank" rel="noopener">Directions</a>${/^https?:\/\//.test(p.web||"")?`<a href="${esc(p.web)}" target="_blank" rel="noopener">${/instagram\.com/.test(p.web)?"Instagram":/facebook\.com/.test(p.web)?"Facebook":"Website"}</a>`:""}<button class="link addplan" data-act="pickToggle" data-id="${esc(p.id)}">${(S.form.picks||[]).includes(p.id)?"In your plan ✓":"Add to a plan"}</button></div></div></details>`;
 }
 const MAP_SPOTS={bicocca:[270,30],isola:[175,88],lambrate:[320,80],sarpi:[64,140],garibaldi:[178,140],centrale:[300,130],cittastudi:[318,178],brera:[100,192],venezia:[240,212],duomo:[190,265],tortona:[66,305],navigli:[135,345],romana:[285,320],lodi:[270,375]};
