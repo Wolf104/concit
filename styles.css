@@ -666,7 +666,8 @@ body.voting .vtop{margin-bottom:12px}
 .hdate b{display:block;font-size:21px;font-weight:700}
 .hempty{border:1.5px dashed var(--line);border-radius:18px;padding:18px;text-align:center;display:flex;flex-direction:column;gap:4px}
 .hempty span{font-size:14px;color:var(--muted)}
-.hplaces{display:flex;gap:12px;overflow-x:auto;margin:0;padding:2px 1px 8px;scroll-snap-type:x mandatory;scrollbar-width:none}
+.hplaces{display:flex;gap:12px;overflow-x:auto;margin:0 -24px;padding:2px 24px 8px;scroll-padding-inline:24px;scroll-snap-type:x mandatory;scrollbar-width:none}
+.hplaces::after{content:"";flex:none;width:12px}
 .hplaces::-webkit-scrollbar{display:none}
 .hplace{flex:none;width:190px;scroll-snap-align:start;display:flex;flex-direction:column;text-align:left;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:var(--card);color:var(--fg);font:inherit;padding:0;cursor:pointer}
 .hband{height:70px;background:var(--c);padding:10px 12px;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start}
@@ -796,3 +797,5 @@ html[data-theme=dark] .cbub,html[data-theme=dark] .carrow{background:#1b2a3b;col
 .hero{padding-top:max(14px,calc(env(safe-area-inset-top,0px) + 6px))}
 body.voting .hero{padding-top:max(12px,calc(env(safe-area-inset-top,0px) + 4px))}
 #coach .cbub{max-height:calc(100vh - env(safe-area-inset-top,0px) - 20px)}
+/* Home-screen app: keep a blue strip behind the clock and battery so the page never scrolls under them */
+body::before{content:"";position:fixed;left:0;right:0;top:0;height:env(safe-area-inset-top,0px);background:var(--hero);z-index:55;pointer-events:none}
