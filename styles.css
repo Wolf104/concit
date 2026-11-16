@@ -666,15 +666,17 @@ body.voting .vtop{margin-bottom:12px}
 .hdate b{display:block;font-size:21px;font-weight:700}
 .hempty{border:1.5px dashed var(--line);border-radius:18px;padding:18px;text-align:center;display:flex;flex-direction:column;gap:4px}
 .hempty span{font-size:14px;color:var(--muted)}
-.hplaces{display:flex;gap:12px;overflow-x:auto;margin:0;padding:0 0 6px;scroll-padding-inline:0;scroll-snap-type:x mandatory;scrollbar-width:none}
-.hplace .hbody b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hplaces{display:flex;gap:24px;overflow-x:auto;margin:0 -24px;padding:0 24px 6px;scroll-padding-inline:24px;scroll-snap-type:x mandatory;scrollbar-width:none}
+.hplace .hbody>b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hplace .rate{gap:4px}.hplace .rate b{overflow:visible}
 .hplaces::-webkit-scrollbar{display:none}
-.hplace{flex:none;width:calc(50% - 6px);scroll-snap-align:start;display:flex;flex-direction:column;text-align:left;border:0;border-radius:18px;overflow:hidden;background:none;isolation:isolate;-webkit-mask-image:-webkit-radial-gradient(white,black);color:var(--fg);font:inherit;padding:0;cursor:pointer}
+.hplaces::after{content:"";flex:none;width:1px;margin-left:-1px}
+.hplace{flex:none;width:calc(50% - 12px);scroll-snap-align:start;display:flex;flex-direction:column;text-align:left;border:0;border-radius:18px;overflow:hidden;background:none;isolation:isolate;-webkit-mask-image:-webkit-radial-gradient(white,black);color:var(--fg);font:inherit;padding:0;cursor:pointer}
 .hband{height:70px;background:var(--c);padding:10px 12px;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start}
 .hband i{font-style:normal;background:rgba(255,255,255,.93);color:#0f2a44;font-size:12px;font-weight:700;border-radius:99px;padding:2px 9px}
 .hband small{color:#fff;font-size:12px;font-weight:700}
 .hbody{padding:10px 12px 12px;display:flex;flex-direction:column;gap:2px;min-width:0;flex:1;background:var(--page)}
-.hbody b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hbody>b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hbody small{font-size:13px;color:var(--muted)}
 .hgroups{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .hgroup{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 6px;border:1px solid var(--line);border-radius:18px;background:var(--card);color:var(--fg);font:inherit;cursor:pointer;min-width:0}
