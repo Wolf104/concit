@@ -1399,6 +1399,8 @@ const CITY_PHOTOS={milan:{
 const CITY="milan";
 const commonsImg=(f,w=600)=>"https://commons.wikimedia.org/wiki/Special:FilePath/"+encodeURIComponent(f)+"?width="+w;
 const commonsPage=f=>"https://commons.wikimedia.org/wiki/File:"+encodeURIComponent(f);
+/* The Events tiles' photos are fetched as soon as the app starts and kept in memory, so they are already there when the tab opens. */
+const EV_TILE_IMGS=Object.values(CITY_PHOTOS[CITY]||{}).map(([f])=>{ const im=new Image(); im.referrerPolicy="no-referrer"; im.src=commonsImg(f); return im; });
 const EV_MORE=[["free","Free","Nothing to pay",e=>e.priceNum===0],["saved","Saved","Events you kept",e=>S.saved.has(e.id)],["all","Everything","All upcoming events",()=>true]];
 const evIcon=p=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 function viewEvents(){
@@ -1409,7 +1411,7 @@ function viewEvents(){
     return `<div data-hero><h1>Events</h1></div>
     <p class="evintro">What are you in the mood for?</p>
     <div class="evtiles">${EV_CATS.map(([k,l,sub,f,ic])=>{const ph=(CITY_PHOTOS[CITY]||{})[k];
-      return `<button class="evtile ev-${k}${ph?" hasph":""}" data-act="ev" data-v="${k}">${ph?`<img src="${commonsImg(ph[0])}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.classList.remove('hasph');this.remove()">`:""}<b>${l}</b><small>${esc(sub)}</small></button>`}).join("")}</div>
+      return `<button class="evtile ev-${k}${ph?" hasph":""}" data-act="ev" data-v="${k}">${ph?`<img src="${commonsImg(ph[0])}" alt="" referrerpolicy="no-referrer" onerror="this.parentNode.classList.remove('hasph');this.remove()">`:""}<b>${l}</b><small>${esc(sub)}</small></button>`}).join("")}</div>
     <div class="evmore">${EV_MORE.map(([k,l,sub,f])=>`<button class="evmini" data-act="ev" data-v="${k}"><b>${l}</b><small>${k==="saved"?`${n(f)} saved`:`${n(f)} events`}</small></button>`).join("")}</div>
     <p class="foot">Checked ${S.evChecked||CHECKED}. Confirm dates before you go.</p>
     <p class="foot credits">Photos from Wikimedia Commons: ${EV_CATS.map(c=>(CITY_PHOTOS[CITY]||{})[c[0]]).filter(Boolean).map(([f,of])=>`<a href="${commonsPage(f)}" target="_blank" rel="noopener">${esc(of)}</a>`).join(", ")}. Tap a name for the photographer and licence.</p>`;
