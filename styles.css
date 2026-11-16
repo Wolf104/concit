@@ -930,6 +930,7 @@ body.guest nav{display:none}
 .guestcta .link{flex:none}
 /* The area revealed when the page is pulled past its top or bottom edge matches the blue header, in both themes. */
 html{background:var(--hero)}
-/* The tab bar floats with no backing strip, so the blue behind the page shows across the whole bottom when the page is pulled up. */
-nav{background:none;pointer-events:none}
-nav::before{display:none}
+/* The tab bar keeps its solid backing strip, so nothing shows behind or around it while scrolling.
+   Only while the page is being pulled past its bottom edge does the strip step aside, to let the blue show. */
+body.overscroll nav{background:none}
+body.overscroll nav::before{display:none}

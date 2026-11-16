@@ -2036,6 +2036,7 @@ document.addEventListener("submit",async e=>{ e.preventDefault();
 document.addEventListener("keydown",e=>{ if((e.key==="Enter"||e.key===" ")&&e.target.matches?.("g[data-act]")){e.preventDefault();H.zoneMap(e.target)}
   if((e.key==="Enter"||e.key===" ")&&e.target.matches?.("img[data-act=viewAv]")){e.preventDefault();H.viewAv(e.target)} });
 document.addEventListener("focusout",()=>setTimeout(()=>{if(render.later)render()},0));
+addEventListener("scroll",()=>{ document.body.classList.toggle("overscroll",scrollY+innerHeight-document.documentElement.scrollHeight>2); },{passive:true});
 addEventListener("hashchange",()=>{const t=location.hash.slice(1);if(["home","decide","hotspots","events","groups"].includes(t)&&t!==S.tab){S.tab=t;render()}});
 {const t=location.hash.slice(1);if(["home","decide","hotspots","events","groups"].includes(t))S.tab=t}
 
