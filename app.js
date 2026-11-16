@@ -157,7 +157,7 @@ function logout(expired){
   if(t&&!expired&&PUSH.endpoint) rpc("push_unsubscribe",{p_endpoint:PUSH.endpoint},false).catch(()=>{});
   PUSH.on=false; PUSH.endpoint=null;
   if(t&&!expired) authCall("logout",{}, "POST",t).catch(()=>{});
-  S.session=null; S.plan=null; S.code=null; S.groups=[]; S.gid=null; S.acct=false; S.deleting=false; S.authView="login"; S.noGuest=false; S.authNote=expired?"Please log in again.":""; S.tab="home"; S.chatOpen=false;
+  S.session=null; S.plan=null; S.code=null; S.groups=[]; S.gid=null; S.acct=false; S.deleting=false; S.authView="login"; S.noGuest=false; S.admin=false; S.stats=false; S.statsData=null; OPENED_AT=0; S.authNote=expired?"Please log in again.":""; S.tab="home"; S.chatOpen=false;
   if(typeof CHAT!=="undefined"){ CHAT.gid=null; CHAT.msgs=[]; }
   if(!expired){ for(const k in AV) delete AV[k]; if(typeof AV_LARGE!=="undefined") for(const k in AV_LARGE) delete AV_LARGE[k]; try{localStorage.removeItem("concit.av")}catch{} }
   saveSession(); history.replaceState(null,"",location.pathname); render();
@@ -175,7 +175,7 @@ async function authSubmit(){
   try{
     const cap=view==="newpass"?"":await captchaToken();
     if(view==="guest"){
-      try{ setSession(await authCall("signup",withCap({data:{name:name.slice(0,30)}},cap))); }
+      try{ setSession(await authCall("signup",withCap({data:{name:name.slice(0,30)}},cap))); track("guest_join"); }
       catch(e){ if(/anonymous|disabled|not enabled/i.test(e.message)){ S.noGuest=true; S.authBusy=false; S.authNote="Guest voting isn't available right now. Log in or create an account to vote."; render(); return; } throw e; }
     }
     if(view==="login") setSession(await authCall("token?grant_type=password",withCap({email,password:pass},cap)));
@@ -237,7 +237,7 @@ async function pushEnable(){
     if(perm!=="granted"){ toast(perm==="denied"?"Notifications are blocked. Allow them for Concit in your phone's settings.":"Notifications weren't turned on."); return; }
     const reg=await navigator.serviceWorker.register("/sw.js"); await navigator.serviceWorker.ready;
     const sub=await reg.pushManager.getSubscription()||await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u(SB.vapidKey)});
-    await pushSave(sub); toast("Notifications are on for this device.");
+    await pushSave(sub); track("push_on"); toast("Notifications are on for this device.");
   }catch{ toast("Couldn't turn notifications on. Try again."); }
   finally{ PUSH.busy=false; render(); }
 }
@@ -260,6 +260,44 @@ function pushSend(code,kind){
 function openChatLink(gid){ if(!S.groups.some(g=>g.id===gid)) return false; S.acct=false; S.sights=false; S.tab="groups"; S.gid=gid; openChat(gid); return true; }
 const pushAsk=()=>{ let later=false; try{ later=!!localStorage.getItem("concit.pushlater"); }catch{} return PUSH_OK&&!PUSH.on&&!later&&Notification.permission==="default"&&S.groups.length>0; };
 if("serviceWorker" in navigator) navigator.serviceWorker.addEventListener("message",e=>{ const u=e.data&&e.data.openUrl; if(!u||!S.session) return; try{ const q=new URL(u).searchParams, c=q.get("plan"), g=q.get("chat"); if(c){ S.acct=false; S.chatOpen=false; openPlan(c); } else if(g) openChatLink(g); }catch{} });
+/* ---------- Usage analytics ----------
+   A short list of actions is recorded in Concit's own database (see supabase/analytics.sql): opening the app, the first
+   look at each screen, and taps on booking, directions and share buttons. Nothing is recorded during the tutorial. */
+const SEEN_TABS=new Set(); let OPENED_AT=0;
+function track(ev,ref,props){
+  let touring=false; try{ touring=!!TOUR; }catch{}
+  if(!S.session||S.practice||touring||!SB.url) return;
+  try{ fetch(`${SB.url}/rest/v1/rpc/track`,{method:"POST",keepalive:true,headers:{apikey:SB.anonKey,Authorization:`Bearer ${S.session.access_token}`,"Content-Type":"application/json"},body:JSON.stringify({p_event:ev,p_ref:ref||null,p_props:props||{}})}).catch(()=>{}); }catch{}
+}
+function trackOpen(){ if(!S.session||Date.now()-OPENED_AT<30*60e3) return; if(OPENED_AT) SEEN_TABS.clear(); OPENED_AT=Date.now(); track("app_open",null,{installed:!!(matchMedia("(display-mode: standalone)").matches||navigator.standalone)}); }
+function trackTab(){ const t=S.acct?"account":S.tab; if(!S.session||SEEN_TABS.has(t)) return; SEEN_TABS.add(t); track("tab_view",t); }
+document.addEventListener("click",e=>{ const el=e.target.closest("[data-track]"); if(el) track(el.dataset.track,el.dataset.ref,{...(el.dataset.name?{name:el.dataset.name}:{}),...(el.dataset.plan?{plan:el.dataset.plan}:{})}); },true);
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden) trackOpen(); });
+async function loadStats(){ try{ S.statsData=await rpc("admin_stats",{p_days:S.statDays||14}); }catch{ S.statsData={error:true}; } if(S.stats) render(); }
+function viewStats(){
+  const d=S.statsData, head=`<div data-hero><button class="back" data-act="closeStats">‹ Account</button><h1>Stats</h1></div>`;
+  if(!d) return head+`<p class="empty">Loading…</p>`;
+  if(d.error) return head+`<p class="empty">Couldn't load the stats. Check your connection and try again.</p>`;
+  const t=d.totals, p=d.period, tile=(n,l)=>`<div class="stile"><b>${Number(n||0).toLocaleString("en-GB")}</b><small>${l}</small></div>`, row=(l,n,sub="")=>`<div class="grow"><span class="gmain"><b>${esc(l)}</b>${sub?`<small>${esc(sub)}</small>`:""}</span><span class="gstat">${Number(n||0).toLocaleString("en-GB")}</span></div>`;
+  const TABS={home:"Home",decide:"Decide",hotspots:"Hotspots",events:"Events",groups:"Groups",account:"Your account"};
+  return head+`<div class="themeseg">${seg("statDays",d.days,[[7,"7 days"],[14,"14 days"],[30,"30 days"]],"Period")}</div>
+  <p class="glabel stop">Last ${d.days} days</p>
+  <div class="stiles">${tile(p.active,"Active people")}${tile(p.new_people,"New people")}${tile(p.plans,"Plans started")}${tile(p.decided,"Plans decided")}${tile(p.book_taps,"Booking taps")}${tile(p.messages,"Messages")}</div>
+  <p class="glabel">From plan to booking</p>
+  <div class="sheet glist">${row("Plans started",p.plans)}${row("Plans decided",p.decided,p.plans?Math.round(p.decided/p.plans*100)+"% of plans started":"")}${row("Plans with a booking tap",p.book_plans,p.decided?Math.round(p.book_plans/p.decided*100)+"% of plans decided":"")}</div>
+  <p class="glabel">Booking taps by place</p>
+  ${d.top_places.length?`<div class="sheet glist">${d.top_places.map(x=>row(x.name,x.taps,`${x.people} ${x.people===1?"person":"people"}`)).join("")}</div>`:`<p class="fine sgap">No booking taps yet.</p>`}
+  <p class="glabel">Day by day</p>
+  <div class="sheet glist">${[...d.daily].reverse().slice(0,14).map(x=>row(parse(x.day).toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"}),x.active,`${x.plans} ${x.plans===1?"plan":"plans"} · ${x.books} booking ${x.books===1?"tap":"taps"}`)).join("")}</div>
+  <p class="fine sgap">The number on the right is people who opened the app that day.</p>
+  <p class="glabel">Screens opened</p>
+  ${d.tabs.length?`<div class="sheet glist">${d.tabs.map(x=>row(TABS[x.tab]||x.tab,x.views,`${x.people} ${x.people===1?"person":"people"}`)).join("")}</div>`:`<p class="fine sgap">Nothing recorded yet.</p>`}
+  <p class="glabel">Other actions</p>
+  <div class="sheet glist">${row("Directions taps",p.directions)}${row("Plan and invite links shared",p.shares)}${row("Guests who voted from a link",p.guest_joins)}${row("Guests who made an account",p.guest_upgrades)}${row("Notifications turned on",p.push_on)}</div>
+  <p class="glabel">All time</p>
+  <div class="stiles">${tile(t.people,"People")}${tile(t.guests,"Of them guests")}${tile(t.groups,"Groups")}${tile(t.plans,"Plans")}${tile(t.decided,"Decided")}${tile(t.votes,"Votes")}</div>
+  <p class="foot">Activity counts (active people, taps, screens) start from 16 Nov 2026, when tracking was added. Days are Milan time.</p>`;
+}
 async function refresh(){
   if(!S.code||refresh.busy||document.hidden) return;
   refresh.busy=true;
@@ -720,13 +758,13 @@ function bookLink(it,p){
   const n=going(p).length, forWho=`${n} ${n===1?"person":"people"}`, when=dayText(p.day)+(p.time?` at ${p.time}`:"");
   if(it.cat){ const u=srcUrl(it.src); if(u==="#") return "";
     const label=it.sold?"Check for tickets":it.priceNum===0?"See event details":"Get tickets";
-    return `<a class="btn" href="${esc(u)}" target="_blank" rel="noopener">${label}</a><p class="fine center booknote">${it.sold?"Listed as sold out. The ticket page shows any returns.":it.priceNum===0?"Free entry. Opens the event's page.":`You need ${n===1?"1 ticket":n+" tickets"}. Opens the ticket page.`}</p>`; }
+    return `<a class="btn" href="${esc(u)}" target="_blank" rel="noopener" data-track="book_tap" data-ref="${esc(it.id)}" data-name="${esc(it.name)}" data-plan="${esc(S.code||"")}">${label}</a><p class="fine center booknote">${it.sold?"Listed as sold out. The ticket page shows any returns.":it.priceNum===0?"Free entry. Opens the event's page.":`You need ${n===1?"1 ticket":n+" tickets"}. Opens the ticket page.`}</p>`; }
   if(!/^https?:\/\//.test(it.web||"")) return `<p class="fine center booknote">No website on file for ${esc(it.name)}. Open Directions to find its phone number.</p>`;
   const social=/instagram\.com/.test(it.web)?"Instagram":/facebook\.com/.test(it.web)?"Facebook":"";
   const tickets=it.kind==="culture"||it.kind==="club";
   const label=it.kind==="cafe"?(social?`Open its ${social}`:"Visit the website"):tickets?(social?`Tickets on ${social}`:"Get tickets"):(social?`Book on ${social}`:"Book a table");
   const note=it.kind==="cafe"?"Opens the place's own page.":tickets?(it.kind==="club"?`For ${forWho}, ${when}. Opens the club's own page for tickets, lists and tables.`:`For ${forWho}, ${when}. Opens the venue's own page.`):`For ${forWho}, ${when}. Opens the place's own ${social?"page":"website"} to book.`;
-  return `<a class="btn" href="${esc(it.web)}" target="_blank" rel="noopener">${label}</a><p class="fine center booknote">${esc(note)}</p>`;
+  return `<a class="btn" href="${esc(it.web)}" target="_blank" rel="noopener" data-track="book_tap" data-ref="${esc(it.id)}" data-name="${esc(it.name)}" data-plan="${esc(S.code||"")}">${label}</a><p class="fine center booknote">${esc(note)}</p>`;
 }
 function viewResult(p){
   const r=results(p), w=r[0], total=Object.keys(p.votes||{}).filter(n=>!isOut(p,n)).length||going(p).length, back=p.group_id?(p.group_name||"Back"):"New plan";
@@ -745,7 +783,7 @@ function viewResult(p){
     <p class="pollwin">${TROPHY_ICON}<span>Winner: <b>${esc(it.name)}</b></span></p>
   </section>
   <div class="win"><p class="ok">${w.yes} of ${total} said yes</p>${p.time?`<p><b>Meet at ${esc(p.time)}</b> · ${esc(dayText(p.day))}</p>`:""}<p>${esc(where)}</p><p class="dim">${esc(sub)}</p></div>
-  ${p.practice?`<p class="note">That's how every plan works. Your friends vote on their phones, and the place with the most yeses wins.</p><div class="stack"><button class="btn" data-act="tourCoach">Show me around the app</button><button class="btn plain" data-act="tourAgain">Vote again</button></div>`:`${bookLink(it,p)}<div class="duo"><button class="btn plain" data-act="copy">Copy the details</button><a class="btn plain" href="${mapsUrl(it.name+" "+where)}" target="_blank" rel="noopener">Directions</a></div>`}`;
+  ${p.practice?`<p class="note">That's how every plan works. Your friends vote on their phones, and the place with the most yeses wins.</p><div class="stack"><button class="btn" data-act="tourCoach">Show me around the app</button><button class="btn plain" data-act="tourAgain">Vote again</button></div>`:`${bookLink(it,p)}<div class="duo"><button class="btn plain" data-act="copy">Copy the details</button><a class="btn plain" href="${mapsUrl(it.name+" "+where)}" target="_blank" rel="noopener" data-track="directions_tap" data-ref="${esc(it.id)}" data-name="${esc(it.name)}">Directions</a></div>`}`;
 }
 const GROUP_ICON='<svg class="pollicon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 19.5c0-3.4 2.7-5.8 6-5.8s6 2.4 6 5.8"/><circle cx="16.6" cy="9" r="2.6"/><path d="M16 13.8c2.8.2 5 2.3 5 5.2"/></svg>';
 const TROPHY_ICON='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 6H5a2 2 0 0 0 2 4h1M16 6h3a2 2 0 0 1-2 4h-1M12 13v4M8.5 20h7M10 17h4"/></svg>';
@@ -1279,6 +1317,7 @@ function viewAccount(){
     :pushPerm()==="denied"?`<p class="fine">Notifications are blocked for Concit. Allow them in your ${IS_IOS?"iPhone's Settings, under Notifications":"browser's site settings"}, then come back here.</p>`
     :`<div class="themeseg${PUSH.busy?" busy":""}">${seg("setPush",PUSH.on?"on":"off",[["on","On"],["off","Off"]],"Notifications")}</div><p class="fine">Get an alert for new group plans, results and chat messages. Set separately on each device.</p>`}</div>
   <div class="group"><span class="label">Appearance</span><div class="themeseg">${seg("setTheme",themePref(),[["light","Light"],["dark","Dark"],["auto","Match device"]],"Appearance")}</div><p class="fine">Saved on this device.</p></div>
+  ${S.admin?`<div class="group"><span class="label">Owner</span><button class="person" data-act="openStats"><span>Stats<small class="sub">How Concit is being used</small></span><small>Open</small></button></div>`:""}
   <div class="group"><span class="label">Help</span><button class="person tourrow" data-act="replayTour"><span class="tourico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg></span><span>Show me around again<small class="sub">Replay the welcome, practice vote and tour of the app</small></span></button></div>
   <div class="group"><span class="label">Your data</span><a class="person" href="privacy.html"><span>Privacy notice<small class="sub">What Concit keeps and why</small></span><small>Read</small></a></div>
   <button class="btn plain" data-act="logout">${isGuest()?"Leave guest mode":"Log out"}</button>${isGuest()?`<p class="fine center">Leaving guest mode on this device means you can't get back to these votes.</p>`:""}
@@ -1597,8 +1636,8 @@ function render(){
   const open=[...document.querySelectorAll("details[open] b")].map(b=>b.textContent);
   const authed=S.session&&S.authView!=="newpass";
   document.body.classList.toggle("noauth",!authed);
-  if(!authed) requestAnimationFrame(mountCaptcha);
-  document.getElementById("view").innerHTML=!authed?viewAuth():S.acct?viewAccount():S.tab==="home"?viewHome():S.tab==="decide"?viewDecide():S.tab==="hotspots"?viewHot():S.tab==="groups"?viewGroups():viewEvents();
+  if(!authed) requestAnimationFrame(mountCaptcha); else trackTab();
+  document.getElementById("view").innerHTML=!authed?viewAuth():S.acct?(S.stats&&S.admin?viewStats():viewAccount()):S.tab==="home"?viewHome():S.tab==="decide"?viewDecide():S.tab==="hotspots"?viewHot():S.tab==="groups"?viewGroups():viewEvents();
   const h=document.querySelector("#view [data-hero]"), ht=document.getElementById("heroText");
   ht.innerHTML=h?h.innerHTML:""; h?.remove();
   if(S.practice) decoratePractice();
@@ -1848,7 +1887,7 @@ const H={
   async planRejoin(){ const code=S.code; try{ await rpc("rejoin_plan",{p_code:code}); await openPlan(code); loadGroups(); toast("You're back in."); }catch{ toast("Couldn't rejoin. Try again."); } },
   attend(el){ const go=el.dataset.v==="1"; setAttending(go); },
   clearTime(){ S.timeOpen=false;  S.form.time=""; render(); },
-  share(){ shareOut(`Help choose where we go: ${shareUrl()}`,"Link copied"); },
+  share(){ track("share","plan"); shareOut(`Help choose where we go: ${shareUrl()}`,"Link copied"); },
   authView(el){ S.email=document.getElementById("email")?.value||S.email; S.authView=el.dataset.v; S.authNote=""; render(); },
   noGuest(){ S.noGuest=true; S.authView="login"; S.authNote=""; render(); },
   asGuest(){ S.noGuest=false; S.authView="login"; S.authNote=""; render(); },
@@ -1877,7 +1916,10 @@ const H={
   removeGroupAvatar(el){ removeGroupAvatar(el.dataset.id); },
   viewAv(el){ openPhoto(el.dataset.id,el.dataset.name); },
   allGroups(){ S.chatOpen=false; CHAT.gid=null; S.gid=null; S.acct=false; S.deleting=false; S.leaving=false; render(); scrollTo(0,0); },
-  account(){ S.acct=true; S.deleting=false; render(); scrollTo(0,0); },
+  account(){ S.acct=true; S.stats=false; S.deleting=false; render(); scrollTo(0,0); },
+  openStats(){ S.stats=true; S.statsData=null; render(); scrollTo(0,0); loadStats(); },
+  closeStats(){ S.stats=false; render(); scrollTo(0,0); },
+  statDays(el){ S.statDays=Number(el.dataset.v)||14; loadStats(); },
   setTheme(el){ setTheme(el.dataset.v); render(); },
   closeAccount(){ S.acct=false; S.deleting=false; render(); scrollTo(0,0); },
   joinMode(el){ S.joinMode=el.dataset.v==="1"; render(); document.getElementById(S.joinMode?"joinCode":"groupName")?.focus(); },
@@ -1887,7 +1929,7 @@ const H={
     try{localStorage.removeItem(KEY)}catch{} S.saved.clear(); S.acct=false; S.deleting=false;
     logout(true); S.authNote="Your account and its data have been deleted."; render(); },
   newGroupPlan(el){ S.form.group=el.dataset.id; S.form.linkOnly=false; S.plan=null; S.code=null; setUrl(null); S.tab="decide"; render(); scrollTo(0,0); },
-  invite(el){ const g=S.groups.find(x=>x.id===el.dataset.id); if(g) shareOut(`Join ${g.name} on Concit: ${inviteUrl(g)}`,"Invite link copied"); },
+  invite(el){ const g=S.groups.find(x=>x.id===el.dataset.id); if(g) track("share","group"); if(g) shareOut(`Join ${g.name} on Concit: ${inviteUrl(g)}`,"Invite link copied"); },
   async leave(el){ if(!S.leaving){ S.leaving=true; render(); return; } S.leaving=false; try{ await rpc("leave_group",{p_group:el.dataset.id}); S.gid=null; await loadGroups(); render(); }catch{ toast("Couldn't leave the group. Try again."); } },
   vote(el){ dealVote(el.dataset.id,Number(el.dataset.v)); },
   undoVote(){ undoVote(); },
@@ -1951,7 +1993,7 @@ document.addEventListener("submit",async e=>{ e.preventDefault();
     try{
       const u=await authCall("user",{email},"PUT",S.session.access_token);
       if((u.email||"").toLowerCase()!==email.toLowerCase()){ toast("Check your inbox to confirm that email, then set a password with Forgot your password."); }
-      else { const u2=await authCall("user",{password:pass},"PUT",S.session.access_token); S.session.user=u2&&u2.id?u2:u; await refreshSession().catch(()=>{}); saveSession(); toast("Account created. You can log in anywhere now."); }
+      else { const u2=await authCall("user",{password:pass},"PUT",S.session.access_token); S.session.user=u2&&u2.id?u2:u; await refreshSession().catch(()=>{}); saveSession(); track("guest_upgrade"); toast("Account created. You can log in anywhere now."); }
     }catch(err){ toast(authMessage(err.message)); }
     S.keepBusy=false; render(); return; }
   if(e.target.id==="renameForm"){ const i=document.getElementById("groupRename"), n=i.value.trim().replace(/\s+/g," "), gid=e.target.dataset.id, g=S.groups.find(x=>x.id===gid); i.blur(); if(!n||!g||n===g.name){ render(); return; }
@@ -1999,7 +2041,8 @@ function linkFromUrl(){
 }
 async function afterLogin(){
   render();
-  pushSync();
+  pushSync(); trackOpen();
+  rpc("is_admin").then(v=>{ S.admin=!!v; if(S.acct) render(); }).catch(()=>{});
   await Promise.all([loadPlaces(),loadEvents(),loadGroups(),loadMyAvatar()]);
   const p=S.pending; S.pending=null; persist();
   if(p?.join){ setUrl(null); await joinByCode(p.join); }
