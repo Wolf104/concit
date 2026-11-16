@@ -220,10 +220,12 @@ async function pushDisable(){
 /* Ask the server to notify the others in a plan. It checks for itself that the notification is due and sends it once. */
 function pushSend(code,kind){
   if(!code||!S.session||!SB.vapidKey) return;
-  fetch("/api/push",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${S.session.access_token}`},body:JSON.stringify({code,kind})}).catch(()=>{});
+  fetch("/api/push",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${S.session.access_token}`},body:JSON.stringify(kind==="chat"?{kind,id:code}:{code,kind})}).catch(()=>{});
 }
+/* Open a group's chat, from a tapped notification or a ?chat= link. */
+function openChatLink(gid){ if(!S.groups.some(g=>g.id===gid)) return false; S.acct=false; S.sights=false; S.tab="groups"; S.gid=gid; openChat(gid); return true; }
 const pushAsk=()=>{ let later=false; try{ later=!!localStorage.getItem("concit.pushlater"); }catch{} return PUSH_OK&&!PUSH.on&&!later&&Notification.permission==="default"&&S.groups.length>0; };
-if("serviceWorker" in navigator) navigator.serviceWorker.addEventListener("message",e=>{ const u=e.data&&e.data.openUrl; if(!u||!S.session) return; try{ const c=new URL(u).searchParams.get("plan"); if(c){ S.acct=false; S.chatOpen=false; openPlan(c); } }catch{} });
+if("serviceWorker" in navigator) navigator.serviceWorker.addEventListener("message",e=>{ const u=e.data&&e.data.openUrl; if(!u||!S.session) return; try{ const q=new URL(u).searchParams, c=q.get("plan"), g=q.get("chat"); if(c){ S.acct=false; S.chatOpen=false; openPlan(c); } else if(g) openChatLink(g); }catch{} });
 async function refresh(){
   if(!S.code||refresh.busy||document.hidden) return;
   refresh.busy=true;
@@ -979,7 +981,7 @@ async function sendChat(){
   i.value=""; i.style.height=""; typing(false);
   const temp={id:Number.MAX_SAFE_INTEGER, body, by:uid(), name:"You", at:new Date().toISOString(), pending:true};
   CHAT.msgs.push(temp); paintChat(true);
-  try{ const m=await rpc("send_message",{p_group:CHAT.gid,p_body:body}); CHAT.msgs=CHAT.msgs.filter(x=>x!==temp); if(m&&!CHAT.msgs.some(x=>x.id===m.id)) CHAT.msgs.push(m); CHAT.msgs.sort((a,b)=>a.id-b.id); CHAT.last=Math.max(CHAT.last,m?.id||0); paintChat(true); }
+  try{ const m=await rpc("send_message",{p_group:CHAT.gid,p_body:body}); if(m&&m.id) pushSend(m.id,"chat"); CHAT.msgs=CHAT.msgs.filter(x=>x!==temp); if(m&&!CHAT.msgs.some(x=>x.id===m.id)) CHAT.msgs.push(m); CHAT.msgs.sort((a,b)=>a.id-b.id); CHAT.last=Math.max(CHAT.last,m?.id||0); paintChat(true); }
   catch{ CHAT.msgs=CHAT.msgs.filter(x=>x!==temp); paintChat(); if(i&&!i.value) i.value=body; toast("Message not sent. Check your connection and try again."); }
 }
 function viewChat(g){
@@ -1118,7 +1120,7 @@ function viewAccount(){
   <div class="group"><span class="label">Notifications</span>${
     pushPerm()==="unsupported"?`<p class="fine">${IS_IOS?"On an iPhone, notifications work once Concit is on your Home Screen. Open concit.app in Safari, tap Share, then Add to Home Screen, and turn them on here from the app.":"This browser can't show notifications."}</p>`
     :pushPerm()==="denied"?`<p class="fine">Notifications are blocked for Concit. Allow them in your ${IS_IOS?"iPhone's Settings, under Notifications":"browser's site settings"}, then come back here.</p>`
-    :`<div class="themeseg${PUSH.busy?" busy":""}">${seg("setPush",PUSH.on?"on":"off",[["on","On"],["off","Off"]],"Notifications")}</div><p class="fine">Get an alert when a group plan needs your vote and when the votes are in. Set separately on each device.</p>`}</div>
+    :`<div class="themeseg${PUSH.busy?" busy":""}">${seg("setPush",PUSH.on?"on":"off",[["on","On"],["off","Off"]],"Notifications")}</div><p class="fine">Get an alert for new group plans, results and chat messages. Set separately on each device.</p>`}</div>
   <div class="group"><span class="label">Appearance</span><div class="themeseg">${seg("setTheme",themePref(),[["light","Light"],["dark","Dark"],["auto","Match device"]],"Appearance")}</div><p class="fine">Saved on this device.</p></div>
   <div class="group"><span class="label">Help</span><button class="person tourrow" data-act="replayTour"><span class="tourico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg></span><span>Show me around again<small class="sub">Replay the welcome, practice vote and tour of the app</small></span></button></div>
   <div class="group"><span class="label">Your data</span><a class="person" href="privacy.html"><span>Privacy notice<small class="sub">What Concit keeps and why</small></span><small>Read</small></a></div>
@@ -1810,8 +1812,9 @@ async function loadPlaces(){
   }catch{}
 }
 function linkFromUrl(){
-  const q=new URLSearchParams(location.search), plan=q.get("plan"), join=q.get("join");
+  const q=new URLSearchParams(location.search), plan=q.get("plan"), join=q.get("join"), chat=q.get("chat");
   if(plan||join){ S.pending={plan,join}; persist(); }
+  if(chat){ S.pendingChat=chat; history.replaceState(null,"",location.pathname); }
 }
 async function afterLogin(){
   render();
@@ -1821,6 +1824,8 @@ async function afterLogin(){
   if(p?.join){ setUrl(null); await joinByCode(p.join); }
   else if(p?.plan) await openPlan(p.plan);
   render();
+  const pc=S.pendingChat; S.pendingChat=null;
+  if(pc&&!p?.plan&&!p?.join&&openChatLink(pc)) return;
   if(!p?.plan&&tourDue()) startTour(); else homeTop();
 }
 /* Links from confirmation and password-reset emails arrive in the address hash. */

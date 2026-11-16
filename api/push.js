@@ -1,5 +1,5 @@
-// Sends phone notifications for a plan. The app calls this right after someone makes a group plan
-// ("new") or casts the vote that completes one ("done"), passing that person's own login token.
+// Sends phone notifications. The app calls this right after someone makes a group plan ("new"),
+// casts the vote that completes one ("done") or sends a chat message ("chat"), passing that person's own login token.
 // The database decides whether a notification is due and who gets it (see supabase/push.sql);
 // this file only delivers it. Secrets live in Vercel's environment variables, never in the code:
 //   VAPID_PRIVATE_KEY  signs the notifications (pairs with vapidKey in config.js)
@@ -23,11 +23,13 @@ module.exports = async function handler(req, res) {
   const secret = process.env.PUSH_SECRET, key = process.env.VAPID_PRIVATE_KEY;
   if (!secret || !key) return res.status(503).json({ ok: false, error: "push not configured" });
   const token = (req.headers.authorization || "").replace(/^Bearer\s+/i, "");
-  const { code, kind } = req.body || {};
-  if (!token || typeof code !== "string" || code.length > 40 || !["new", "done"].includes(kind)) return res.status(400).json({ ok: false });
+  const { code, kind, id } = req.body || {};
+  const chat = kind === "chat";
+  if (!token || (chat ? !Number.isSafeInteger(id) || id < 1 : typeof code !== "string" || code.length > 40 || !["new", "done"].includes(kind))) return res.status(400).json({ ok: false });
 
   try {
-    const r = await rpc("push_claim", token, { p_code: code, p_kind: kind, p_secret: secret });
+    const r = chat ? await rpc("push_chat", token, { p_id: id, p_secret: secret })
+                   : await rpc("push_claim", token, { p_code: code, p_kind: kind, p_secret: secret });
     if (!r.ok) return res.status(r.status === 401 ? 401 : 400).json({ ok: false });
     const job = await r.json();
     if (!job || !job.subs || !job.subs.length) return res.status(200).json({ ok: true, sent: 0 });
