@@ -24,14 +24,38 @@ function starsHtml(p,cls){
   return `<span class="rate${cls?" "+cls:""}" role="img" aria-label="Rated ${v} out of 5 from ${(p.reviews||0).toLocaleString("en-GB")} reviews"><span class="st5" style="--p:${Math.round(p.stars*20)}%" aria-hidden="true">★★★★★</span><b aria-hidden="true">${v}</b><small aria-hidden="true">(${revText(p.reviews)})</small></span>`;
 }
 function costText(p){const u=KIND_UNIT[p.kind],c=costOf(p,u);return c===0?"Free":`about €${c} ${UNIT_TEXT[u]}`}
+/* ---------- Cities ----------
+   Everything that differs between cities lives in CITIES. PLACES, EVENTS, SIGHTS, AREAS and the local cuisine
+   always hold the current city's data; ALL keeps every city's places and events so a plan made elsewhere still opens. */
+const MAP_SPOTS={bicocca:[270,30],isola:[175,88],lambrate:[320,80],sarpi:[64,140],garibaldi:[178,140],centrale:[300,130],cittastudi:[318,178],brera:[100,192],venezia:[240,212],duomo:[190,265],tortona:[66,305],navigli:[135,345],romana:[285,320],lodi:[270,375]};
+const CITIES={
+  milan:{name:"Milan",q:"Milano",center:[45.4642,9.19],bounds:[[9.105,45.42],[9.275,45.52]],zones:{...ZONES},
+    areas:["brera","duomo","garibaldi","isola","lambrate","navigli","nolo","romana","venezia","sarpi","tortona"],sights:[...SIGHTS],cuisine:["milanese","Milanese"],chips:["Open now","Under €15","Navigli","Sushi"]},
+  ...(typeof MADRID==="object"?{madrid:MADRID}:{})};
+Object.values(CITIES).forEach(c=>Object.assign(ZONES,c.zones));
+let CITY=(()=>{ try{ const c=localStorage.getItem("concit.city"); return CITIES[c]?c:"milan"; }catch{ return "milan"; } })();
+const city=()=>CITIES[CITY], cityName=()=>city().name;
+const cityOf=x=>x&&CITIES[x.city]?x.city:"milan";
+const ALL={places:PLACES.slice(),events:EVENTS.slice()};
 const CUISINES=[["","Any"],["pizza","Pizza"],["pasta","Pasta"],["milanese","Milanese"],["seafood","Seafood"],["sushi","Sushi"],["asian","Asian"],["meat","Meat"],["street","Street food"],["world","World"],["veggie","Veggie"],["fine","Fine dining"]];
-const CUISINE_TEXT=Object.fromEntries(CUISINES);
+const CUISINE_TEXT={...Object.fromEntries(CUISINES),...Object.fromEntries(Object.values(CITIES).map(c=>c.cuisine))};
+const AREAS=[];
+/* Point the working lists at the current city. */
+function useCity(){
+  const c=city();
+  PLACES.length=0; ALL.places.forEach(p=>{ if(cityOf(p)===CITY) PLACES.push(p); });
+  EVENTS.length=0; ALL.events.forEach(e=>{ if(cityOf(e)===CITY) EVENTS.push(e); });
+  SIGHTS.length=0; SIGHTS.push(...c.sights);
+  AREAS.length=0; AREAS.push(...c.areas);
+  CUISINES[3]=c.cuisine;
+  SIGHT_KINDS.modern[0]="Modern "+c.name;
+}
+useCity();
 const hasCuisine=(p,c)=>!c||(p.cuisine||[]).includes(c);
 const cuisineSelect=(act,val,any)=>`<select class="csel${val?" on":""}" data-cs="${act}" aria-label="Cuisine">${CUISINES.map(([k,l])=>`<option value="${k}" ${(val||"")===k?"selected":""}>${k?l:any}</option>`).join("")}</select>`;
-const AREAS=["brera","duomo","garibaldi","isola","lambrate","navigli","nolo","romana","venezia","sarpi","tortona"];
 
 /* ---------- Logic ---------- */
-const byId=id=>PLACES.find(p=>p.id===id)||EVENTS.find(e=>e.id===id)||null;
+const byId=id=>ALL.places.find(p=>p.id===id)||ALL.events.find(e=>e.id===id)||null;
 const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 const parse=s=>{const[y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)};
 const addDays=(s,n)=>{const d=parse(s);d.setDate(d.getDate()+n);return iso(d)};
@@ -468,14 +492,14 @@ const psValue=el=>{ const [ ,hi]=prange(el.dataset.unit), v=+el.value; return v>
 function slider(id,unit,i){
   return `<div class="group"><div class="sliderhead"><span class="label">${LABEL[unit]}</span><b id="${id}Val">${stepText(unit,i)}</b></div><input type="range" id="${id}" data-slider="${unit}" min="0" max="${STEPS[unit].length}" step="1" value="${i}" aria-label="${LABEL[unit]}"></div>`;
 }
-const metroText=m=>m[0]?`M${m[0][0]} ${m[0][1]}`:"";
+const metroText=m=>m&&m[0]?`${typeof m[0][0]==="number"?"M"+m[0][0]:m[0][0]} ${m[0][1]}`:"";
 /* Changing the day drops picked events that aren't on that day. */
 function setDay(d){ const f=S.form; f.day=d; if(f.picks) f.picks=f.picks.filter(id=>{ const e=EVENTS.find(x=>x.id===id); return !e||(e.start<=d&&e.end>=d); }); }
 const dayName=d=>d===today?"today":d===addDays(today,1)?"tomorrow":parse(d).toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"});
 const eventWhen=e=>e.start===e.end?`${wday(e.start)} ${short(e.start)}`:(e.start<=today?`Until ${short(e.end)}`:`${short(e.start)} to ${short(e.end)}`);
 const srcUrl=k=>SRC[k]?SRC[k][1]:/^https?:\/\//.test(k||"")?k:"#";
 const dot=t=>{ t=(t||"").trim(); return t&&!/[.!?…]$/.test(t)?t+".":t; };
-const mapsUrl=q=>"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(q+", Milano");
+const mapsUrl=(q,x)=>"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(q+", "+CITIES[x?cityOf(x):CITY].q);
 
 const WHAT_TEXT={coffee:"Coffee",eat:"Food",drinks:"Drinks",clubs:"Clubs",culture:"Culture",event:"An event"};
 const dayText=d=>d===today?"tonight":d===addDays(today,1)?"tomorrow":`${long(d)} ${short(d)}`;
@@ -500,8 +524,7 @@ function calendar(sel){
   <div class="calgrid">${["M","T","W","T","F","S","S"].map(x=>`<span class="dow">${x}</span>`).join("")}${cells}</div></div>`;
 }
 /* Where: drop a pin by moving the map under a fixed centre pin. Falls back to an area list if the map can't load. */
-const MILAN=[45.4642,9.19];
-const nearestZone=([lat,lng])=>Object.entries(ZONES).reduce((b,[k,z])=>{const d=km([null,lat,lng],z);return d<b[1]?[k,d]:b},[null,1e9])[0];
+const nearestZone=([lat,lng])=>Object.entries(city().zones).reduce((b,[k,z])=>{const d=km([null,lat,lng],z);return d<b[1]?[k,d]:b},[null,1e9])[0];
 const radText=r=>r<1?`${Math.round(r*1000)} m`:`${r} km`;
 const pinText=(pin,r)=>r?`Within ${radText(r)} of ${zname(nearestZone(pin))}`:`Near ${zname(nearestZone(pin))}`;
 const pickTarget=()=>S.pickOpen==="hot"?flt():S.form;
@@ -513,7 +536,7 @@ function viewPinPicker(){
     <div class="inline" style="margin-top:10px"><button class="btn small plain" data-act="pickCancel">Cancel</button><button class="btn" data-act="pickSet" style="flex:1">Set area</button></div>`;
 }
 function pinButton(t,which){
-  return `<div class="where"><button class="wherebtn" data-act="pickOpen" data-v="${which}"><span class="wpin">${PIN}</span><span>${t.pin?esc(pinText(t.pin,t.radius)):"Anywhere in Milan"}</span><small>${t.pin?"Change":"Drop a pin"}</small></button>
+  return `<div class="where"><button class="wherebtn" data-act="pickOpen" data-v="${which}"><span class="wpin">${PIN}</span><span>${t.pin?esc(pinText(t.pin,t.radius)):"Anywhere in "+cityName()}</span><small>${t.pin?"Change":"Drop a pin"}</small></button>
     ${t.pin?`<button class="wclear" data-act="pinClear" data-v="${which}" aria-label="Remove pin">×</button>`:""}</div>`;
 }
 let PICK=null, PICK_HOST=null;
@@ -527,11 +550,13 @@ const METRO_STATIONS={
 5:"Bignami|Ponale|Bicocca|Ca' Granda|Istria|Marche|Zara|Isola|Garibaldi|Garibaldi FS|Monumentale|Cenisio|Gerusalemme|Domodossola|Domodossola FN|Tre Torri|Portello|Lotto|Lotto Fieramilanocity|Segesta|San Siro Ippodromo|San Siro Stadio"};
 /* Main train stations that connect to the metro. */
 const TRAIN_LINKS={"milano centrale":[2,3],"milano porta garibaldi":[2,5],"milano cadorna":[1,2],"milano lambrate":[2],"milano porta genova":[2],"milano rogoredo":[3],"milano porta venezia":[1],"milano repubblica":[3],"milano dateo":[4],"milano forlanini":[4],"milano san cristoforo":[4],"sesto san giovanni":[1],"milano affori":[3],"milano domodossola":[5],"milano bovisa":[]};
+const metroOf=()=>city().metro||{pre:"M",colors:METRO_LINES,stations:METRO_STATIONS,trains:TRAIN_LINKS};
 function metroLookup(){
   const m={}, add=(n,l)=>{ for(const v of new Set([n.toLowerCase(),n.toLowerCase().replace(/'/g,"’")])){ m[v]=m[v]||[]; if(!m[v].includes(l)) m[v].push(l); } };
-  for(const [l,names] of Object.entries(METRO_STATIONS)) names.split("|").forEach(n=>add(n,+l));
-  for(const [n,ls] of Object.entries(TRAIN_LINKS)) ls.forEach(l=>add(n,l));
-  Object.values(m).forEach(a=>a.sort());
+  const M=metroOf();
+  for(const [l,names] of Object.entries(M.stations)) names.split("|").forEach(n=>add(n,l));
+  for(const [n,ls] of Object.entries(M.trains||{})) ls.forEach(l=>add(n,String(l)));
+  Object.values(m).forEach(a=>a.sort((x,y)=>(parseInt(x)||99)-(parseInt(y)||99)));
   return m;
 }
 /* Metro and train stations from the map's own street data, drawn as clear dots with names. */
@@ -542,16 +567,17 @@ function addStations(map){
       const ref=map.getLayer("poi_transit"), font=(ref&&map.getLayoutProperty("poi_transit","text-font"))||["Noto Sans Bold"];
       if(ref) map.setLayoutProperty("poi_transit","visibility","none");
       const isStation=["all",["match",["get","class"],["railway","rail"],true,false],["!",["match",["get","subclass"],["tram_stop","subway_entrance","train_station_entrance","platform"],true,false]]];
-      const look=metroLookup(), key=["downcase",["get","name"]], navy="#0f2a44";
+      const look=metroLookup(), ML=metroOf().colors, MP=metroOf().pre, key=["downcase",["get","name"]], navy="#0f2a44";
       const colorPairs=[], labelPairs=[];
       for(const [n,ls] of Object.entries(look)){ if(!ls.length) continue;
-        colorPairs.push(n,METRO_LINES[ls[0]]);
-        const f=["format"]; ls.forEach(l=>f.push("M"+l+" ",{"text-color":METRO_LINES[l]})); f.push(["get","name"],{"text-color":navy});
+        colorPairs.push(n,ML[ls[0]]||navy);
+        const f=["format"]; ls.forEach(l=>f.push(MP+l+" ",{"text-color":ML[l]||navy})); f.push(["get","name"],{"text-color":navy});
         labelPairs.push(n,f); }
+      if(!colorPairs.length){ colorPairs.push("\u0000",navy); labelPairs.push("\u0000",["get","name"]); }
       map.addLayer({id:"concit-stations",type:"circle",source:"openmaptiles","source-layer":"poi",minzoom:12,filter:isStation,
         paint:{"circle-radius":["interpolate",["linear"],["zoom"],12,3.5,16,6],"circle-color":["match",key,...colorPairs,navy],"circle-stroke-color":"#ffffff","circle-stroke-width":2}});
-      map.addLayer({id:"concit-station-lines",type:"symbol",source:"openmaptiles","source-layer":"poi",minzoom:12.6,maxzoom:13.6,filter:["all",isStation,["match",key,Object.keys(look).filter(k=>look[k].length),true,false]],
-        layout:{"text-field":["match",key,...Object.keys(look).filter(k=>look[k].length).flatMap(k=>[k,look[k].map(l=>"M"+l).join(" ")]),""],"text-font":font,"text-size":10,"text-anchor":"left","text-offset":[0.7,0],"text-optional":true},
+      map.addLayer({id:"concit-station-lines",type:"symbol",source:"openmaptiles","source-layer":"poi",minzoom:12.6,maxzoom:13.6,filter:["all",isStation,["match",key,[...Object.keys(look).filter(k=>look[k].length),"\u0000"],true,false]],
+        layout:{"text-field":["match",key,...Object.keys(look).filter(k=>look[k].length).flatMap(k=>[k,look[k].map(l=>MP+l).join(" ")]),"\u0000","",""],"text-font":font,"text-size":10,"text-anchor":"left","text-offset":[0.7,0],"text-optional":true},
         paint:{"text-color":["match",key,...colorPairs,navy],"text-halo-color":"#ffffff","text-halo-width":1.6}});
       map.addLayer({id:"concit-station-names",type:"symbol",source:"openmaptiles","source-layer":"poi",minzoom:13.6,filter:isStation,
         layout:{"text-field":["match",key,...labelPairs,["get","name"]],"text-font":font,"text-size":11,"text-anchor":"left","text-offset":[0.8,0],"text-optional":true},
@@ -563,7 +589,7 @@ function addStations(map){
 /* Area names on the maps, so people can find their way around (Duomo, Brera...). Tapping one on the pin map moves the pin there. */
 function zoneLabels(map,tap){
   const els=[];
-  for(const [k,[name,lat,lng]] of Object.entries(ZONES)){
+  for(const [k,[name,lat,lng]] of Object.entries(city().zones)){
     const el=document.createElement(tap?"button":"div");
     el.className="zl"+(tap?" tap":""); el.textContent=name;
     if(tap){ el.type="button"; el.setAttribute("aria-label",`Move the pin to ${name}`); el.addEventListener("click",e=>{ e.stopPropagation(); map.easeTo({center:[lng,lat],zoom:Math.max(map.getZoom(),14)}); }); }
@@ -585,7 +611,7 @@ async function mountPick(){
   try{
     await loadMapLib();
     if(!document.getElementById("pickSlot")) return;
-    const t=pickTarget(), c=t.pin||MILAN;
+    const t=pickTarget(), c=t.pin||city().center;
     if(!PICK){
       PICK=new maplibregl.Map({container:PICK_HOST,style:MAP_STYLE,center:[c[1],c[0]],zoom:radZoom(S.pickR||2),dragRotate:false,touchPitch:false,attributionControl:{compact:true}});
       PICK.addControl(new maplibregl.NavigationControl({showCompass:false}),"top-right");
@@ -670,8 +696,8 @@ function viewSetup(){
     f.what==="eat"?row("Cuisine",cuisineSelect("cuisine",f.cuisine,"Any")):"",
     row("When",`<div class="seg" role="group" aria-label="When"><button data-act="day" data-v="${today}" aria-pressed="${!S.calOpen&&f.day===today}">Tonight</button><button data-act="day" data-v="${tom}" aria-pressed="${!S.calOpen&&f.day===tom}">Tomorrow</button><button data-act="cal" aria-pressed="${picked||!!S.calOpen}" aria-expanded="${!!S.calOpen}">${picked?short(f.day):"Other"}</button></div>`,S.calOpen?calendar(f.day):""),
     ev?"":row("Time",`<input type="text" class="tin" id="meetTime" inputmode="numeric" maxlength="5" autocomplete="off" placeholder="Any time" value="${esc(f.time||"")}" aria-label="Meet time, 24-hour, for example 19:30">`),
-    S.mapFail?row("Where",`<select id="area" data-change="area" aria-label="Area"><option value="">Anywhere in Milan</option>${AREAS.map(z=>`<option value="${z}" ${f.area===z?"selected":""}>${esc(zname(z))}</option>`).join("")}</select>`)
-      :row("Where",`<button class="sval${f.pin?" on":""}" data-act="pickOpen" data-v="form" aria-expanded="${S.pickOpen===true}">${f.pin?esc(pinText(f.pin,f.radius)):"Anywhere in Milan"}</button>${f.pin?`<button class="pillx" data-act="pinClear" data-v="form" aria-label="Remove pin">×</button>`:""}`,S.pickOpen===true?viewPinPicker():""),
+    S.mapFail?row("Where",`<select id="area" data-change="area" aria-label="Area"><option value="">Anywhere in ${cityName()}</option>${AREAS.map(z=>`<option value="${z}" ${f.area===z?"selected":""}>${esc(zname(z))}</option>`).join("")}</select>`)
+      :row("Where",`<button class="sval${f.pin?" on":""}" data-act="pickOpen" data-v="form" aria-expanded="${S.pickOpen===true}">${f.pin?esc(pinText(f.pin,f.radius)):"Anywhere in "+cityName()}</button>${f.pin?`<button class="pillx" data-act="pinClear" data-v="form" aria-label="Remove pin">×</button>`:""}`,S.pickOpen===true?viewPinPicker():""),
     row("Filters",`<button class="sval${ftxt?" on":""}" data-act="dfltOpen" aria-expanded="${!!S.dfltOpen}">${ftxt?esc(ftxt):"None"}</button>`,S.dfltOpen?viewDecideFilters(f,unit):""),
     S.groups.length?row("Send to",`<select id="sendTo" data-change="sendTo" aria-label="Send to">${S.groups.map(g=>`<option value="${esc(g.id)}" ${f.group===g.id?"selected":""}>${esc(g.name)}</option>`).join("")}<option value="" ${f.group?"":"selected"}>Share by link</option></select>`):""
   ].join("");
@@ -725,7 +751,7 @@ function cardHtml(p,id,under){
   if(ev){
     facts.push(["cal",eventWhen(it),it.time?it.time:"Time to be confirmed"]);
     facts.push(["ticket",it.priceNum===0?"Free":it.priceText||"Price to be confirmed","Tickets"]);
-    facts.push(["pin",it.venue||"Venue to be confirmed",it.zone?zname(it.zone):"Milan"]);
+    facts.push(["pin",it.venue||"Venue to be confirmed",it.zone?zname(it.zone):CITIES[cityOf(it)].name]);
     if(far!=null) facts.push(["walk",distText(far),"from your pin"]);
   } else {
     const c=costOf(it,KIND_UNIT[it.kind]);
@@ -735,8 +761,8 @@ function cardHtml(p,id,under){
     const d=p.day||today, h=hoursOn(it,d), when=d===today?"today":d===addDays(today,1)?"tomorrow":parse(d).toLocaleDateString("en-GB",{weekday:"long"});
     facts.push(h?["clock",fmtHours(h),(h==="C"?"Closed ":"Open ")+when,h==="C"]:["clock",open(it,d)?"Hours not listed":"Usually closed",when,!open(it,d)]);
   }
-  const links=ev?(/^https?:\/\//.test(it.src||"")?[[it.src,"web","Event page"]]:[]).concat(it.venue?[[mapsUrl(it.venue),"dir","Directions"]]:[])
-    :[[mapsUrl(it.name+" "+it.addr),"dir","Directions"]].concat(/^https?:\/\//.test(it.web||"")?[[it.web,"web",/instagram\.com/.test(it.web)?"Instagram":/facebook\.com/.test(it.web)?"Facebook":"Website"]]:[]);
+  const links=ev?(/^https?:\/\//.test(it.src||"")?[[it.src,"web","Event page"]]:[]).concat(it.venue?[[mapsUrl(it.venue,it),"dir","Directions"]]:[])
+    :[[mapsUrl(it.name+" "+it.addr,it),"dir","Directions"]].concat(/^https?:\/\//.test(it.web||"")?[[it.web,"web",/instagram\.com/.test(it.web)?"Instagram":/facebook\.com/.test(it.web)?"Facebook":"Website"]]:[]);
   const about=ev?"":[it.why,it.detail].filter(Boolean).map(t=>t.replace(/\.$/,"")).join(". ")+".";
   return `<article class="vcard${under?" under":""}" style="--cc:${col}" data-id="${esc(id)}"${under?' aria-hidden="true" inert':""}>
     ${under?"":`<span class="vstamp yes" aria-hidden="true">I'm in</span><span class="vstamp no" aria-hidden="true">Nope</span>`}
@@ -802,7 +828,7 @@ function viewGuestGate(){
   return `<div data-hero><span>You're voting as a guest</span><h1>Want to plan your own?</h1></div>
   ${S.guestNote?`<p class="note">${esc(S.guestNote)}</p>`:""}
   ${code?`<div class="group"><button class="person" data-act="openPlan" data-code="${esc(code)}"><span>Your plan<small class="sub">Vote, or see the result</small></span><small>Open</small></button></div>`:""}
-  <div class="guestbox"><b>Create a free account</b><p class="fine">Start your own plans, make groups with your friends, chat, and browse Milan's places and events. Your votes come with you.</p>${keepFormHtml()}</div>
+  <div class="guestbox"><b>Create a free account</b><p class="fine">Start your own plans, make groups with your friends, chat, and browse places and events in your city. Your votes come with you.</p>${keepFormHtml()}</div>
   <button class="link center" data-act="guestLogin">${S.guestLeaving?"Tap again to log in. Your guest votes stay behind.":"I already have an account"}</button>
   <p class="fine center">See how Concit handles your data in the <a href="privacy.html">privacy notice</a>.</p>`;
 }
@@ -1242,7 +1268,7 @@ function viewHome(){
   const now=PLACES.filter(p=>p.stars&&(p.reviews||0)>=150).map(p=>({p,u:openUntil(p)})).filter(x=>x.u).sort((a,b)=>byRank(a.p,b.p)).slice(0,10);
   const evs=EVENTS.filter(e=>e.start>=today&&!isRun(e)).sort((a,b)=>a.start.localeCompare(b.start)).slice(0,4);
   const pstat=p=>p.st===2?["See result","done"]:p.st===0?["Vote","todo"]:[`${p.done} of ${p.people} voted`,""];
-  return `<div data-hero><span class="kicker">${esc(new Date().toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"}).replace(",",""))} · Milan</span><h1>What's the plan?</h1></div>
+  return `<div data-hero><span class="kicker">${esc(new Date().toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"}).replace(",",""))} · ${cityPick()}</span><h1>What's the plan?</h1></div>
   <section class="hstart" aria-labelledby="hsH">
     <div class="hsec"><h2 id="hsH">Start a plan</h2><button class="link" data-act="homeGo" data-v="pick">I'll pick myself</button></div>
     <div class="tiles four" role="group" aria-label="What">${HOME_OCC.map(([k,l,ic])=>`<button class="tile" data-act="homeWhat" data-v="${k}" aria-pressed="${w===k}">${evIcon(ic)}<span>${l}</span></button>`).join("")}</div>
@@ -1254,7 +1280,7 @@ function viewHome(){
   ${pushAsk()?`<div class="pushask"><span>Get an alert when a plan needs your vote</span><button class="link" data-act="pushOn">Turn on</button><button class="pillx" data-act="pushLater" aria-label="Not now">×</button></div>`:""}</section>
   ${now.length?`<section aria-labelledby="hnH"><div class="hsec"><h2 id="hnH">Open now, top rated</h2><button class="link" data-act="tab" data-tab="hotspots">Hotspots</button></div>
   <div class="hplaces">${now.map(({p,u})=>{const c=mapCat(p);return `<button class="hplace" data-act="homePlace" data-id="${esc(p.id)}" style="--c:${c[2]}"><span class="hband"><i>${esc(p.cuisine&&p.cuisine[0]&&CUISINE_TEXT[p.cuisine[0]]||KIND_SHORT[p.kind]||"")}</i><small>Open till ${u}</small></span><span class="hbody"><b>${esc(p.name)}</b><small>${esc(zname(p.zone))} · ${esc(costText(p).replace(/ (a|an) .*$/,""))}</small>${starsHtml(p,"small")}</span></button>`}).join("")}</div></section>`:""}
-  ${evs.length?`<section aria-labelledby="heH"><div class="hsec"><h2 id="heH">Coming up in Milan</h2><button class="link" data-act="tab" data-tab="events">Events</button></div>
+  ${evs.length?`<section aria-labelledby="heH"><div class="hsec"><h2 id="heH">Coming up in ${cityName()}</h2><button class="link" data-act="tab" data-tab="events">Events</button></div>
   <div class="sheet glist">${evs.map(e=>{const d=parse(e.start);return `<button class="grow" data-act="homeEvent" data-id="${esc(e.id)}"><span class="hdate" style="--c:${EV_COL[e.cat]||"var(--link)"}"><i>${d.toLocaleDateString("en-GB",{month:"short"})}</i><b>${d.getDate()}</b></span><span class="gmain"><b>${esc(e.name)}</b><small>${esc([EV_TYPES[evType(e)][0],e.venue,e.time].filter(Boolean).join(" · "))}</small></span></button>`}).join("")}</div></section>`:""}
   ${homeSights()}
   <section aria-labelledby="hgH"><div class="hsec"><h2 id="hgH">Your groups</h2></div>
@@ -1281,14 +1307,18 @@ async function loadSightImgs(){
   try{ localStorage.setItem("concit.sightimg",JSON.stringify(SIGHT_IMG)); }catch{}
   SIGHT_LOADING=false; if(S.sights&&S.tab==="home") render();
 }
+/* The city name in the Home header is the city switch. */
+/* It only appears once the database is known to hold more than one city. */
+const cityPick=()=>Object.keys(CITIES).length<2||(!DATA.multi&&CITY==="milan")?esc(cityName()):`<label class="citypick">${esc(cityName())}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg><select data-cs="city" aria-label="City">${Object.entries(CITIES).map(([k,c])=>`<option value="${k}" ${k===CITY?"selected":""}>${esc(c.name)}</option>`).join("")}</select></label>`;
 function homeSights(){
+  if(!SIGHTS.length) return "";
   const top=SIGHTS.filter(x=>x.top);
   return `<section aria-labelledby="hvH"><div class="hsec"><h2 id="hvH">See the city</h2><button class="link" data-act="sights">All ${SIGHTS.length} sights</button></div>
   <div class="hplaces hsights">${top.map(x=>`<button class="hsight" data-act="sights" data-id="${x.id}" data-simg="${x.id}"${sightBg(x)}><i>${esc(x.pay)}</i><span><b>${esc(x.name)}</b><small>${esc(x.zone)}</small></span></button>`).join("")}</div></section>`;
 }
 function viewSights(){
   const k=S.sightKind||"all", list=SIGHTS.filter(x=>k==="all"||x.kind===k);
-  return `<div data-hero><button class="back" data-act="sightsBack">‹ Home</button><span>${SIGHTS.length} places worth the walk</span><h1>See Milan</h1></div>
+  return `<div data-hero><button class="back" data-act="sightsBack">‹ Home</button><span>${SIGHTS.length} places worth the walk</span><h1>See ${cityName()}</h1></div>
   <div class="chips sightchips" role="group" aria-label="Type">${[["all","All"],...Object.entries(SIGHT_KINDS).map(([key,v])=>[key,v[0]])].map(([key,l])=>`<button class="chip" data-act="sightKind" data-v="${key}" aria-pressed="${k===key}">${l}</button>`).join("")}</div>
   <div class="sights">${list.map(x=>{ const pg=sightPage(x); return `<article class="scard" id="sight-${x.id}">
     <div class="sphoto" data-simg="${x.id}"${sightBg(x)}><i>${esc(SIGHT_KINDS[x.kind][0])}</i><em>${esc(x.pay)}</em></div>
@@ -1437,7 +1467,7 @@ async function mountMap(){
     await loadMapLib();
     if(!document.getElementById("mapSlot")) return;
     if(!MAP){
-      MAP=new maplibregl.Map({container:MAP_HOST,style:MAP_STYLE,center:[9.19,45.4642],zoom:12,dragRotate:false,touchPitch:false,attributionControl:{compact:true}});
+      MAP=new maplibregl.Map({container:MAP_HOST,style:MAP_STYLE,center:[city().center[1],city().center[0]],zoom:12,dragRotate:false,touchPitch:false,attributionControl:{compact:true}});
       MAP.addControl(new maplibregl.NavigationControl({showCompass:false}),"top-right");
       MAP.touchZoomRotate.disableRotation();
       MAP.on("error",e=>{ if(!MAP.isStyleLoaded()&&!S.mapOk) mapFailed(); });
@@ -1484,9 +1514,8 @@ function viewFilters(part){
 function placeRow(p){
   return `<details><summary><div><b>${esc(p.name)}</b><small>${esc(zname(p.zone))} · ${esc(costText(p))}</small>${starsHtml(p)}</div></summary>
   <div class="more"><p>${esc([p.why,p.detail].map(dot).filter(Boolean).join(" "))}</p><p class="dim">${esc(p.addr)}${p.metro[0]?" · "+esc(metroText(p.metro)):""}</p>
-  <div class="actions"><a href="${mapsUrl(p.name+" "+p.addr)}" target="_blank" rel="noopener">Directions</a>${/^https?:\/\//.test(p.web||"")?`<a href="${esc(p.web)}" target="_blank" rel="noopener">${/instagram\.com/.test(p.web)?"Instagram":/facebook\.com/.test(p.web)?"Facebook":"Website"}</a>`:""}<button class="link addplan" data-act="pickToggle" data-id="${esc(p.id)}">${(S.form.picks||[]).includes(p.id)?"In your plan ✓":"Add to a plan"}</button></div></div></details>`;
+  <div class="actions"><a href="${mapsUrl(p.name+" "+p.addr,p)}" target="_blank" rel="noopener">Directions</a>${/^https?:\/\//.test(p.web||"")?`<a href="${esc(p.web)}" target="_blank" rel="noopener">${/instagram\.com/.test(p.web)?"Instagram":/facebook\.com/.test(p.web)?"Facebook":"Website"}</a>`:""}<button class="link addplan" data-act="pickToggle" data-id="${esc(p.id)}">${(S.form.picks||[]).includes(p.id)?"In your plan ✓":"Add to a plan"}</button></div></div></details>`;
 }
-const MAP_SPOTS={bicocca:[270,30],isola:[175,88],lambrate:[320,80],sarpi:[64,140],garibaldi:[178,140],centrale:[300,130],cittastudi:[318,178],brera:[100,192],venezia:[240,212],duomo:[190,265],tortona:[66,305],navigli:[135,345],romana:[285,320],lodi:[270,375]};
 /* An illustrated rooftop view: Milan's ring-and-spoke street plan, filled with courtyard blocks. */
 let CITY_BG="";
 function cityBg(){
@@ -1592,7 +1621,7 @@ function evRow(e){
   const facts=[run?eventWhen(e):`${wday(e.start)} ${short(e.start)}`,e.time?"Starts "+e.time:"",e.sold?"Sold out":e.priceText].filter(Boolean);
   return `<details class="ev"><summary><span class="dbadge" style="--c:${EV_COL[e.cat]||"var(--link)"}">${until?"<i>until</i>":""}<b>${d.getDate()}</b><i>${d.toLocaleDateString("en-GB",{month:"short"})}</i></span><div><b>${esc(e.name)}</b><span class="eline">${evTag(e)}<small>${esc(info)}</small></span></div></summary>
   <div class="more">${evPhoto(e)}${e.desc?`<p class="edesc">${esc(dot(e.desc))}</p>`:""}<div class="efacts">${facts.map(f=>`<span${f==="Sold out"?' class="sold"':""}>${esc(f)}</span>`).join("")}</div>
-  <div class="actions"><button data-act="save" data-id="${e.id}">${on?"Saved ✓":"Save"}</button><a href="${mapsUrl(e.venue)}" target="_blank" rel="noopener">Directions</a><a href="${esc(srcUrl(e.src))}" target="_blank" rel="noopener">Tickets & info</a></div></div></details>`;
+  <div class="actions"><button data-act="save" data-id="${e.id}">${on?"Saved ✓":"Save"}</button><a href="${mapsUrl(e.venue,e)}" target="_blank" rel="noopener">Directions</a><a href="${esc(srcUrl(e.src))}" target="_blank" rel="noopener">Tickets & info</a></div></div></details>`;
 }
 /* Events calendar: days with events get a dot; tapping a day shows what's on. */
 const CAL_ICON='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7zm-2 8h14v10H5V10z"/></svg>';
@@ -1618,12 +1647,14 @@ const CITY_PHOTOS={milan:{
   music:["Destrage_-_The_Last_Dance,_Alcatraz,_Milan_(October_20,_2024)_-_3609_02.jpg","a gig at Alcatraz"],
   culture:["Milan_Cathedral_from_Piazza_del_Duomo.jpg","the Duomo"],
   sport:["Stadio_Meazza_2021_3.jpg","San Siro"],
-  activities:["Milan_Naviglio_Grande_at_sunset_HD_01.jpg","the Naviglio Grande"]}};
-const CITY="milan";
+  activities:["Milan_Naviglio_Grande_at_sunset_HD_01.jpg","the Naviglio Grande"]},
+  ...Object.fromEntries(Object.entries(CITIES).filter(([k,c])=>c.photos).map(([k,c])=>[k,c.photos]))};
 const commonsImg=(f,w=600)=>"https://commons.wikimedia.org/wiki/Special:FilePath/"+encodeURIComponent(f)+"?width="+w;
 const commonsPage=f=>"https://commons.wikimedia.org/wiki/File:"+encodeURIComponent(f);
 /* The Events tiles' photos are fetched as soon as the app starts and kept in memory, so they are already there when the tab opens. */
-const EV_TILE_IMGS=Object.values(CITY_PHOTOS[CITY]||{}).map(([f])=>{ const im=new Image(); im.referrerPolicy="no-referrer"; im.src=commonsImg(f); return im; });
+let EV_TILE_IMGS=[];
+function warmTiles(){ EV_TILE_IMGS=Object.values(CITY_PHOTOS[CITY]||{}).map(([f])=>{ const im=new Image(); im.referrerPolicy="no-referrer"; im.src=commonsImg(f); return im; }); }
+warmTiles();
 const EV_MORE=[["free","Free","Nothing to pay",e=>e.priceNum===0],["saved","Saved","Events you kept",e=>S.saved.has(e.id)],["all","Everything","All upcoming events",()=>true]];
 const evIcon=p=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 function viewEvents(){
@@ -1745,7 +1776,7 @@ const CROSS='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="cur
 const FRIENDS=[["Giulia","#e0408a"],["Marco","#13a39a"],["Sofia","#b7793b"]];
 const miniStars=p=>`<span class="tstars">★ ${String(p.stars).replace(".",",")}<i>(${p.reviews>=1000?(p.reviews/1000).toFixed(1).replace(".",",")+"k":p.reviews})</i></span>`;
 /* Every place in the city as a dot, from the real data. A drawing first, then the real map loads behind it. */
-const TMAP={la:[45.405,45.535],lo:[9.09,9.29]};
+const TMAP={get la(){ const b=city().bounds; return [b[0][1]-.015,b[1][1]+.015]; },get lo(){ const b=city().bounds; return [b[0][0]-.015,b[1][0]+.015]; }};
 const tmapXY=p=>[(p.lng-TMAP.lo[0])/(TMAP.lo[1]-TMAP.lo[0])*400,(TMAP.la[1]-p.lat)/(TMAP.la[1]-TMAP.la[0])*300];
 function tourMap(){
   return `<svg class="tmapsvg" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${PLACES.filter(p=>p.lat&&p.lng).map(p=>{ const [x,y]=tmapXY(p);
@@ -1757,7 +1788,7 @@ async function mountTourMap(){
   const host=document.querySelector(".tmapgl"); if(!host||!TOUR) return;
   try{ await loadMapLib(); }catch{ return; }
   if(!TOUR||!host.isConnected) return;
-  const p=tourStar(), m=new maplibregl.Map({container:host,style:MAP_STYLE,bounds:[[9.105,45.42],[9.275,45.52]],fitBoundsOptions:{padding:{top:8,left:8,right:8,bottom:72}},interactive:false,attributionControl:{compact:true},fadeDuration:0});
+  const p=tourStar(), m=new maplibregl.Map({container:host,style:MAP_STYLE,bounds:city().bounds,fitBoundsOptions:{padding:{top:8,left:8,right:8,bottom:72}},interactive:false,attributionControl:{compact:true},fadeDuration:0});
   TOUR.map=m;
   m.on("load",()=>{ if(!host.isConnected) return;
     m.addSource("tp",{type:"geojson",data:{type:"FeatureCollection",features:PLACES.filter(x=>x.lat&&x.lng).map(x=>({type:"Feature",properties:{c:mapCat(x)[2]},geometry:{type:"Point",coordinates:[x.lng,x.lat]}}))}});
@@ -1768,7 +1799,7 @@ async function mountTourMap(){
 }
 const TOUR_SLIDES=[
   {k:"welcome",kick:"Welcome to Concit",title:()=>firstName()?`Hi ${esc(firstName())}, let's sort your next night out`:"Let's sort your next night out",
-   body:"No more endless group chats about where to go. Concit helps you and your friends pick a place in Milan in a minute.",
+   body:()=>`No more endless group chats about where to go. Concit helps you and your friends pick a place in ${cityName()} in a minute.`,
    art:()=>{ const p=TOUR.places[0]||{}; return `<div class="tchat">
      <div class="tmsg l" style="--d:0"><b style="--c:${FRIENDS[0][1]}">${FRIENDS[0][0]}</b>Where are we going tonight?</div>
      <div class="tmsg r" style="--d:1">No idea, you choose</div>
@@ -1779,12 +1810,12 @@ const TOUR_SLIDES=[
    art:()=>{ const P=TOUR.places; return `<div class="tfan">${[2,1,0].map(k=>{const p=P[k]||P[0]; return `<div class="tfc f${k}"><div class="tfh" style="--c:${mapCat(p)[2]}"><i>${esc(KIND_SHORT[p.kind]||"")} · ${esc(zname(p.zone))}</i><b>${esc(p.name)}</b></div><div class="tfb">${miniStars(p)}<small>${esc(costText(p))}</small></div></div>`;}).join("")}</div>
      <div class="tvotes">${FRIENDS.map(([n,c],k)=>`<span class="tvchip${k===2?" no":""}" style="--d:${k+1}"><i style="--c:${c}">${n[0]}</i>${n}<em>${k===2?CROSS:TICK}</em></span>`).join("")}</div>`; }},
   {k:"hotspots",kick:"Hotspots",title:()=>`${(Math.floor(PLACES.length/100)*100).toLocaleString("en-GB")}+ places, all rated`,
-   body:"Restaurants, bars, cafés and clubs across Milan, with prices, opening hours and a map. Filter by area, price or cuisine.",
+   body:()=>`Restaurants, bars, cafés and clubs across ${cityName()}, with prices, opening hours and a map. Filter by area, price or cuisine.`,
    art:()=>{ const p=tourStar(), [px,py]=tmapXY(p); return `<div class="tmapwrap"><div class="tmapgl"></div>${tourMap()}<span class="tpin" style="--c:${mapCat(p)[2]};left:${(px/4).toFixed(1)}%;top:${(py/3).toFixed(1)}%"></span>
      <div class="tmapcard"><span class="tmc" style="--c:${mapCat(p)[2]}"></span><span><b>${esc(p.name)}</b><small>${esc(zname(p.zone))} · ${esc(costText(p))}</small></span>${miniStars(p)}</div></div>
-     <div class="tchips">${["Open now","Under €15","Navigli","Sushi"].map((t,k)=>`<span style="--d:${k}">${t}</span>`).join("")}</div>`; }},
+     <div class="tchips">${city().chips.map((t,k)=>`<span style="--d:${k}">${t}</span>`).join("")}</div>`; }},
   {k:"events",kick:"Events",title:()=>"Never miss what's on",
-   body:"Concerts, exhibitions, matches and markets, updated for Milan. Save the ones you like, or turn one into a group plan.",
+   body:()=>`Concerts, exhibitions, matches and markets, updated for ${cityName()}. Save the ones you like, or turn one into a group plan.`,
    art:()=>{ const evs=EVENTS.filter(e=>e.start>=today&&!isRun(e)).sort((a,b)=>a.start.localeCompare(b.start)).slice(0,3);
      return `<div class="ttix">${evs.map((e,k)=>{const d=parse(e.start); return `<div class="ttk" style="--d:${k};--c:${EV_COL[e.cat]||"#2f9bff"}"><span class="ttd"><i>${d.toLocaleDateString("en-GB",{month:"short"})}</i><b>${d.getDate()}</b></span><span class="ttm"><b>${esc(e.name)}</b><small>${esc(e.venue||"")}${e.time?" · "+esc(e.time):""}</small></span><span class="ttp">${e.priceNum===0?"Free":esc((e.priceText||"").replace(/^From /,"from "))}</span></div>`;}).join("")}</div>`; }}];
 function paintTour(){
@@ -1794,7 +1825,7 @@ function paintTour(){
   el.innerHTML=`<div class="tbg">${ph?`<img src="${ph}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">`:""}</div>
   <div class="ttop">${PIN_SVG}<b>concit</b><button class="tskip" data-t="skip">Skip</button></div>
   <div class="tart" aria-hidden="true">${sl.art()}</div>
-  <div class="ttext"><span class="tkick">${sl.kick}</span><h2>${sl.title()}</h2><p>${sl.body}</p>
+  <div class="ttext"><span class="tkick">${sl.kick}</span><h2>${sl.title()}</h2><p>${typeof sl.body==="function"?sl.body():sl.body}</p>
     <div class="tctl"><div class="tpips" role="img" aria-label="Step ${i+1} of ${TOUR_SLIDES.length}">${TOUR_SLIDES.map((_,k)=>`<i class="${k===i?"on":k<i?"done":""}"></i>`).join("")}</div>
       ${i?`<button class="tprev" data-t="prev" aria-label="Back">‹</button>`:""}<button class="tnext" data-t="next">${last?"Try a practice vote":i?"Next":"Show me how"}</button></div>
     ${credit?`<a class="tcredit" href="${commonsPage(credit[0])}" target="_blank" rel="noopener">Photo: ${esc(credit[1])}, Wikimedia Commons</a>`:""}</div>`;
@@ -1963,6 +1994,7 @@ const H={
   account(){ S.acct=true; S.stats=false; S.deleting=false; render(); pageTop(); },
   openStats(){ S.stats=true; S.statsData=null; render(); pageTop(); loadStats(); },
   closeStats(){ S.stats=false; render(); pageTop(); },
+  city(el){ setCity(el.dataset.v); },
   statDays(el){ S.statDays=Number(el.dataset.v)||14; loadStats(); },
   setTheme(el){ setTheme(el.dataset.v); render(); },
   closeAccount(){ S.acct=false; S.deleting=false; render(); pageTop(); },
@@ -2058,27 +2090,45 @@ addEventListener("scroll",()=>{ document.body.classList.toggle("overscroll",scro
 addEventListener("hashchange",()=>{const t=location.hash.slice(1);if(["home","decide","hotspots","events","groups"].includes(t)&&t!==S.tab){S.tab=t;render()}});
 {const t=location.hash.slice(1);if(["home","decide","hotspots","events","groups"].includes(t))S.tab=t}
 
-async function loadEvents(){
+/* Places and events come from the database one city at a time: the city on screen first, the others quietly afterwards
+   (a plan made in another city still needs its places). Before the database had a city column, everything is Milan. */
+const evFromDb=e=>({id:e.id,name:e.name,cat:e.cat,start:e.start_date,end:e.end_date,venue:e.venue,zone:e.zone||null,time:e.time||"",priceNum:e.price_num===null?null:Number(e.price_num),priceText:e.price_text||"",src:e.src,sold:!!e.sold,type:e.type||"",city:e.city||"milan",...(e.descr?{desc:e.descr}:{}),...(e.wiki?{wiki:e.wiki}:{})});
+const DATA={places:{},events:{},checked:{},multi:false};
+async function dbRows(table,q,cityQ){
+  const get=async u=>{ const r=await fetch(`${SB.url}/rest/v1/${u}`,{headers:{apikey:SB.anonKey,Authorization:`Bearer ${SB.anonKey}`}}); return r.ok?r.json():null; };
+  let rows=await get(`${table}?select=*${q}${cityQ}`), all=false;
+  if(!Array.isArray(rows)){ rows=await get(`${table}?select=*${q}`); all=true; }
+  if(Array.isArray(rows)&&!all&&!DATA.multi){ DATA.multi=true; if(S.tab==="home") setTimeout(render,0); }
+  return Array.isArray(rows)?{rows,all}:null;
+}
+function mergeCity(kind,rows,which,all){
+  const fresh=(kind==="events"?rows.map(evFromDb):rows.map(p=>({...p,city:p.city||"milan"}))).filter(x=>all||(which.other?x.city!==which.other:x.city===which.city));
+  const covers=x=>all||(which.other?cityOf(x)!==which.other:cityOf(x)===which.city);
+  ALL[kind]=ALL[kind].filter(x=>!covers(x)).concat(fresh);
+  Object.keys(CITIES).forEach(c=>{ if(all||(which.other?c!==which.other:c===which.city)) DATA[kind][c]=true; });
+  if(kind==="events") Object.keys(CITIES).forEach(c=>{ const d=rows.filter(e=>(e.city||"milan")===c).map(e=>e.checked).filter(Boolean).sort().pop(); if(d) DATA.checked[c]=new Date(d).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}); });
+  S.evChecked=DATA.checked[CITY]||"";
+  useCity(); render();
+}
+async function loadKind(kind,c){
+  const q=kind==="events"?`&end_date=gte.${today}&order=start_date`:"";
   try{
-    const r=await fetch(`${SB.url}/rest/v1/events?select=*&end_date=gte.${today}&order=start_date`,{headers:{apikey:SB.anonKey,Authorization:`Bearer ${SB.anonKey}`}});
-    if(!r.ok) return;
-    const rows=await r.json();
-    if(!Array.isArray(rows)||!rows.length) return;
-    EVENTS.length=0;
-    rows.forEach(e=>EVENTS.push({id:e.id,name:e.name,cat:e.cat,start:e.start_date,end:e.end_date,venue:e.venue,zone:e.zone||null,time:e.time||"",priceNum:e.price_num===null?null:Number(e.price_num),priceText:e.price_text||"",src:e.src,sold:!!e.sold,type:e.type||"",...(e.descr?{desc:e.descr}:{}),...(e.wiki?{wiki:e.wiki}:{})}));
-    const c=rows.map(e=>e.checked).filter(Boolean).sort().pop(); if(c) S.evChecked=new Date(c).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});
-    render();
+    if(!DATA[kind][c]){ const r=await dbRows(kind,q,`&city=eq.${c}`); if(r&&r.rows.length) mergeCity(kind,r.rows,{city:c},r.all); }
+    if(Object.keys(CITIES).some(k=>!DATA[kind][k])){ const r=await dbRows(kind,q,`&city=neq.${c}`); if(r&&!r.all&&r.rows.length) mergeCity(kind,r.rows,{other:c},false); }
   }catch{}
 }
-async function loadPlaces(){
-  try{
-    const r=await fetch(`${SB.url}/rest/v1/places?select=*`,{headers:{apikey:SB.anonKey,Authorization:`Bearer ${SB.anonKey}`}});
-    if(!r.ok) return;
-    const rows=await r.json();
-    if(!Array.isArray(rows)||!rows.length) return;
-    PLACES.length=0; rows.forEach(p=>PLACES.push(p));
-    render();
-  }catch{}
+const loadEvents=()=>loadKind("events",CITY), loadPlaces=()=>loadKind("places",CITY);
+/* Changing city: everything tied to the old city's map and areas is cleared. */
+function setCity(c){
+  if(!CITIES[c]||c===CITY) return;
+  CITY=c; try{ localStorage.setItem("concit.city",c); }catch{}
+  const f=S.form; f.area=""; f.pin=null; f.radius=null; f.picks=[]; S.flt=null; S.zone=null; S.sel=null; S.hot="all"; S.hotCuisine=""; S.open=new Set();
+  S.pickOpen=false; S.fltOpen=false; S.sights=false; S.sightKind="all"; S.ev=null; S.evDate=null; S.evType=""; S.evCalOpen=false;
+  try{ if(MAP){ MAP.remove(); } }catch{} MAP=null; MAP_HOST=null; FIT=""; SEL_MK=null;
+  try{ if(PICK){ PICK.remove(); } }catch{} PICK=null; PICK_HOST=null;
+  S.evChecked=DATA.checked[c]||"";
+  useCity(); warmTiles(); render(); pageTop();
+  loadPlaces(); loadEvents(); track("city",c);
 }
 function linkFromUrl(){
   const q=new URLSearchParams(location.search), plan=q.get("plan"), join=q.get("join"), chat=q.get("chat");

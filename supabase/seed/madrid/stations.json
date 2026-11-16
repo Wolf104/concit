@@ -1,0 +1,1987 @@
+[
+{
+"name": "Abrantes",
+"lines": [
+"11"
+],
+"lat": 40.38083,
+"lng": -3.7279
+},
+{
+"name": "Acacias",
+"lines": [
+"5"
+],
+"lat": 40.40387,
+"lng": -3.70664
+},
+{
+"name": "Aeropuerto T1-T2-T3",
+"lines": [
+"8"
+],
+"lat": 40.46864,
+"lng": -3.56954
+},
+{
+"name": "Aeropuerto T4",
+"lines": [
+"8"
+],
+"lat": 40.49177,
+"lng": -3.59325
+},
+{
+"name": "Alameda de Osuna",
+"lines": [
+"5"
+],
+"lat": 40.45779,
+"lng": -3.58752
+},
+{
+"name": "Alcorcón Central",
+"lines": [
+"12"
+],
+"lat": 40.35008,
+"lng": -3.83178
+},
+{
+"name": "Alfonso XIII",
+"lines": [
+"4"
+],
+"lat": 40.44825,
+"lng": -3.66791
+},
+{
+"name": "Almendrales",
+"lines": [
+"3"
+],
+"lat": 40.38409,
+"lng": -3.69788
+},
+{
+"name": "Alonso Cano",
+"lines": [
+"7"
+],
+"lat": 40.43838,
+"lng": -3.69925
+},
+{
+"name": "Alonso de Mendoza",
+"lines": [
+"12"
+],
+"lat": 40.30081,
+"lng": -3.73664
+},
+{
+"name": "Alonso Martínez",
+"lines": [
+"4",
+"5",
+"10"
+],
+"lat": 40.42818,
+"lng": -3.6958
+},
+{
+"name": "Alsacia",
+"lines": [
+"2"
+],
+"lat": 40.41829,
+"lng": -3.62351
+},
+{
+"name": "Alto de Extremadura",
+"lines": [
+"6"
+],
+"lat": 40.40993,
+"lng": -3.73894
+},
+{
+"name": "Alto del Arenal",
+"lines": [
+"1"
+],
+"lat": 40.38977,
+"lng": -3.64522
+},
+{
+"name": "Aluche",
+"lines": [
+"5"
+],
+"lat": 40.38563,
+"lng": -3.7608
+},
+{
+"name": "Alvarado",
+"lines": [
+"1"
+],
+"lat": 40.45033,
+"lng": -3.70331
+},
+{
+"name": "Antonio Machado",
+"lines": [
+"7"
+],
+"lat": 40.47022,
+"lng": -3.71769
+},
+{
+"name": "Antón Martín",
+"lines": [
+"1"
+],
+"lat": 40.41246,
+"lng": -3.69937
+},
+{
+"name": "Arganda del Rey",
+"lines": [
+"9"
+],
+"lat": 40.30367,
+"lng": -3.44752
+},
+{
+"name": "Arganzuela-Planetario",
+"lines": [
+"6"
+],
+"lat": 40.3931,
+"lng": -3.68864
+},
+{
+"name": "Argüelles",
+"lines": [
+"3",
+"4",
+"6"
+],
+"lat": 40.4306,
+"lng": -3.71596
+},
+{
+"name": "Arroyo Culebro",
+"lines": [
+"12"
+],
+"lat": 40.28874,
+"lng": -3.75682
+},
+{
+"name": "Arroyofresno",
+"lines": [
+"7"
+],
+"lat": 40.4909,
+"lng": -3.72604
+},
+{
+"name": "Artilleros",
+"lines": [
+"9"
+],
+"lat": 40.40522,
+"lng": -3.64181
+},
+{
+"name": "Arturo Soria",
+"lines": [
+"4"
+],
+"lat": 40.45583,
+"lng": -3.65618
+},
+{
+"name": "Ascao",
+"lines": [
+"7"
+],
+"lat": 40.43021,
+"lng": -3.64106
+},
+{
+"name": "Atocha",
+"lines": [
+"1"
+],
+"lat": 40.40659,
+"lng": -3.68938
+},
+{
+"name": "Avenida de América",
+"lines": [
+"4",
+"6",
+"7",
+"9"
+],
+"lat": 40.43804,
+"lng": -3.67656
+},
+{
+"name": "Avenida de Guadalajara",
+"lines": [
+"2"
+],
+"lat": 40.42239,
+"lng": -3.61206
+},
+{
+"name": "Avenida de la Ilustración",
+"lines": [
+"7"
+],
+"lat": 40.4801,
+"lng": -3.7184
+},
+{
+"name": "Avenida de la Paz",
+"lines": [
+"4"
+],
+"lat": 40.45354,
+"lng": -3.66118
+},
+{
+"name": "Aviación Española",
+"lines": [
+"10"
+],
+"lat": 40.38364,
+"lng": -3.78392
+},
+{
+"name": "Bambú",
+"lines": [
+"1"
+],
+"lat": 40.47682,
+"lng": -3.67637
+},
+{
+"name": "Banco de España",
+"lines": [
+"2"
+],
+"lat": 40.41922,
+"lng": -3.69497
+},
+{
+"name": "Barajas",
+"lines": [
+"8"
+],
+"lat": 40.47577,
+"lng": -3.58253
+},
+{
+"name": "Barrio de la Concepción",
+"lines": [
+"7"
+],
+"lat": 40.4391,
+"lng": -3.652
+},
+{
+"name": "Barrio del Pilar",
+"lines": [
+"9"
+],
+"lat": 40.47689,
+"lng": -3.70316
+},
+{
+"name": "Barrio del Puerto",
+"lines": [
+"7"
+],
+"lat": 40.4225,
+"lng": -3.56919
+},
+{
+"name": "Batán",
+"lines": [
+"10"
+],
+"lat": 40.40786,
+"lng": -3.75311
+},
+{
+"name": "Baunatal",
+"lines": [
+"10"
+],
+"lat": 40.55442,
+"lng": -3.63513
+},
+{
+"name": "Begoña",
+"lines": [
+"10"
+],
+"lat": 40.48041,
+"lng": -3.68585
+},
+{
+"name": "Bilbao",
+"lines": [
+"1",
+"4"
+],
+"lat": 40.42896,
+"lng": -3.70166
+},
+{
+"name": "Buenos Aires",
+"lines": [
+"1"
+],
+"lat": 40.39156,
+"lng": -3.65391
+},
+{
+"name": "Callao",
+"lines": [
+"3",
+"5"
+],
+"lat": 40.42011,
+"lng": -3.70566
+},
+{
+"name": "Campamento",
+"lines": [
+"5"
+],
+"lat": 40.39481,
+"lng": -3.76813
+},
+{
+"name": "Canal",
+"lines": [
+"2",
+"7"
+],
+"lat": 40.43855,
+"lng": -3.70461
+},
+{
+"name": "Canillas",
+"lines": [
+"4"
+],
+"lat": 40.46381,
+"lng": -3.6356
+},
+{
+"name": "Canillejas",
+"lines": [
+"5"
+],
+"lat": 40.44942,
+"lng": -3.60816
+},
+{
+"name": "Carabanchel",
+"lines": [
+"5"
+],
+"lat": 40.38783,
+"lng": -3.74487
+},
+{
+"name": "Carabanchel Alto",
+"lines": [
+"11"
+],
+"lat": 40.372,
+"lng": -3.75191
+},
+{
+"name": "Carpetana",
+"lines": [
+"6"
+],
+"lat": 40.3927,
+"lng": -3.74099
+},
+{
+"name": "Cartagena",
+"lines": [
+"7"
+],
+"lat": 40.43934,
+"lng": -3.67215
+},
+{
+"name": "Casa de Campo",
+"lines": [
+"5",
+"10"
+],
+"lat": 40.40322,
+"lng": -3.76101
+},
+{
+"name": "Casa del Reloj",
+"lines": [
+"12"
+],
+"lat": 40.3266,
+"lng": -3.75942
+},
+{
+"name": "Chamartín",
+"lines": [
+"1",
+"10"
+],
+"lat": 40.47207,
+"lng": -3.68259
+},
+{
+"name": "Chueca",
+"lines": [
+"5"
+],
+"lat": 40.42293,
+"lng": -3.69762
+},
+{
+"name": "Ciudad de los Ángeles",
+"lines": [
+"3"
+],
+"lat": 40.35959,
+"lng": -3.69363
+},
+{
+"name": "Ciudad Lineal",
+"lines": [
+"5"
+],
+"lat": 40.43805,
+"lng": -3.63816
+},
+{
+"name": "Ciudad Universitaria",
+"lines": [
+"6"
+],
+"lat": 40.44356,
+"lng": -3.72678
+},
+{
+"name": "Colombia",
+"lines": [
+"8",
+"9"
+],
+"lat": 40.45691,
+"lng": -3.67688
+},
+{
+"name": "Colón",
+"lines": [
+"4"
+],
+"lat": 40.42542,
+"lng": -3.69101
+},
+{
+"name": "Colonia Jardín",
+"lines": [
+"10"
+],
+"lat": 40.39698,
+"lng": -3.77462
+},
+{
+"name": "Concha Espina",
+"lines": [
+"9"
+],
+"lat": 40.45145,
+"lng": -3.67738
+},
+{
+"name": "Conde de Casal",
+"lines": [
+"6"
+],
+"lat": 40.40697,
+"lng": -3.67041
+},
+{
+"name": "Congosto",
+"lines": [
+"1"
+],
+"lat": 40.37238,
+"lng": -3.61884
+},
+{
+"name": "Conservatorio",
+"lines": [
+"12"
+],
+"lat": 40.29324,
+"lng": -3.74576
+},
+{
+"name": "Coslada Central",
+"lines": [
+"7"
+],
+"lat": 40.42374,
+"lng": -3.56119
+},
+{
+"name": "Cruz del Rayo",
+"lines": [
+"9"
+],
+"lat": 40.44427,
+"lng": -3.67821
+},
+{
+"name": "Cuatro Caminos",
+"lines": [
+"1",
+"2",
+"6"
+],
+"lat": 40.44697,
+"lng": -3.70392
+},
+{
+"name": "Cuatro Vientos",
+"lines": [
+"10"
+],
+"lat": 40.37771,
+"lng": -3.79152
+},
+{
+"name": "Cuzco",
+"lines": [
+"10"
+],
+"lat": 40.45842,
+"lng": -3.68985
+},
+{
+"name": "Delicias",
+"lines": [
+"3"
+],
+"lat": 40.3999,
+"lng": -3.6942
+},
+{
+"name": "Diego de León",
+"lines": [
+"4",
+"5",
+"6"
+],
+"lat": 40.43333,
+"lng": -3.67405
+},
+{
+"name": "Duque de Pastrana",
+"lines": [
+"9"
+],
+"lat": 40.46763,
+"lng": -3.67917
+},
+{
+"name": "El Bercial",
+"lines": [
+"12"
+],
+"lat": 40.32907,
+"lng": -3.72963
+},
+{
+"name": "El Capricho",
+"lines": [
+"5"
+],
+"lat": 40.45347,
+"lng": -3.59401
+},
+{
+"name": "El Carmen",
+"lines": [
+"5"
+],
+"lat": 40.43189,
+"lng": -3.65757
+},
+{
+"name": "El Carrascal",
+"lines": [
+"12"
+],
+"lat": 40.33664,
+"lng": -3.74018
+},
+{
+"name": "El Casar",
+"lines": [
+"3",
+"12"
+],
+"lat": 40.31859,
+"lng": -3.70967
+},
+{
+"name": "Embajadores",
+"lines": [
+"3"
+],
+"lat": 40.40513,
+"lng": -3.70268
+},
+{
+"name": "Empalme",
+"lines": [
+"5"
+],
+"lat": 40.39057,
+"lng": -3.76535
+},
+{
+"name": "Esperanza",
+"lines": [
+"4"
+],
+"lat": 40.45945,
+"lng": -3.64582
+},
+{
+"name": "Estación del Arte",
+"lines": [
+"1"
+],
+"lat": 40.40885,
+"lng": -3.69249
+},
+{
+"name": "Estadio Metropolitano",
+"lines": [
+"7"
+],
+"lat": 40.4334,
+"lng": -3.60017
+},
+{
+"name": "Estrecho",
+"lines": [
+"1"
+],
+"lat": 40.45429,
+"lng": -3.70302
+},
+{
+"name": "Estrella",
+"lines": [
+"9"
+],
+"lat": 40.41147,
+"lng": -3.66179
+},
+{
+"name": "Eugenia de Montijo",
+"lines": [
+"5"
+],
+"lat": 40.38439,
+"lng": -3.75121
+},
+{
+"name": "Feria de Madrid",
+"lines": [
+"8"
+],
+"lat": 40.46389,
+"lng": -3.6162
+},
+{
+"name": "Francos Rodríguez",
+"lines": [
+"7"
+],
+"lat": 40.45648,
+"lng": -3.71239
+},
+{
+"name": "Fuencarral",
+"lines": [
+"10"
+],
+"lat": 40.49509,
+"lng": -3.69283
+},
+{
+"name": "Fuenlabrada Central",
+"lines": [
+"12"
+],
+"lat": 40.28268,
+"lng": -3.79891
+},
+{
+"name": "García Noblejas",
+"lines": [
+"7"
+],
+"lat": 40.42842,
+"lng": -3.6333
+},
+{
+"name": "Getafe Central",
+"lines": [
+"12"
+],
+"lat": 40.30993,
+"lng": -3.73403
+},
+{
+"name": "Goya",
+"lines": [
+"2",
+"4"
+],
+"lat": 40.42468,
+"lng": -3.67638
+},
+{
+"name": "Gran Vía",
+"lines": [
+"1",
+"5"
+],
+"lat": 40.42,
+"lng": -3.7018
+},
+{
+"name": "Gregorio Marañón",
+"lines": [
+"7",
+"10"
+],
+"lat": 40.43789,
+"lng": -3.69137
+},
+{
+"name": "Guzmán el Bueno",
+"lines": [
+"6",
+"7"
+],
+"lat": 40.44635,
+"lng": -3.71229
+},
+{
+"name": "Henares",
+"lines": [
+"7"
+],
+"lat": 40.41777,
+"lng": -3.52718
+},
+{
+"name": "Herrera Oria",
+"lines": [
+"9"
+],
+"lat": 40.48466,
+"lng": -3.70751
+},
+{
+"name": "Hortaleza",
+"lines": [
+"4"
+],
+"lat": 40.47537,
+"lng": -3.65257
+},
+{
+"name": "Hospital 12 de Octubre",
+"lines": [
+"3"
+],
+"lat": 40.37503,
+"lng": -3.69585
+},
+{
+"name": "Hospital de Fuenlabrada",
+"lines": [
+"12"
+],
+"lat": 40.28576,
+"lng": -3.81642
+},
+{
+"name": "Hospital del Henares",
+"lines": [
+"7"
+],
+"lat": 40.41761,
+"lng": -3.53453
+},
+{
+"name": "Hospital de Móstoles",
+"lines": [
+"12"
+],
+"lat": 40.31652,
+"lng": -3.87471
+},
+{
+"name": "Hospital Infanta Sofía",
+"lines": [
+"10"
+],
+"lat": 40.55977,
+"lng": -3.61145
+},
+{
+"name": "Hospital Severo Ochoa",
+"lines": [
+"12"
+],
+"lat": 40.32177,
+"lng": -3.76797
+},
+{
+"name": "Ibiza",
+"lines": [
+"9"
+],
+"lat": 40.41839,
+"lng": -3.67858
+},
+{
+"name": "Iglesia",
+"lines": [
+"1"
+],
+"lat": 40.43492,
+"lng": -3.69898
+},
+{
+"name": "Islas Filipinas",
+"lines": [
+"7"
+],
+"lat": 40.43907,
+"lng": -3.71373
+},
+{
+"name": "Jarama",
+"lines": [
+"7"
+],
+"lat": 40.42295,
+"lng": -3.52549
+},
+{
+"name": "Joaquín Vilumbrales",
+"lines": [
+"10"
+],
+"lat": 40.34985,
+"lng": -3.8072
+},
+{
+"name": "Juan de la Cierva",
+"lines": [
+"12"
+],
+"lat": 40.3118,
+"lng": -3.72224
+},
+{
+"name": "Julián Besteiro",
+"lines": [
+"12"
+],
+"lat": 40.33475,
+"lng": -3.75266
+},
+{
+"name": "La Almudena",
+"lines": [
+"2"
+],
+"lat": 40.42361,
+"lng": -3.63914
+},
+{
+"name": "Lacoma",
+"lines": [
+"7"
+],
+"lat": 40.48502,
+"lng": -3.72305
+},
+{
+"name": "La Elipa",
+"lines": [
+"2"
+],
+"lat": 40.42662,
+"lng": -3.65052
+},
+{
+"name": "La Fortuna",
+"lines": [
+"11"
+],
+"lat": 40.35795,
+"lng": -3.77783
+},
+{
+"name": "La Gavia",
+"lines": [
+"1"
+],
+"lat": 40.37019,
+"lng": -3.61346
+},
+{
+"name": "Lago",
+"lines": [
+"10"
+],
+"lat": 40.41641,
+"lng": -3.73563
+},
+{
+"name": "La Granja",
+"lines": [
+"10"
+],
+"lat": 40.5276,
+"lng": -3.65859
+},
+{
+"name": "Laguna",
+"lines": [
+"6"
+],
+"lat": 40.39923,
+"lng": -3.74429
+},
+{
+"name": "La Latina",
+"lines": [
+"5"
+],
+"lat": 40.41128,
+"lng": -3.70816
+},
+{
+"name": "La Moraleja",
+"lines": [
+"10"
+],
+"lat": 40.53196,
+"lng": -3.63556
+},
+{
+"name": "La Peseta",
+"lines": [
+"11"
+],
+"lat": 40.36422,
+"lng": -3.7569
+},
+{
+"name": "La Poveda",
+"lines": [
+"9"
+],
+"lat": 40.31902,
+"lng": -3.47745
+},
+{
+"name": "La Rambla",
+"lines": [
+"7"
+],
+"lat": 40.42514,
+"lng": -3.54792
+},
+{
+"name": "Las Musas",
+"lines": [
+"7"
+],
+"lat": 40.43299,
+"lng": -3.60788
+},
+{
+"name": "Las Rosas",
+"lines": [
+"2"
+],
+"lat": 40.42375,
+"lng": -3.60331
+},
+{
+"name": "Las Suertes",
+"lines": [
+"1"
+],
+"lat": 40.36323,
+"lng": -3.59953
+},
+{
+"name": "Las Tablas",
+"lines": [
+"10"
+],
+"lat": 40.50833,
+"lng": -3.66944
+},
+{
+"name": "Lavapiés",
+"lines": [
+"3"
+],
+"lat": 40.40851,
+"lng": -3.7009
+},
+{
+"name": "Leganés Central",
+"lines": [
+"12"
+],
+"lat": 40.32899,
+"lng": -3.77154
+},
+{
+"name": "Legazpi",
+"lines": [
+"3",
+"6"
+],
+"lat": 40.39115,
+"lng": -3.69508
+},
+{
+"name": "Lista",
+"lines": [
+"4"
+],
+"lat": 40.42917,
+"lng": -3.67541
+},
+{
+"name": "Loranca",
+"lines": [
+"12"
+],
+"lat": 40.29681,
+"lng": -3.83768
+},
+{
+"name": "Los Espartales",
+"lines": [
+"12"
+],
+"lat": 40.32423,
+"lng": -3.7182
+},
+{
+"name": "Lucero",
+"lines": [
+"6"
+],
+"lat": 40.4051,
+"lng": -3.74534
+},
+{
+"name": "Manoteras",
+"lines": [
+"4"
+],
+"lat": 40.47687,
+"lng": -3.6629
+},
+{
+"name": "Manuela Malasaña",
+"lines": [
+"12"
+],
+"lat": 40.30903,
+"lng": -3.86402
+},
+{
+"name": "Manuel Becerra",
+"lines": [
+"2",
+"6"
+],
+"lat": 40.4279,
+"lng": -3.66924
+},
+{
+"name": "Manuel de Falla",
+"lines": [
+"10"
+],
+"lat": 40.55048,
+"lng": -3.64688
+},
+{
+"name": "Mar de Cristal",
+"lines": [
+"4",
+"8"
+],
+"lat": 40.46941,
+"lng": -3.63832
+},
+{
+"name": "Marqués de la Valdavia",
+"lines": [
+"10"
+],
+"lat": 40.54102,
+"lng": -3.63738
+},
+{
+"name": "Marqués de Vadillo",
+"lines": [
+"5"
+],
+"lat": 40.39736,
+"lng": -3.71596
+},
+{
+"name": "Méndez Álvaro",
+"lines": [
+"6"
+],
+"lat": 40.39538,
+"lng": -3.67814
+},
+{
+"name": "Menéndez Pelayo",
+"lines": [
+"1"
+],
+"lat": 40.40445,
+"lng": -3.68098
+},
+{
+"name": "Miguel Hernández",
+"lines": [
+"1"
+],
+"lat": 40.38732,
+"lng": -3.63951
+},
+{
+"name": "Mirasierra",
+"lines": [
+"9"
+],
+"lat": 40.4911,
+"lng": -3.71634
+},
+{
+"name": "Moncloa",
+"lines": [
+"3",
+"6"
+],
+"lat": 40.435,
+"lng": -3.71945
+},
+{
+"name": "Montecarmelo",
+"lines": [
+"10"
+],
+"lat": 40.50525,
+"lng": -3.69575
+},
+{
+"name": "Móstoles Central",
+"lines": [
+"12"
+],
+"lat": 40.3285,
+"lng": -3.86354
+},
+{
+"name": "Noviciado",
+"lines": [
+"2"
+],
+"lat": 40.42484,
+"lng": -3.70742
+},
+{
+"name": "Nueva Numancia",
+"lines": [
+"1"
+],
+"lat": 40.39554,
+"lng": -3.66414
+},
+{
+"name": "Nuevos Ministerios",
+"lines": [
+"6",
+"8",
+"10"
+],
+"lat": 40.44659,
+"lng": -3.69241
+},
+{
+"name": "Núñez de Balboa",
+"lines": [
+"5",
+"9"
+],
+"lat": 40.43145,
+"lng": -3.68097
+},
+{
+"name": "O'Donnell",
+"lines": [
+"6"
+],
+"lat": 40.42289,
+"lng": -3.6686
+},
+{
+"name": "Opañel",
+"lines": [
+"6"
+],
+"lat": 40.3869,
+"lng": -3.72313
+},
+{
+"name": "Ópera",
+"lines": [
+"2",
+"5",
+"R"
+],
+"lat": 40.41809,
+"lng": -3.70935
+},
+{
+"name": "Oporto",
+"lines": [
+"5",
+"6"
+],
+"lat": 40.38846,
+"lng": -3.73129
+},
+{
+"name": "Pacífico",
+"lines": [
+"1",
+"6"
+],
+"lat": 40.40167,
+"lng": -3.6745
+},
+{
+"name": "Paco de Lucía",
+"lines": [
+"9"
+],
+"lat": 40.49971,
+"lng": -3.70913
+},
+{
+"name": "Palos de la Frontera",
+"lines": [
+"3"
+],
+"lat": 40.40307,
+"lng": -3.69423
+},
+{
+"name": "Pan Bendito",
+"lines": [
+"11"
+],
+"lat": 40.37587,
+"lng": -3.73417
+},
+{
+"name": "Parque de las Avenidas",
+"lines": [
+"7"
+],
+"lat": 40.43945,
+"lng": -3.66297
+},
+{
+"name": "Parque de los Estados",
+"lines": [
+"12"
+],
+"lat": 40.28684,
+"lng": -3.78697
+},
+{
+"name": "Parque de Santa María",
+"lines": [
+"4"
+],
+"lat": 40.47711,
+"lng": -3.64524
+},
+{
+"name": "Parque Europa",
+"lines": [
+"12"
+],
+"lat": 40.28518,
+"lng": -3.80632
+},
+{
+"name": "Parque Lisboa",
+"lines": [
+"12"
+],
+"lat": 40.34969,
+"lng": -3.8212
+},
+{
+"name": "Parque Oeste",
+"lines": [
+"12"
+],
+"lat": 40.34589,
+"lng": -3.84934
+},
+{
+"name": "Pavones",
+"lines": [
+"9"
+],
+"lat": 40.40051,
+"lng": -3.63512
+},
+{
+"name": "Peñagrande",
+"lines": [
+"7"
+],
+"lat": 40.47592,
+"lng": -3.71582
+},
+{
+"name": "Pinar de Chamartín",
+"lines": [
+"1",
+"4"
+],
+"lat": 40.48014,
+"lng": -3.66678
+},
+{
+"name": "Pinar del Rey",
+"lines": [
+"8"
+],
+"lat": 40.468,
+"lng": -3.64867
+},
+{
+"name": "Pío XII",
+"lines": [
+"9"
+],
+"lat": 40.463,
+"lng": -3.67579
+},
+{
+"name": "Pirámides",
+"lines": [
+"5"
+],
+"lat": 40.4026,
+"lng": -3.71138
+},
+{
+"name": "Pitis",
+"lines": [
+"7"
+],
+"lat": 40.49511,
+"lng": -3.72589
+},
+{
+"name": "Plaza de Castilla",
+"lines": [
+"1",
+"9",
+"10"
+],
+"lat": 40.4669,
+"lng": -3.68913
+},
+{
+"name": "Plaza de España",
+"lines": [
+"3",
+"10"
+],
+"lat": 40.42375,
+"lng": -3.71045
+},
+{
+"name": "Plaza Elíptica",
+"lines": [
+"6",
+"11"
+],
+"lat": 40.3846,
+"lng": -3.71831
+},
+{
+"name": "Portazgo",
+"lines": [
+"1"
+],
+"lat": 40.39266,
+"lng": -3.65868
+},
+{
+"name": "Pradillo",
+"lines": [
+"12"
+],
+"lat": 40.32168,
+"lng": -3.86489
+},
+{
+"name": "Príncipe de Vergara",
+"lines": [
+"2",
+"9"
+],
+"lat": 40.42356,
+"lng": -3.68018
+},
+{
+"name": "Príncipe Pío",
+"lines": [
+"6",
+"10",
+"R"
+],
+"lat": 40.42103,
+"lng": -3.72033
+},
+{
+"name": "Prosperidad",
+"lines": [
+"4"
+],
+"lat": 40.44419,
+"lng": -3.67482
+},
+{
+"name": "Pueblo Nuevo",
+"lines": [
+"5",
+"7"
+],
+"lat": 40.43568,
+"lng": -3.64282
+},
+{
+"name": "Puente de Vallecas",
+"lines": [
+"1"
+],
+"lat": 40.39819,
+"lng": -3.66906
+},
+{
+"name": "Puerta de Arganda",
+"lines": [
+"9"
+],
+"lat": 40.40132,
+"lng": -3.59598
+},
+{
+"name": "Puerta del Ángel",
+"lines": [
+"6"
+],
+"lat": 40.4139,
+"lng": -3.72724
+},
+{
+"name": "Puerta del Sur",
+"lines": [
+"10",
+"12"
+],
+"lat": 40.34533,
+"lng": -3.8123
+},
+{
+"name": "Puerta de Toledo",
+"lines": [
+"5"
+],
+"lat": 40.40704,
+"lng": -3.71105
+},
+{
+"name": "Quevedo",
+"lines": [
+"2"
+],
+"lat": 40.43322,
+"lng": -3.70433
+},
+{
+"name": "Quintana",
+"lines": [
+"5"
+],
+"lat": 40.43358,
+"lng": -3.64736
+},
+{
+"name": "República Argentina",
+"lines": [
+"6"
+],
+"lat": 40.44379,
+"lng": -3.68406
+},
+{
+"name": "Retiro",
+"lines": [
+"2"
+],
+"lat": 40.42031,
+"lng": -3.68624
+},
+{
+"name": "Reyes Católicos",
+"lines": [
+"10"
+],
+"lat": 40.55037,
+"lng": -3.6234
+},
+{
+"name": "Ríos Rosas",
+"lines": [
+"1"
+],
+"lat": 40.44198,
+"lng": -3.70133
+},
+{
+"name": "Rivas Futura",
+"lines": [
+"9"
+],
+"lat": 40.34134,
+"lng": -3.52479
+},
+{
+"name": "Rivas Urbanizaciones",
+"lines": [
+"9"
+],
+"lat": 40.36677,
+"lng": -3.54728
+},
+{
+"name": "Rivas Vaciamadrid",
+"lines": [
+"9"
+],
+"lat": 40.32837,
+"lng": -3.5206
+},
+{
+"name": "Ronda de la Comunicación",
+"lines": [
+"10"
+],
+"lat": 40.51553,
+"lng": -3.66277
+},
+{
+"name": "Rubén Darío",
+"lines": [
+"5"
+],
+"lat": 40.43316,
+"lng": -3.68954
+},
+{
+"name": "Sainz de Baranda",
+"lines": [
+"6",
+"9"
+],
+"lat": 40.41505,
+"lng": -3.66951
+},
+{
+"name": "San Bernardo",
+"lines": [
+"2",
+"4"
+],
+"lat": 40.42983,
+"lng": -3.70562
+},
+{
+"name": "San Blas",
+"lines": [
+"7"
+],
+"lat": 40.42799,
+"lng": -3.61547
+},
+{
+"name": "San Cipriano",
+"lines": [
+"9"
+],
+"lat": 40.40381,
+"lng": -3.60239
+},
+{
+"name": "San Cristóbal",
+"lines": [
+"3"
+],
+"lat": 40.34154,
+"lng": -3.69318
+},
+{
+"name": "San Fermín-Orcasur",
+"lines": [
+"3"
+],
+"lat": 40.36999,
+"lng": -3.69418
+},
+{
+"name": "San Fernando",
+"lines": [
+"7"
+],
+"lat": 40.42441,
+"lng": -3.53541
+},
+{
+"name": "San Francisco",
+"lines": [
+"11"
+],
+"lat": 40.3736,
+"lng": -3.7391
+},
+{
+"name": "San Lorenzo",
+"lines": [
+"4"
+],
+"lat": 40.47447,
+"lng": -3.63958
+},
+{
+"name": "San Nicasio",
+"lines": [
+"12"
+],
+"lat": 40.33616,
+"lng": -3.77587
+},
+{
+"name": "Santiago Bernabéu",
+"lines": [
+"10"
+],
+"lat": 40.45159,
+"lng": -3.69038
+},
+{
+"name": "Santo Domingo",
+"lines": [
+"2"
+],
+"lat": 40.42132,
+"lng": -3.70796
+},
+{
+"name": "Serrano",
+"lines": [
+"4"
+],
+"lat": 40.42543,
+"lng": -3.68663
+},
+{
+"name": "Sevilla",
+"lines": [
+"2"
+],
+"lat": 40.41805,
+"lng": -3.69925
+},
+{
+"name": "Sierra de Guadalupe",
+"lines": [
+"1"
+],
+"lat": 40.38216,
+"lng": -3.62472
+},
+{
+"name": "Simancas",
+"lines": [
+"7"
+],
+"lat": 40.42799,
+"lng": -3.62572
+},
+{
+"name": "Sol",
+"lines": [
+"1",
+"2",
+"3"
+],
+"lat": 40.41685,
+"lng": -3.70326
+},
+{
+"name": "Suanzes",
+"lines": [
+"5"
+],
+"lat": 40.44085,
+"lng": -3.62684
+},
+{
+"name": "Tetuán",
+"lines": [
+"1"
+],
+"lat": 40.46055,
+"lng": -3.69825
+},
+{
+"name": "Tirso de Molina",
+"lines": [
+"1"
+],
+"lat": 40.41235,
+"lng": -3.70466
+},
+{
+"name": "Torre Arias",
+"lines": [
+"5"
+],
+"lat": 40.44374,
+"lng": -3.61699
+},
+{
+"name": "Tres Olivos",
+"lines": [
+"10"
+],
+"lat": 40.5012,
+"lng": -3.6952
+},
+{
+"name": "Tribunal",
+"lines": [
+"1",
+"10"
+],
+"lat": 40.4261,
+"lng": -3.70159
+},
+{
+"name": "Universidad Rey Juan Carlos",
+"lines": [
+"12"
+],
+"lat": 40.33512,
+"lng": -3.87218
+},
+{
+"name": "Urgel",
+"lines": [
+"5"
+],
+"lat": 40.39335,
+"lng": -3.7236
+},
+{
+"name": "Usera",
+"lines": [
+"6"
+],
+"lat": 40.3871,
+"lng": -3.7069
+},
+{
+"name": "Valdeacederas",
+"lines": [
+"1"
+],
+"lat": 40.46442,
+"lng": -3.69506
+},
+{
+"name": "Valdebernardo",
+"lines": [
+"9"
+],
+"lat": 40.40005,
+"lng": -3.62156
+},
+{
+"name": "Valdecarros",
+"lines": [
+"1"
+],
+"lat": 40.36007,
+"lng": -3.59316
+},
+{
+"name": "Valdezarza",
+"lines": [
+"7"
+],
+"lat": 40.46482,
+"lng": -3.71597
+},
+{
+"name": "Velázquez",
+"lines": [
+"4"
+],
+"lat": 40.42503,
+"lng": -3.68292
+},
+{
+"name": "Ventas",
+"lines": [
+"2",
+"5"
+],
+"lat": 40.43088,
+"lng": -3.66364
+},
+{
+"name": "Ventilla",
+"lines": [
+"9"
+],
+"lat": 40.46944,
+"lng": -3.69588
+},
+{
+"name": "Ventura Rodríguez",
+"lines": [
+"3"
+],
+"lat": 40.42709,
+"lng": -3.71341
+},
+{
+"name": "Vicálvaro",
+"lines": [
+"9"
+],
+"lat": 40.40422,
+"lng": -3.60886
+},
+{
+"name": "Vicente Aleixandre",
+"lines": [
+"6"
+],
+"lat": 40.44644,
+"lng": -3.71943
+},
+{
+"name": "Villa de Vallecas",
+"lines": [
+"1"
+],
+"lat": 40.3796,
+"lng": -3.6213
+},
+{
+"name": "Villaverde Alto",
+"lines": [
+"3"
+],
+"lat": 40.34123,
+"lng": -3.71199
+},
+{
+"name": "Villaverde Bajo-Cruce",
+"lines": [
+"3"
+],
+"lat": 40.35089,
+"lng": -3.69265
+},
+{
+"name": "Vinateros",
+"lines": [
+"9"
+],
+"lat": 40.41024,
+"lng": -3.65273
+},
+{
+"name": "Vista Alegre",
+"lines": [
+"5"
+],
+"lat": 40.38885,
+"lng": -3.73982
+}
+]

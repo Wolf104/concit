@@ -1,7 +1,7 @@
 {
   "name": "Concit",
   "short_name": "Concit",
-  "description": "Decide where to go out in Milan with your friends.",
+  "description": "Decide where to go out with your friends, in Milan and Madrid.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

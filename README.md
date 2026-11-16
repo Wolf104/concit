@@ -1,6 +1,6 @@
 # Concit
 
-Pick where to go out with friends. Starting in Milan.
+Pick where to go out with friends. Milan and Madrid so far.
 
 ## Run it live
 
@@ -23,7 +23,7 @@ In Vercel, choose Add New > Project, import this GitHub repository and press Dep
 - **Home**: start a plan, your plans, places open now, upcoming events, sights to see, your groups
 - **Decide**: make a plan and vote on it with a group. People opening a plan link can vote as a guest with just a name (needs "Allow anonymous sign-ins" switched on in Supabase Auth)
 - **Hotspots**: every place, as a list or a map
-- **Events**: what's on in Milan
+- **Events**: what's on in your city
 - **Groups**: your groups and their chats, with plan cards, replies, reactions and photos. Tap a group's name in its chat for members, invites, renaming and muting
 - A first-run tutorial, which can be replayed from Your account
 

@@ -58,7 +58,11 @@ module.exports=function makeFake(opts={}){
     if(u.includes("/rest/v1/rpc/")){ const fn=u.split("/rpc/")[1].split("?")[0]; let a={}; try{ a=JSON.parse(body||"{}"); }catch{}
       st.calls.push(fn); if(!rpc[fn]){ st.log.push("UNKNOWN RPC "+fn); return r.fulfill({status:404,json:{message:"no function"}}); }
       try{ return r.fulfill({json:rpc[fn](a)}); }catch(e){ st.log.push("RPC FAILED "+fn+" "+(e&&e.message||"")); return r.fulfill({status:400,json:{message:"refused"}}); } }
-    if(u.includes("/rest/v1/places")) return r.fulfill({json:opts.places||[]});
+    if(u.includes("/rest/v1/places")||u.includes("/rest/v1/events")){
+      const rows=(u.includes("/rest/v1/places")?opts.places:opts.events)||[], m=u.match(/[?&]city=(eq|neq)\.(\w+)/);
+      if(!m) return r.fulfill({json:opts.noCity?rows.map(({city,...x})=>x):rows});
+      if(opts.noCity) return r.fulfill({status:400,json:{message:"column city does not exist"}});
+      return r.fulfill({json:rows.filter(x=>((x.city||"milan")===m[2])===(m[1]==="eq"))}); }
     if(u.includes("supabase.co")) return r.fulfill({json:[]});
     if(u.startsWith("http://localhost")) return r.continue();
     return r.abort();
