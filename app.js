@@ -1310,7 +1310,7 @@ function viewGroups(){
   :`<p class="hint left">Create a group for your friends or family, then invite them. Plans you send there appear for everyone.</p>`}`;
 }
 /* Light or dark look. The choice is kept on this device; "auto" follows the phone or computer setting. */
-const themePref=()=>{ try{ return localStorage.getItem("concit.theme")||"light"; }catch{ return "light"; } };
+const themePref=()=>{ try{ return localStorage.getItem("concit.theme")||"dark"; }catch{ return "dark"; } };
 const THEME_MQ=window.matchMedia?matchMedia("(prefers-color-scheme: dark)"):null;
 function applyTheme(){ const p=themePref(), dark=p==="dark"||(p==="auto"&&THEME_MQ&&THEME_MQ.matches);
   document.documentElement.dataset.theme=dark?"dark":"light";
@@ -1338,7 +1338,7 @@ function viewAccount(){
     pushPerm()==="unsupported"?`<p class="fine">${IS_IOS?"On an iPhone, notifications work once Concit is on your Home Screen. Open concit.app in Safari, tap Share, then Add to Home Screen, and turn them on here from the app.":"This browser can't show notifications."}</p>`
     :pushPerm()==="denied"?`<p class="fine">Notifications are blocked for Concit. Allow them in your ${IS_IOS?"iPhone's Settings, under Notifications":"browser's site settings"}, then come back here.</p>`
     :`<div class="themeseg${PUSH.busy?" busy":""}">${seg("setPush",PUSH.on?"on":"off",[["on","On"],["off","Off"]],"Notifications")}</div><p class="fine">Get an alert for new group plans, results and chat messages. Set separately on each device.</p>`}</div>
-  <div class="group"><span class="label">Appearance</span><div class="themeseg">${seg("setTheme",themePref(),[["light","Light"],["dark","Dark"],["auto","Match device"]],"Appearance")}</div><p class="fine">Saved on this device.</p></div>
+  <div class="group"><span class="label">Appearance</span><div class="themeseg">${seg("setTheme",themePref(),[["dark","Dark"],["light","Light"],["auto","Match device"]],"Appearance")}</div><p class="fine">Saved on this device.</p></div>
   ${S.admin?`<div class="group"><span class="label">Owner</span><button class="person" data-act="openStats"><span>Stats<small class="sub">How Concit is being used</small></span><small>Open</small></button></div>`:""}
   <div class="group"><span class="label">Help</span><button class="person tourrow" data-act="replayTour"><span class="tourico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg></span><span>Show me around again<small class="sub">Replay the welcome, practice vote and tour of the app</small></span></button></div>
   <div class="group"><span class="label">Your data</span><a class="person" href="privacy.html"><span>Privacy notice<small class="sub">What Concit keeps and why</small></span><small>Read</small></a></div>
