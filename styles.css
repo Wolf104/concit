@@ -930,3 +930,6 @@ body.guest nav{display:none}
 .guestcta .link{flex:none}
 /* The area revealed when the page is pulled past its top or bottom edge matches the blue header, in both themes. */
 html{background:var(--hero)}
+/* The tab bar floats with no backing strip, so the blue behind the page shows across the whole bottom when the page is pulled up. */
+nav{background:none;pointer-events:none}
+nav::before{display:none}
