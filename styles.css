@@ -928,3 +928,5 @@ body.guest nav{display:none}
 .guestcta{display:flex;align-items:center;gap:12px;margin:18px 0 6px;padding:13px 14px;border:1px solid var(--line);border-radius:16px;background:var(--tint)}
 .guestcta span{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.guestcta b{font-size:15px}.guestcta small{font-size:13px;color:var(--muted)}
 .guestcta .link{flex:none}
+/* The area revealed when the page is pulled past its top or bottom edge matches the blue header, in both themes. */
+html{background:var(--hero)}
