@@ -666,10 +666,10 @@ body.voting .vtop{margin-bottom:12px}
 .hdate b{display:block;font-size:21px;font-weight:700}
 .hempty{border:1.5px dashed var(--line);border-radius:18px;padding:18px;text-align:center;display:flex;flex-direction:column;gap:4px}
 .hempty span{font-size:14px;color:var(--muted)}
-.hplaces{display:flex;gap:12px;overflow-x:auto;margin:0 -24px;padding:2px 24px 8px;scroll-padding-inline:24px;scroll-snap-type:x mandatory;scrollbar-width:none}
-.hplaces::after{content:"";flex:none;width:12px}
+.hplaces{display:flex;gap:12px;overflow-x:auto;margin:0 -2px;padding:2px 2px 8px;scroll-padding-inline:2px;scroll-snap-type:x mandatory;scrollbar-width:none}
+.hplace .hbody b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hplaces::-webkit-scrollbar{display:none}
-.hplace{flex:none;width:190px;scroll-snap-align:start;display:flex;flex-direction:column;text-align:left;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:var(--card);color:var(--fg);font:inherit;padding:0;cursor:pointer}
+.hplace{flex:none;width:calc(50% - 6px);scroll-snap-align:start;display:flex;flex-direction:column;text-align:left;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:var(--card);color:var(--fg);font:inherit;padding:0;cursor:pointer}
 .hband{height:70px;background:var(--c);padding:10px 12px;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start}
 .hband i{font-style:normal;background:rgba(255,255,255,.93);color:#0f2a44;font-size:12px;font-weight:700;border-radius:99px;padding:2px 9px}
 .hband small{color:#fff;font-size:12px;font-weight:700}
