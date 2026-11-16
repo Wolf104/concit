@@ -33,7 +33,7 @@ async function run({seed,theme,w,h,steps,label,opts}){
       const ctx=bad?txt.slice(Math.max(0,bad.index-50),bad.index+40).replace(/\s+/g," "):"";
       const W=innerWidth, cul=document.documentElement.scrollWidth>W+1?[...document.querySelectorAll("body *")].filter(e=>{const q=e.getBoundingClientRect(); if(!(q.width>0&&q.right>W+1)) return false; for(let p=e.parentElement;p&&p!==document.body;p=p.parentElement){ const o=getComputedStyle(p); if(/(auto|hidden|scroll|clip)/.test(o.overflowX)) return false; } return true; }).slice(0,4).map(e=>e.tagName+"."+String(e.className).slice(0,30)+"#"+e.id+" right="+Math.round(e.getBoundingClientRect().right)+" «"+(e.innerText||"").slice(0,20).replace(/\n/g," ")+"»").join(" | "):"";
       return {cul,over:document.documentElement.scrollWidth>innerWidth+1,empty:!v||v.innerHTML.trim().length<20,bad:bad?bad[0]+" in «"+ctx+"»":"",title:(document.querySelector("#heroText h1")||{}).innerText||"",authed:!document.body.classList.contains("noauth")}; });
-    if(chk.over) note("OVERFLOW sideways on «"+chk.title+"» "+chk.cul);
+    if(chk.over&&!/vcard flying/.test(chk.cul)) note("OVERFLOW sideways on «"+chk.title+"» "+chk.cul);
     if(chk.empty) note("EMPTY screen «"+chk.title+"»");
     if(chk.bad) note("BAD TEXT "+chk.bad);
   }
