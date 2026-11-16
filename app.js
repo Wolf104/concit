@@ -985,6 +985,7 @@ function homePlans(){
   return out.filter(p=>st(p)!==3).sort((a,b)=>st(a)-st(b)||a.day.localeCompare(b.day)).slice(0,3).map(p=>({...p,st:st(p)}));
 }
 function viewHome(){
+  if(S.sights) return viewSights();
   const name=(S.session?.user?.user_metadata?.name||"").trim().split(" ")[0];
   const hr=new Date().getHours(), part=hr<12?"morning":hr<18?"afternoon":"evening";
   const day=new Date().toLocaleDateString("en-GB",{weekday:"long"});
@@ -1008,9 +1009,46 @@ function viewHome(){
   <div class="hplaces">${now.map(({p,u})=>{const c=mapCat(p);return `<button class="hplace" data-act="homePlace" data-id="${esc(p.id)}" style="--c:${c[2]}"><span class="hband"><i>${esc(p.cuisine&&p.cuisine[0]&&CUISINE_TEXT[p.cuisine[0]]||KIND_SHORT[p.kind]||"")}</i><small>Open till ${u}</small></span><span class="hbody"><b>${esc(p.name)}</b><small>${esc(zname(p.zone))} · ${esc(costText(p).replace(/ (a|an) .*$/,""))}</small>${starsHtml(p,"small")}</span></button>`}).join("")}</div></section>`:""}
   ${evs.length?`<section aria-labelledby="heH"><div class="hsec"><h2 id="heH">Coming up in Milan</h2><button class="link" data-act="tab" data-tab="events">Events</button></div>
   <div class="sheet glist">${evs.map(e=>{const d=parse(e.start);return `<button class="grow" data-act="homeEvent" data-id="${esc(e.id)}"><span class="hdate" style="--c:${EV_COL[e.cat]||"var(--link)"}"><i>${d.toLocaleDateString("en-GB",{month:"short"})}</i><b>${d.getDate()}</b></span><span class="gmain"><b>${esc(e.name)}</b><small>${esc([e.venue,e.time].filter(Boolean).join(" · "))}</small></span></button>`}).join("")}</div></section>`:""}
+  ${homeSights()}
   <section aria-labelledby="hgH"><div class="hsec"><h2 id="hgH">Your groups</h2></div>
   ${S.groups.length?`<div class="hgroups">${S.groups.slice(0,6).map(g=>`<button class="hgroup" data-act="openGroup" data-id="${esc(g.id)}">${g.unread?`<i class="gbadge">${g.unread}</i>`:""}${groupAv(g,"hav",false)}<b>${esc(g.name)}</b><small>${g.members.length} ${g.members.length===1?"person":"people"}</small></button>`).join("")}</div>`
   :`<button class="hnew" data-act="tab" data-tab="groups"><span aria-hidden="true">+</span><span><b>Make your first group</b><small>Share a code so friends can join</small></span></button>`}</section>`;
+}
+/* Sights: a Home section and a page reached only from Home. Photos come from Wikipedia at run time and are kept for later visits. */
+let SIGHT_IMG={}; try{ SIGHT_IMG=JSON.parse(localStorage.getItem("concit.sightimg"))||{}; }catch{}
+let SIGHT_LOADING=false;
+const sightImg=x=>x.file?commonsImg(x.file,800):(SIGHT_IMG[x.id]&&SIGHT_IMG[x.id].src)||"";
+const sightPage=x=>x.file?commonsPage(x.file):(SIGHT_IMG[x.id]&&SIGHT_IMG[x.id].page)||"";
+const sightBg=x=>{ const u=sightImg(x); return u?` style="--c:${SIGHT_KINDS[x.kind][1]};background-image:url('${u.replace(/'/g,"%27")}')"`:` style="--c:${SIGHT_KINDS[x.kind][1]}"`; };
+async function loadSightImgs(){
+  if(SIGHT_LOADING) return; const need=SIGHTS.filter(x=>!x.file&&!SIGHT_IMG[x.id]); if(!need.length) return; SIGHT_LOADING=true;
+  await Promise.all(need.map(async x=>{ try{
+    const r=await fetch("https://en.wikipedia.org/api/rest_v1/page/summary/"+encodeURIComponent(x.wiki)); if(!r.ok) return;
+    const j=await r.json(), small=(j.thumbnail&&j.thumbnail.source)||""; if(!small) return;
+    /* Ask for a sharper size; keep the small one if that size isn't available. */
+    const big=small.replace(/\/\d+px-/,"/960px-");
+    const src=big===small?small:await new Promise(ok=>{ const im=new Image(); im.onload=()=>ok(big); im.onerror=()=>ok(small); im.referrerPolicy="no-referrer"; im.src=big; setTimeout(()=>ok(small),6000); });
+    SIGHT_IMG[x.id]={src,page:(j.content_urls&&j.content_urls.desktop&&j.content_urls.desktop.page)||""};
+    document.querySelectorAll(`[data-simg="${x.id}"]`).forEach(el=>{ el.style.backgroundImage=`url('${src.replace(/'/g,"%27")}')`; });
+  }catch{} }));
+  try{ localStorage.setItem("concit.sightimg",JSON.stringify(SIGHT_IMG)); }catch{}
+  SIGHT_LOADING=false; if(S.sights&&S.tab==="home") render();
+}
+function homeSights(){
+  const top=SIGHTS.filter(x=>x.top);
+  return `<section aria-labelledby="hvH"><div class="hsec"><h2 id="hvH">See the city</h2><button class="link" data-act="sights">All ${SIGHTS.length} sights</button></div>
+  <div class="hplaces hsights">${top.map(x=>`<button class="hsight" data-act="sights" data-id="${x.id}" data-simg="${x.id}"${sightBg(x)}><i>${esc(x.pay)}</i><span><b>${esc(x.name)}</b><small>${esc(x.zone)}</small></span></button>`).join("")}</div></section>`;
+}
+function viewSights(){
+  const k=S.sightKind||"all", list=SIGHTS.filter(x=>k==="all"||x.kind===k);
+  return `<div data-hero><button class="back" data-act="sightsBack">‹ Home</button><span>${SIGHTS.length} places worth the walk</span><h1>See Milan</h1></div>
+  <div class="chips sightchips" role="group" aria-label="Type">${[["all","All"],...Object.entries(SIGHT_KINDS).map(([key,v])=>[key,v[0]])].map(([key,l])=>`<button class="chip" data-act="sightKind" data-v="${key}" aria-pressed="${k===key}">${l}</button>`).join("")}</div>
+  <div class="sights">${list.map(x=>{ const pg=sightPage(x); return `<article class="scard" id="sight-${x.id}">
+    <div class="sphoto" data-simg="${x.id}"${sightBg(x)}><i>${esc(SIGHT_KINDS[x.kind][0])}</i><em>${esc(x.pay)}</em></div>
+    <div class="sbody"><h2>${esc(x.name)}</h2><small>${esc(x.zone)} · ${esc(x.metro)} · allow ${esc(x.time)}</small>
+      <p>${esc(x.blurb)}</p><p class="stip"><b>Tip</b>${esc(x.tip)}</p>
+      <div class="vlinks"><a href="${mapsUrl(x.name)}" target="_blank" rel="noopener">${evIcon('<path d="M3 11l18-8-8 18-2-8z"/>')}Directions</a><a href="https://en.wikipedia.org/wiki/${encodeURIComponent(x.wiki)}" target="_blank" rel="noopener">Read more</a></div></div></article>`; }).join("")}</div>
+  <p class="foot">Opening times and ticket prices change, so check before you go. Photos are from Wikipedia and Wikimedia Commons; tap Read more for the photographer and licence.</p>`;
 }
 function viewGroups(){
   const g=S.groups.find(x=>x.id===S.gid);
@@ -1318,6 +1356,7 @@ function render(){
   const h=document.querySelector("#view [data-hero]"), ht=document.getElementById("heroText");
   ht.innerHTML=h?h.innerHTML:""; h?.remove();
   if(S.practice) decoratePractice();
+  if(authed&&S.tab==="home"&&!S.acct&&!TOUR) loadSightImgs();
   document.body.classList.toggle("voting",!!document.querySelector("#view .vdeck"));
   document.querySelectorAll("details").forEach(d=>{ if(open.includes(d.querySelector("b").textContent)) d.open=true; });
   if(authed&&S.tab==="hotspots"&&S.hotView==="map"&&!S.mapFail) mountMap();
@@ -1499,7 +1538,7 @@ function placeCoach(){
 }
 /* Tapping a tab always opens that tab's main page, closing whatever was open inside it. */
 function resetTab(t){
-  S.pickOpen=false; S.calOpen=false;
+  S.pickOpen=false; S.calOpen=false; S.sights=false;
   if(t==="decide"){ if(S.plan||S.code){ S.plan=null; S.code=null; setUrl(null); } S.dfltOpen=false; }
   else if(t==="hotspots"){ S.hot="all"; S.hotView="list"; S.sel=null; S.zone=null; S.fltOpen=false; S.hotCuisine=""; S.open=new Set(); }
   else if(t==="events"){ S.ev=null; S.evCalOpen=false; S.evDate=null; }
@@ -1572,6 +1611,9 @@ const H={
   seen(el){ if(getSelection&&String(getSelection()).length) return; const id=Number(el.dataset.id); CHAT.seenOpen=CHAT.seenOpen===id?null:id; paintChat(false); },
   closeChat(){ closeChat(); },
   removeAvatar(){ removeAvatar(); },
+  sights(el){ S.sights=true; S.sightKind="all"; S.acct=false; render(); const id=el.dataset.id, t=id&&document.getElementById("sight-"+id); if(t) requestAnimationFrame(()=>scrollTo(0,Math.max(0,t.getBoundingClientRect().top+scrollY-(document.querySelector(".hero")?.offsetHeight?12:12)))); else scrollTo(0,0); },
+  sightsBack(){ S.sights=false; render(); scrollTo(0,0); },
+  sightKind(el){ S.sightKind=el.dataset.v; render(); },
   replayTour(){ S.acct=false; S.tab="home"; render(); startTour(); },
   tourSkipPractice(){ if(TOUR) startCoach(); else { S.practice=false; S.plan=null; render(); } },
   tourCoach(){ if(TOUR) startCoach(); },
