@@ -1687,7 +1687,9 @@ function viewEvents(){
   <p class="foot">Checked ${S.evChecked||CHECKED}. Confirm dates before you go.</p>`;
 }
 function render(){
-  if(DEALING){ clearTimeout(render.wait); render.wait=setTimeout(render,360); return; }
+  /* Never redraw under someone's thumb: while a vote card is flying off or being dragged, updates from the server
+     (other people's votes, group changes, fresh listings) wait until the card has landed. */
+  if(DEALING||document.querySelector(".vcard.dragging")){ clearTimeout(render.wait); render.wait=setTimeout(render,360); return; }
   const a=document.activeElement;
   if(render.ok&&a&&a.matches?.('input[type=text],input[type=email],input[type=password],textarea')&&a.value&&S.session){ render.later=true; return; }
   render.ok=true; render.later=false;
@@ -2108,7 +2110,11 @@ function mergeCity(kind,rows,which,all){
   Object.keys(CITIES).forEach(c=>{ if(all||(which.other?c!==which.other:c===which.city)) DATA[kind][c]=true; });
   if(kind==="events") Object.keys(CITIES).forEach(c=>{ const d=rows.filter(e=>(e.city||"milan")===c).map(e=>e.checked).filter(Boolean).sort().pop(); if(d) DATA.checked[c]=new Date(d).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}); });
   S.evChecked=DATA.checked[CITY]||"";
-  useCity(); render();
+  useCity();
+  /* Skip the redraw when only another city's list arrived and nothing on screen depends on it. */
+  const need=all||which.city===CITY||(which.other&&which.other!==CITY)||(S.plan&&(S.plan.options||[]).some(id=>fresh.some(x=>x.id===id)));
+  if(!need) return;
+  render();
 }
 async function loadKind(kind,c){
   const q=kind==="events"?`&end_date=gte.${today}&order=start_date`:"";

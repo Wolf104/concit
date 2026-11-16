@@ -954,8 +954,6 @@ body.overscroll nav::before{display:none}
 /* A picked place with a long name wraps inside its chip instead of pushing the page sideways. */
 .picked .chip{flex:0 1 auto;max-width:100%;min-width:0;text-align:left;border-radius:16px;overflow-wrap:anywhere}
 
-/* A voted card flies off the side of the screen: it must never widen the page while it does. */
-.app{overflow-x:clip}
 
 /* City switch: the city name in the Home header, with the phone's own picker laid invisibly over it. */
 .citypick{position:relative;display:inline-flex;align-items:center;gap:4px;margin:-3px 0 -3px 2px;padding:3px 8px;border-radius:9px;background:rgba(255,255,255,.16);cursor:pointer;vertical-align:baseline}
