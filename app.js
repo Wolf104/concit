@@ -1342,8 +1342,7 @@ function tourDue(){
   try{ if(localStorage.getItem("concit.tour."+u.id)) return false; }catch{}
   const made=Date.parse(u.created_at||""); return made>=TOUR_SINCE;
 }
-/* Home opens with the white card at the top of the screen, so Start a plan is the first thing you see. */
-function homeTop(){ if(S.tab!=="home"||S.acct||TOUR) return scrollTo(0,0); const a=document.querySelector(".app"); if(!a) return; requestAnimationFrame(()=>scrollTo(0,Math.max(0,a.getBoundingClientRect().top+scrollY-14))); }
+function homeTop(){ scrollTo(0,0); }
 try{ history.scrollRestoration="manual"; }catch{}
 let TOUR=null;
 const firstName=()=>(S.session?.user?.user_metadata?.name||"").trim().split(" ")[0];
