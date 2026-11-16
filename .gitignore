@@ -2,3 +2,4 @@ node_modules
 tests/node_modules
 tests/*.png
 tests/package*.json
+madrid_websites_google.tsv

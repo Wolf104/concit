@@ -168,7 +168,7 @@ for p in sorted(P.values(), key=lambda p: -(p.get("rc") or 0)):
     cu = [CUIS[lab]] if kind in ("eat", "cheap") and lab in CUIS else []
     rows.append({"id": pid, "name": name, "kind": kind, "zone": zone, "addr": addr(p["a"]), "metro": metro, "price": min(pl, 3), "hot": 1, "why": why[0].upper() + why[1:],
                  "detail": det, "src": f"Google Maps listing, checked {CHECKED}", "closed": closed, "occ": OCC[kind] + (["cheap"] if kind == "beer" and pl == 1 else []),
-                 "lat": round(lat, 5), "lng": round(lng, 5), "costs": costs, "cuisine": cu, "web": None, "stars": r, "reviews": rc, "hours": hours, "city": "madrid", "_lab": lab})
+                 "lat": round(lat, 5), "lng": round(lng, 5), "costs": costs, "cuisine": cu, "web": None, "stars": r, "reviews": rc, "hours": hours, "city": "madrid", "_lab": lab, "_gid": p["id"]})
     stats[kind] += 1
 json.dump(rows, open(OUT, "w"), ensure_ascii=False)
 print(len(rows), dict(stats))
