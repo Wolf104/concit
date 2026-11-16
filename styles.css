@@ -669,11 +669,11 @@ body.voting .vtop{margin-bottom:12px}
 .hplaces{display:flex;gap:12px;overflow-x:auto;margin:0;padding:0 0 6px;scroll-padding-inline:0;scroll-snap-type:x mandatory;scrollbar-width:none}
 .hplace .hbody b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hplaces::-webkit-scrollbar{display:none}
-.hplace{flex:none;width:calc(50% - 6px);scroll-snap-align:start;display:flex;flex-direction:column;text-align:left;border:0;border-radius:18px;overflow:hidden;background:var(--page);color:var(--fg);font:inherit;padding:0;cursor:pointer}
+.hplace{flex:none;width:calc(50% - 6px);scroll-snap-align:start;display:flex;flex-direction:column;text-align:left;border:0;border-radius:18px;overflow:hidden;background:none;isolation:isolate;-webkit-mask-image:-webkit-radial-gradient(white,black);color:var(--fg);font:inherit;padding:0;cursor:pointer}
 .hband{height:70px;background:var(--c);padding:10px 12px;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start}
 .hband i{font-style:normal;background:rgba(255,255,255,.93);color:#0f2a44;font-size:12px;font-weight:700;border-radius:99px;padding:2px 9px}
 .hband small{color:#fff;font-size:12px;font-weight:700}
-.hbody{padding:10px 12px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.hbody{padding:10px 12px 12px;display:flex;flex-direction:column;gap:2px;min-width:0;flex:1;background:var(--page)}
 .hbody b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hbody small{font-size:13px;color:var(--muted)}
 .hgroups{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
@@ -801,3 +801,6 @@ body.voting .hero{padding-top:max(12px,calc(env(safe-area-inset-top,0px) + 4px))
 #coach .cbub{max-height:calc(100vh - env(safe-area-inset-top,0px) - 20px)}
 /* Home-screen app: keep a blue strip behind the clock and battery so the page never scrolls under them */
 body::before{content:"";position:fixed;left:0;right:0;top:0;height:env(safe-area-inset-top,0px);background:var(--hero);z-index:55;pointer-events:none}
+/* No grey iPhone tap box when a finger lands on a card or button while scrolling */
+button,a,label,[data-act]{-webkit-tap-highlight-color:transparent}
+.hplace{transition:transform .12s}.hplace:active{transform:scale(.97)}
