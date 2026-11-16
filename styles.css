@@ -9,12 +9,12 @@
 *{box-sizing:border-box}
 html{background:var(--page)}
 body{margin:0;min-height:100vh;background:var(--page);color:var(--fg);font:400 16px/1.5 var(--font);-webkit-font-smoothing:antialiased}
-.hero{background:var(--hero);color:var(--on);padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px));padding-block:20px 56px}
+.hero{background:var(--hero);color:var(--on);padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px));padding-block:14px 46px}
 .heroin{max-width:472px;margin:0 auto;position:relative}
-.brand{display:block;height:34px;width:auto;margin:0 0 26px -3px}
+.brand{display:block;height:30px;width:auto;margin:0 0 14px -3px}
 .brand path{fill:#fff}
-#heroText h1{font-size:34px;line-height:1.12;font-weight:700;letter-spacing:-.015em;margin:0;text-wrap:balance}
-#heroText span{display:block;font-size:16px;font-weight:600;margin-bottom:4px}
+#heroText h1{font-size:28px;line-height:1.12;font-weight:700;letter-spacing:-.015em;margin:0;text-wrap:balance}
+#heroText span{display:block;font-size:15px;font-weight:600;margin-bottom:2px}
 #heroText:empty{display:none}
 .app{max-width:520px;margin:-32px auto 0;background:var(--card);border:1px solid var(--line);border-bottom:0;border-radius:28px 28px 0 0;min-height:calc(100vh - 110px);padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px));padding-block:26px calc(112px + env(safe-area-inset-bottom,0px))}
 button,input,select{font:inherit;color:inherit}
@@ -126,7 +126,7 @@ a.person{text-decoration:none}
 .links p{margin:0 0 6px;font-size:15px;color:var(--muted)}
 .fine{font-size:14px;color:var(--muted);margin:2px 0 0}
 .fine a{color:var(--link);font-weight:700}
-.back{display:block;background:none;border:0;padding:0;margin:0 0 8px;color:var(--on);opacity:.9;font-size:15px;font-weight:700;cursor:pointer}
+.back{display:block;background:none;border:0;padding:0;margin:0 0 5px;color:var(--on);opacity:.9;font-size:15px;font-weight:700;cursor:pointer}
 .rowstat .ok{color:var(--link);font-weight:700}
 #me{position:absolute;right:0;top:0;width:34px;height:34px;border-radius:50%;border:1.5px solid rgba(255,255,255,.75);background:rgba(255,255,255,.18);color:#fff;font-weight:700;font-size:15px;cursor:pointer;padding:0}
 #me[aria-current]{background:#fff;color:var(--accent)}
@@ -623,7 +623,7 @@ html[data-theme=dark] .vstamp.yes{color:var(--ok);border-color:var(--ok)}
 .vdeck.fit6 .vhead .rate{display:none}
 /* Voting: a slimmer blue header so the whole card fits on one screen */
 body.voting .hero{padding-block:12px 44px}
-body.voting .brand{height:28px;margin-bottom:12px}
+body.voting .brand{height:28px;margin-bottom:10px}
 body.voting #heroText .back{margin-bottom:4px;font-size:14px}
 body.voting #heroText span{font-size:14px;margin-bottom:0}
 body.voting #heroText h1{font-size:24px}
