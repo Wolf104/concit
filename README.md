@@ -24,7 +24,7 @@ In Vercel, choose Add New > Project, import this GitHub repository and press Dep
 - **Decide**: make a plan and vote on it with a group
 - **Hotspots**: every place, as a list or a map
 - **Events**: what's on in Milan
-- **Groups**: groups, chat and group photos
+- **Groups**: your groups and their chats, with plan cards, replies, reactions and photos. Tap a group's name in its chat for members, invites, renaming and muting
 - A first-run tutorial, which can be replayed from Your account
 
 If `config.js` is left empty, the app still works on one phone, without share links.

@@ -241,7 +241,7 @@ async function loadGroups(){
   try{
     rpc("heartbeat").catch(()=>{});
     const g=await rpc("my_groups"); needAv((g||[]).flatMap(x=>x.members||[])); needGroupAv(g||[]);
-    if(JSON.stringify(g)!==JSON.stringify(S.groups)){ S.groups=g||[]; if(!(S.chatOpen&&S.tab==="groups"&&!S.acct)) render(); }
+    if(JSON.stringify(g)!==JSON.stringify(S.groups)){ S.groups=g||[]; if(!(S.chatOpen&&S.tab==="groups"&&!S.acct)) render(); else paintChatSide(); }
   }catch{}
 }
 async function openPlan(code){
@@ -363,7 +363,7 @@ async function joinByCode(code){
   try{
     const g=await rpc("join_group",{p_code:code});
     if(!g){ toast("That invite isn't valid. Ask for a new one."); return; }
-    await loadGroups(); S.gid=g.id; S.tab="groups"; toast(`You're in ${g.name}`); render();
+    await loadGroups(); S.groupNew=false; S.joinMode=false; S.tab="groups"; toast(`You're in ${g.name}`); if(!openChatLink(g.id)){ S.gid=g.id; render(); }
   }catch{ toast("Couldn't join that group. Check your connection."); }
 }
 function toast(t){const el=document.getElementById("toast");el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,3000)}
@@ -402,6 +402,11 @@ const mapsUrl=q=>"https://www.google.com/maps/search/?api=1&query="+encodeURICom
 const WHAT_TEXT={coffee:"Coffee",eat:"Food",drinks:"Drinks",clubs:"Clubs",culture:"Culture",event:"An event"};
 const dayText=d=>d===today?"tonight":d===addDays(today,1)?"tomorrow":`${long(d)} ${short(d)}`;
 const planTitle=p=>`${p.what==="eat"&&p.cuisine?CUISINE_TEXT[p.cuisine]:WHAT_TEXT[p.what]||"Plan"} ${dayText(p.day)}${p.time?` at ${p.time}`:""}`;
+/* Short plan wording for rows, chat cards and pinned chips: "Food · Tonight · 20:30". */
+const planShort=p=>`${p.what==="eat"&&p.cuisine?CUISINE_TEXT[p.cuisine]:WHAT_TEXT[p.what]||"Plan"} · ${p.day===today?"Tonight":p.day===addDays(today,1)?"Tomorrow":`${wday(p.day)} ${short(p.day)}`}${p.time?` · ${p.time}`:""}`;
+const planOpen=p=>!(p.finished||(p.people>0&&p.done>=p.people));
+const planState=p=>!planOpen(p)?["See result","done"]:p.me_out?["Not going","out"]:p.mine<p.options?["Vote","todo"]:[`${p.done} of ${p.people} voted`,""];
+const findPlan=code=>{ for(const g of S.groups){ const x=g.plans.find(q=>q.code===code); if(x) return x; } return null; };
 const toVote=()=>S.groups.flatMap(g=>g.plans.filter(p=>!p.finished&&!p.me_out&&p.mine<p.options).map(p=>({...p,group:g.name})));
 /* When: two quick picks, or any date up to six months ahead from a calendar. */
 const MAX_AHEAD=180;
@@ -910,7 +915,83 @@ function typing(on){
 }
 const chatTime=t=>{const d=new Date(t), now=new Date(), same=d.toDateString()===now.toDateString();
   return same?d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}):d.toLocaleDateString("en-GB",{day:"numeric",month:"short"})+" "+d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});};
-const linkify=t=>esc(t).replace(/https?:\/\/[^\s<]+/g,u=>`<a href="${u}" target="_blank" rel="noopener">${u}</a>`);
+/* Links become tappable. A link to a Concit plan becomes a button that opens the plan in the app. */
+const PLAN_LINK=/[?&]plan=([A-Za-z0-9]{6,40})(?![A-Za-z0-9])/;
+const ownHost=u=>{ try{ const h=new URL(u).hostname.replace(/^www\./,""); return h===location.hostname.replace(/^www\./,"")||h==="concit.app"; }catch{ return false; } };
+const PLAN_ICON='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/></svg>';
+const linkify=t=>esc(t).replace(/https?:\/\/[^\s<]+/g,u=>{ const raw=u.replace(/&amp;/g,"&"), m=raw.match(PLAN_LINK);
+  if(m&&ownHost(raw)){ const pl=findPlan(m[1]); return `<button type="button" class="plink" data-act="openPlan" data-code="${m[1]}">${PLAN_ICON}${pl?esc(planShort(pl)):"Open the plan"}</button>`; }
+  return `<a href="${u}" target="_blank" rel="noopener">${u}</a>`; });
+const REACTS=["👍","❤️","😂","😮","😢","🙏"];
+const MSG_IMG={};  /* message id -> photo, kept while the app is open */
+const chatGroup=()=>S.groups.find(x=>x.id===CHAT.gid);
+async function loadMsgImg(id){
+  if(MSG_IMG[id]!==undefined) return; MSG_IMG[id]="";
+  try{ const d=await rpc("get_message_image",{p_id:id}); if(d&&/^data:image\/(jpeg|webp);base64,[A-Za-z0-9+\/=]+$/.test(d)){ MSG_IMG[id]=d; paintChat(false); } }catch{ delete MSG_IMG[id]; }
+}
+function reactsHtml(m){
+  const by={}; (CHAT.reacts||[]).forEach(([id,e,u])=>{ if(id!==m.id) return; (by[e]=by[e]||{n:0,me:false}).n++; if(u===uid()) by[e].me=true; });
+  const ks=REACTS.filter(e=>by[e]); if(!ks.length) return "";
+  return `<div class="mreacts">${ks.map(e=>`<button type="button" class="mreact${by[e].me?" me":""}" data-act="react" data-id="${m.id}" data-v="${e}" aria-label="${e} ${by[e].n}${by[e].me?", including you":""}">${e}<i>${by[e].n}</i></button>`).join("")}</div>`;
+}
+const msgText=m=>m.img&&m.body==="Photo"?"Photo":m.body;
+function quoteHtml(m){
+  if(!m.reply) return ""; const o=CHAT.msgs.find(x=>x.id===m.reply);
+  return `<span class="quote"><b>${o?esc(o.by===uid()?"You":o.name||"Former member"):"Earlier message"}</b>${o?esc(msgText(o).slice(0,90)):""}</span>`;
+}
+function photoHtml(m){
+  if(!m.img) return ""; const src=m.local||MSG_IMG[m.id];
+  if(!src&&!m.pending&&MSG_IMG[m.id]===undefined) loadMsgImg(m.id);
+  return src?`<img class="mphoto" src="${src}" alt="Photo" data-act="viewPhoto" data-id="${m.id}">`:`<span class="mphoto wait" role="img" aria-label="Photo loading"></span>`;
+}
+function planCardHtml(m){
+  const pl=findPlan(m.plan), res=m.kind==="result", who=m.by===uid()?"You":esc((m.name||"Someone").split(" ")[0]);
+  const head=res?"The votes are in":`${who} started a plan`;
+  if(!pl) return `<div class="pcard gone"><span><small>${head}</small><b>${esc(m.body.replace(/^[^:]*:\s*/,""))}</b></span></div>`;
+  const [t,c]=res?["See result","done"]:planState(pl);
+  return `<button type="button" class="pcard${res?" res":""}" data-act="openPlan" data-code="${esc(pl.code)}"><span><small>${head}</small><b>${esc(planShort(pl))}</b></span><span class="gstat ${c}">${esc(t)}</span></button>`;
+}
+const msgBar=m=>`<div class="mbar">${REACTS.map(e=>`<button type="button" data-act="react" data-id="${m.id}" data-v="${e}" aria-label="React ${e}">${e}</button>`).join("")}<button type="button" class="mreply" data-act="reply" data-id="${m.id}">Reply</button></div>`;
+async function reactTo(id,e){
+  const me=uid(), cur=(CHAT.reacts||[]).find(r=>r[0]===id&&r[2]===me);
+  CHAT.reacts=(CHAT.reacts||[]).filter(r=>!(r[0]===id&&r[2]===me)); if(!cur||cur[1]!==e) CHAT.reacts.push([id,e,me]);
+  CHAT.open=null; CHAT.reactAt=Date.now(); paintChat(false);
+  try{ await rpc("react",{p_msg:id,p_emoji:e}); }catch{ toast("Couldn't save that reaction. Try again."); }
+  CHAT.reactAt=Date.now();
+}
+function paintReply(){
+  const el=document.getElementById("chatReply"); if(!el) return; const o=CHAT.reply&&CHAT.msgs.find(x=>x.id===CHAT.reply);
+  el.hidden=!o; el.innerHTML=o?`<span><b>Replying to ${esc(o.by===uid()?"yourself":(o.name||"Former member").split(" ")[0])}</b>${esc(msgText(o).slice(0,80))}</span><button type="button" class="pillx" data-act="replyCancel" aria-label="Cancel reply">×</button>`:"";
+}
+function viewMsgPhoto(id){
+  const src=MSG_IMG[id]||CHAT.msgs.find(m=>m.id===id)?.local; if(!src) return;
+  const wrap=document.createElement("div"); wrap.className="photoview msgphoto"; wrap.setAttribute("role","dialog"); wrap.setAttribute("aria-modal","true"); wrap.setAttribute("aria-label","Photo");
+  wrap.innerHTML=`<figure><img src="${src}" alt="Photo"></figure><button class="photoclose" aria-label="Close">×</button>`;
+  const close=()=>{ document.removeEventListener("keydown",key,true); document.body.classList.remove("cropping"); wrap.remove(); };
+  const key=e=>{ if(e.key==="Escape"){ e.preventDefault(); close(); } };
+  document.addEventListener("keydown",key,true); wrap.addEventListener("click",close);
+  document.body.appendChild(wrap); document.body.classList.add("cropping"); wrap.querySelector(".photoclose").focus({preventScroll:true});
+}
+/* Shrink a chosen photo to a small JPEG and send it. */
+async function sendChatPhoto(file){
+  if(!file||!CHAT.gid) return;
+  try{
+    const img=await loadImage(file); let max=1280, q=.76, d="";
+    for(let n=0;n<6;n++){ const k=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight)), c=document.createElement("canvas");
+      c.width=Math.max(1,Math.round(img.naturalWidth*k)); c.height=Math.max(1,Math.round(img.naturalHeight*k));
+      const x=c.getContext("2d"); x.fillStyle="#fff"; x.fillRect(0,0,c.width,c.height); x.drawImage(img,0,0,c.width,c.height);
+      d=c.toDataURL("image/jpeg",q); if(d.length<=480000) break; max=Math.round(max*.8); q=Math.max(.5,q-.06); }
+    if(d.length>480000||!d.startsWith("data:image/jpeg")){ toast("That photo is too big to send."); return; }
+    sendChat(d);
+  }catch{ toast("Couldn't read that photo. Try another one."); }
+}
+function pinsHtml(g){
+  const ps=g.plans.filter(x=>x.in_plan!==false).sort((a,b)=>planOpen(b)-planOpen(a)).slice(0,6);
+  return ps.map(x=>{ const [t,c]=planState(x); return `<button class="pin ${c}" data-act="openPlan" data-code="${esc(x.code)}"><b>${esc(planShort(x))}</b><i>${esc(t)}</i></button>`; }).join("")
+    +`<button class="pin add" data-act="newGroupPlan" data-id="${esc(g.id)}">+ ${ps.length?"Plan":"Start a plan"}</button>`;
+}
+/* While a chat is open the page isn't rebuilt, so refresh just the pinned plans and the plan cards. */
+function paintChatSide(){ const g=chatGroup(), el=document.getElementById("chatPins"); if(!g||!el) return; el.innerHTML=pinsHtml(g); paintChat(false); sizeChat(); }
 /* Who has opened the chat since this message arrived. */
 /* Read receipts as tiny profile pictures of the people who have seen the message. */
 function seenHtml(m){
@@ -925,10 +1006,13 @@ function chatListHtml(){
   if(!CHAT.loaded) return `<p class="empty">Loading messages…</p>`;
   if(!CHAT.msgs.length) return `<p class="empty">No messages yet. Say hi to the group.</p>`;
   /* Messages from the same person within a minute of each other form a run: name on the first, time under the last. */
-  const joined=(a,b)=>a&&b&&a.by===b.by&&Math.abs(new Date(b.at)-new Date(a.at))<60e3, L=CHAT.msgs;
-  const lastMine=[...L].reverse().find(m=>m.by===uid());
-  return L.map((m,i)=>{ const mine=m.by===uid(), cont=joined(L[i-1],m), more=joined(m,L[i+1]), seen=mine&&(m===lastMine||CHAT.seenOpen===m.id);
-    return `<div class="msg${mine?" mine":" theirs"}${cont?" cont":""}">${!mine&&!more?avatarHtml(m.by,m.name,"msgav"):""}${!mine&&!cont?`<span class="who">${esc(m.name||"Former member")}</span>`:""}<p${mine&&!m.pending?` data-act="seen" data-id="${m.id}" title="Tap to see who has read this"`:""}>${linkify(m.body)}</p>${more?(seen?`<div class="seen">${seenHtml(m)}</div>`:""):`<div class="meta"><time>${esc(chatTime(m.at))}</time>${seen?seenHtml(m):""}</div>`}</div>`; }).join("");
+  const joined=(a,b)=>a&&b&&!a.kind&&!b.kind&&a.by===b.by&&Math.abs(new Date(b.at)-new Date(a.at))<60e3, L=CHAT.msgs;
+  const lastMine=[...L].reverse().find(m=>m.by===uid()&&!m.kind);
+  return L.map((m,i)=>{
+    if(m.kind) return `<div class="msg sys">${planCardHtml(m)}<time>${esc(chatTime(m.at))}</time></div>`;
+    const mine=m.by===uid(), cont=joined(L[i-1],m), more=joined(m,L[i+1]), open=CHAT.open===m.id&&!m.pending, seen=mine&&(m===lastMine||open);
+    const text=m.img?(m.body==="Photo"?"":`<span class="mcap">${linkify(m.body)}</span>`):linkify(m.body);
+    return `<div class="msg${mine?" mine":" theirs"}${cont?" cont":""}${open?" open":""}">${!mine&&!more?avatarHtml(m.by,m.name,"msgav"):""}${!mine&&!cont?`<span class="who">${esc(m.name||"Former member")}</span>`:""}<p${m.img?' class="hasimg"':""}${!m.pending?` data-act="msgTap" data-id="${m.id}"`:""}>${quoteHtml(m)}${photoHtml(m)}${text}</p>${reactsHtml(m)}${open?msgBar(m):""}${more?(seen?`<div class="seen">${seenHtml(m)}</div>`:""):`<div class="meta"><time>${esc(chatTime(m.at))}</time>${seen?seenHtml(m):""}</div>`}</div>`; }).join("");
 }
 /* The messages scroll inside their own panel, sized to end just above the message box,
    which sits above the tab bar (or above the phone keyboard when it is open). */
@@ -968,43 +1052,49 @@ async function loadChat(first){
     const rows=r?r.messages:null, readKey=r?JSON.stringify((r.people||[]).map(p=>[p.id,p.read])):"";
     if(r){ const changed=readKey!==CHAT.readKey; CHAT.readKey=readKey; CHAT.people=r.people||[]; paintPresence(); needAv(CHAT.people); if(changed&&CHAT.loaded) paintChat(false); }
     if(rows===null){ closeChat(); toast("You're no longer in that group."); return; }
+    if(r&&r.reacts&&Date.now()-(CHAT.reactAt||0)>1500){ const k=JSON.stringify([...r.reacts].sort()); if(k!==CHAT.reactKey){ CHAT.reactKey=k; CHAT.reacts=r.reacts; if(CHAT.loaded) paintChat(false); } }
     const fresh=rows.filter(m=>!CHAT.msgs.some(x=>x.id===m.id));
     if(fresh.length||!CHAT.loaded){ CHAT.msgs.push(...fresh); CHAT.msgs.sort((a,b)=>a.id-b.id); CHAT.last=CHAT.msgs.length?CHAT.msgs[CHAT.msgs.length-1].id:0; CHAT.loaded=true; paintChat(first); }
     const g=S.groups.find(x=>x.id===gid); if(g&&g.unread){ g.unread=0; }
   }catch{ if(first&&!CHAT.loaded){ CHAT.loaded=true; paintChat(); toast("Couldn't load messages. Check your connection."); } }
   finally{ CHAT.busy=false; }
 }
-function openChat(gid){ if(CHAT.gid!==gid){ CHAT.gid=gid; CHAT.msgs=[]; CHAT.last=0; CHAT.loaded=false; CHAT.people=[]; CHAT.typingSent=0; CHAT.readKey=""; CHAT.seenOpen=null; } S.chatOpen=true; render(); scrollTo(0,0); sizeChat(); chatToBottom(); loadChat(true); }
-function closeChat(){ typing(false); S.chatOpen=false; CHAT.gid=null; render(); scrollTo(0,0); loadGroups(); }
-async function sendChat(){
-  const i=document.getElementById("chatText"), body=(i?.value||"").trim(); if(!body||!CHAT.gid) return;
-  i.value=""; i.style.height=""; typing(false);
-  const temp={id:Number.MAX_SAFE_INTEGER, body, by:uid(), name:"You", at:new Date().toISOString(), pending:true};
+function openChat(gid){ if(CHAT.gid!==gid){ CHAT.gid=gid; CHAT.msgs=[]; CHAT.last=0; CHAT.loaded=false; CHAT.people=[]; CHAT.typingSent=0; CHAT.readKey=""; CHAT.open=null; CHAT.reply=null; CHAT.reacts=[]; CHAT.reactKey=""; } S.chatOpen=true; render(); scrollTo(0,0); sizeChat(); chatToBottom(); loadChat(true); }
+function closeChat(){ typing(false); S.chatOpen=false; CHAT.gid=null; S.gid=null; render(); scrollTo(0,0); loadGroups(); }
+async function sendChat(image){
+  const i=document.getElementById("chatText"), body=(i?.value||"").trim(); if((!body&&!image)||!CHAT.gid) return;
+  const reply=CHAT.reply||null;
+  if(i){ i.value=""; i.style.height=""; } typing(false); CHAT.reply=null; paintReply();
+  const temp={id:Number.MAX_SAFE_INTEGER, body:body||"Photo", by:uid(), name:"You", at:new Date().toISOString(), pending:true, reply, img:!!image, local:image||undefined};
   CHAT.msgs.push(temp); paintChat(true);
-  try{ const m=await rpc("send_message",{p_group:CHAT.gid,p_body:body}); if(m&&m.id) pushSend(m.id,"chat"); CHAT.msgs=CHAT.msgs.filter(x=>x!==temp); if(m&&!CHAT.msgs.some(x=>x.id===m.id)) CHAT.msgs.push(m); CHAT.msgs.sort((a,b)=>a.id-b.id); CHAT.last=Math.max(CHAT.last,m?.id||0); paintChat(true); }
-  catch{ CHAT.msgs=CHAT.msgs.filter(x=>x!==temp); paintChat(); if(i&&!i.value) i.value=body; toast("Message not sent. Check your connection and try again."); }
+  try{ const args={p_group:CHAT.gid,p_body:body}; if(reply) args.p_reply=reply; if(image) args.p_image=image;
+    const m=await rpc("send_message",args); if(m&&m.id){ if(image) MSG_IMG[m.id]=image; pushSend(m.id,"chat"); }
+    CHAT.msgs=CHAT.msgs.filter(x=>x!==temp); if(m&&!CHAT.msgs.some(x=>x.id===m.id)) CHAT.msgs.push(m); CHAT.msgs.sort((a,b)=>a.id-b.id); CHAT.last=Math.max(CHAT.last,m?.id||0); paintChat(true); }
+  catch{ CHAT.msgs=CHAT.msgs.filter(x=>x!==temp); paintChat(); if(i&&!i.value) i.value=body; CHAT.reply=reply; paintReply(); toast(image?"Photo not sent. Check your connection and try again.":"Message not sent. Check your connection and try again."); }
 }
 function viewChat(g){
-  return `<div data-hero><button class="back" data-act="closeChat">‹ Back</button><h1 class="withav">${groupAv(g,"mid")}<span>${esc(g.name)}</span></h1><p id="chatWho" class="who-online">${whoHtml()}</p></div>
+  return `<div data-hero><button class="back" data-act="closeChat">‹ Groups</button><h1 class="withav"><button class="ginfo" data-act="groupInfo" aria-label="${esc(g.name)}: group info, members and settings">${groupAv(g,"mid",false)}<span>${esc(g.name)}</span><i aria-hidden="true">›</i></button></h1><p id="chatWho" class="who-online">${whoHtml()}</p></div>
+  <div id="chatPins" class="pins">${pinsHtml(g)}</div>
   <div id="chatScroll" class="chatscroll"><div id="chatList" class="chat" aria-live="polite">${chatListHtml()}</div>
   <div id="chatTyping" aria-live="polite">${typingHtml()}</div></div>
-  <form id="chatForm" class="chatbar" novalidate><textarea id="chatText" rows="1" maxlength="1000" placeholder="Message ${esc(g.name)}" aria-label="Message"></textarea><button class="sendbtn" type="submit" aria-label="Send"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h14M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></form>`;
+  <form id="chatForm" class="chatbar" novalidate><div id="chatReply" class="creply" hidden></div><label class="attbtn" aria-label="Send a photo"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="8.5" cy="10" r="1.6"/><path d="M21 15.5l-4.5-4.5L8 19"/></svg><input type="file" id="chatPhoto" accept="image/*" hidden></label><textarea id="chatText" rows="1" maxlength="1000" placeholder="Message ${esc(g.name)}" aria-label="Message"></textarea><button class="sendbtn" type="submit" aria-label="Send"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h14M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></form>`;
 }
+/* Group info: reached by tapping the group's name at the top of its chat. */
 function viewGroup(g){
   const n=g.members.length, on=g.members.filter(m=>m.online&&m.id!==uid()).length;
-  const planStatus=p=>p.finished||(p.people>0&&p.done>=p.people)?["See result","done"]:p.me_out?["Not going","out"]:p.mine<p.options?["Vote","todo"]:[`${p.done} of ${p.people} voted`,""];
-  return `<div data-hero><button class="back" data-act="allGroups">‹ Groups</button><span>${n} ${n===1?"member":"members"}${on?` · ${on} online`:""}</span><h1>${esc(g.name)}</h1></div>
+  const open=g.plans.filter(planOpen), past=g.plans.filter(x=>!planOpen(x));
+  const prow=x=>{ const [t,c]=planState(x); return `<button class="grow" data-act="openPlan" data-code="${esc(x.code)}"><span class="gmain"><b class="wrap">${esc(planShort(x))}</b><small>Started by ${esc(x.by||"someone")}</small></span><span class="gstat ${c}">${esc(t)}</span></button>`; };
+  return `<div data-hero><button class="back" data-act="openChat" data-id="${esc(g.id)}">‹ Chat</button><span>${n} ${n===1?"member":"members"}${on?` · ${on} online`:""}</span><h1>${esc(g.name)}</h1></div>
   <div class="gphoto">${groupAv(g,"big")}<div class="avbtns"><label class="btn small plain${S.gAvBusy===g.id?" busy":""}">${S.gAvBusy===g.id?"Saving…":AV["g:"+g.id]?"Change group photo":"Add a group photo"}<input type="file" class="gAvFile" data-id="${esc(g.id)}" accept="image/*" hidden ${S.gAvBusy?"disabled":""}></label>
     ${AV["g:"+g.id]&&S.gAvBusy!==g.id?`<button class="link quiet" data-act="removeGroupAvatar" data-id="${esc(g.id)}">Remove</button>`:""}</div></div>
-  <div class="gacts">
-    <button class="gact" data-act="openChat" data-id="${esc(g.id)}">${evIcon('<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/>')}${g.unread?`<i class="gbadge">${g.unread}</i>`:""}<b>Chat</b><small>${g.last?esc((g.last.mine?"You":(g.last.name||"Someone").split(" ")[0])+": "+g.last.body):"Say hello"}</small></button>
-    <button class="gact primary" data-act="newGroupPlan" data-id="${esc(g.id)}">${evIcon('<path d="M12 5v14M5 12h14"/>')}<b>Start a plan</b><small>Vote on where to go</small></button>
-  </div>
-  ${g.plans.length?`<p class="glabel">Plans</p><div class="sheet glist">${g.plans.map(p=>{ const [t,c]=planStatus(p); return `<button class="grow" data-act="openPlan" data-code="${esc(p.code)}"><span class="gmain"><b>${esc(cap(planTitle(p)))}</b><small>Started by ${esc(p.by||"someone")}</small></span><span class="gstat ${c}">${esc(t)}</span></button>`; }).join("")}</div>`:""}
+  <button class="btn gstart" data-act="newGroupPlan" data-id="${esc(g.id)}">Start a plan</button>
+  ${open.length?`<p class="glabel">Plans</p><div class="sheet glist">${open.map(prow).join("")}</div>`:""}
+  ${past.length?`<details class="gpast"><summary><b>Decided plans</b><i>${past.length}</i></summary><div class="sheet glist">${past.map(prow).join("")}</div></details>`:""}
   <p class="glabel">Members</p>
   <div class="sheet glist">${g.members.map(m=>{ const me=m.id===uid(); return `<div class="grow">${avatarHtml(m.id,m.name,"mid")}<span class="gmain"><b>${esc(m.name)}</b>${me?"<small>You</small>":m.online?'<small class="live"><span class="dot" aria-hidden="true"></span>Online</small>':""}</span></div>`; }).join("")}
-    <button class="grow ginvite" data-act="invite" data-id="${esc(g.id)}"><span class="gplus" aria-hidden="true">+</span><span class="gmain"><b>Invite people</b><small>Share a link to join</small></span></button></div>
-  <button class="gcode" data-act="copyCode" data-v="${esc(g.invite_code)}" aria-label="Copy invite code">Invite code <b class="code">${esc(g.invite_code)}</b><span>Copy</span></button>
+    <div class="grow ginvite"><button class="ginvmain" data-act="invite" data-id="${esc(g.id)}"><span class="gplus" aria-hidden="true">+</span><span class="gmain"><b>Invite people</b><small>Share a link, or give the code <span class="code">${esc(g.invite_code)}</span></small></span></button><button class="link" data-act="copyCode" data-v="${esc(g.invite_code)}">Copy code</button></div></div>
+  <form id="renameForm" class="group" data-id="${esc(g.id)}" novalidate><span class="label">Group name</span><div class="inline"><input type="text" id="groupRename" value="${esc(g.name)}" maxlength="40" autocomplete="off" aria-label="Group name"><button class="btn small" type="submit">Save</button></div></form>
+  <div class="group"><span class="label">Chat notifications</span><div class="themeseg">${seg("setMute",g.muted?"off":"on",[["on","On"],["off","Muted"]],"Chat notifications")}</div><p class="fine">Muting silences this group's chat messages for you. You still get alerts for its plans.</p></div>
   <button class="link quiet center danger" data-act="leave" data-id="${esc(g.id)}">${S.leaving?"Tap again to leave this group":"Leave group"}</button>`;
 }
 /* Home: start a plan, your live plans, top places open right now, what's coming up, your groups. */
@@ -1090,15 +1180,22 @@ function viewSights(){
       <div class="vlinks"><a href="${mapsUrl(x.name)}" target="_blank" rel="noopener">${evIcon('<path d="M3 11l18-8-8 18-2-8z"/>')}Directions</a><a href="https://en.wikipedia.org/wiki/${encodeURIComponent(x.wiki)}" target="_blank" rel="noopener">Read more</a></div></div></article>`; }).join("")}</div>
   <p class="foot">Opening times and ticket prices change, so check before you go. Photos are from Wikipedia and Wikimedia Commons; tap Read more for the photographer and licence.</p>`;
 }
+const lastTime=t=>{ if(!t) return ""; const d=new Date(t), n=new Date(), y=new Date(n); y.setDate(n.getDate()-1);
+  return d.toDateString()===n.toDateString()?d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}):d.toDateString()===y.toDateString()?"Yesterday":d.toLocaleDateString("en-GB",{day:"numeric",month:"short"}); };
 function viewGroups(){
   const g=S.groups.find(x=>x.id===S.gid);
   if(g) return S.chatOpen&&CHAT.gid===g.id?viewChat(g):viewGroup(g);
+  const any=S.groups.length>0, showNew=S.groupNew||!any;
+  const list=[...S.groups].sort((a,b)=>String(b.last?.at||"").localeCompare(String(a.last?.at||""))||a.name.localeCompare(b.name));
   return `<div data-hero><h1>My groups</h1></div>
-  ${S.joinMode?`<form id="codeForm" class="group" novalidate><span class="label">Join with an invite code</span><div class="inline"><input type="text" id="joinCode" placeholder="Invite code" maxlength="14" autocomplete="off" autocapitalize="off"><button class="btn small" type="submit">Join</button></div></form>
+  <div class="gtop" id="groupsTop"><p class="head">${any?"Your groups":"Start a group"}</p>${any?`<button class="gnew" data-act="groupNew" aria-expanded="${showNew}">${showNew?"Close":"+ New"}</button>`:""}</div>
+  ${!showNew?"":S.joinMode?`<form id="codeForm" class="group" novalidate><span class="label">Join with an invite code</span><div class="inline"><input type="text" id="joinCode" placeholder="Invite code" maxlength="14" autocomplete="off" autocapitalize="off"><button class="btn small" type="submit">Join</button></div></form>
   <button class="link joinswap" data-act="joinMode" data-v="0">Create a group instead</button>`
   :`<form id="groupForm" class="group" novalidate><span class="label">New group</span><div class="inline"><input type="text" id="groupName" placeholder="Group name" maxlength="40" autocomplete="off"><button class="btn small" type="submit">Create</button></div></form>
   <button class="link joinswap" data-act="joinMode" data-v="1">Have an invite code?</button>`}
-  ${S.groups.length?`<p class="head">Your groups</p><div class="stack">${S.groups.map(x=>{const v=x.plans.filter(p=>!p.finished&&p.mine<p.options).length;return `<button class="person gperson" data-act="openGroup" data-id="${esc(x.id)}">${groupAv(x,"mid",false)}<span class="gpname">${esc(x.name)}<small class="sub">${x.last?esc((x.last.mine?"You":x.last.name||"Someone")+": "+x.last.body):`${x.members.length} ${x.members.length===1?"member":"members"}`}</small></span><small>${x.unread?`<b class="pill">${x.unread} new</b>`:v?`${v} to vote on`:(()=>{const o=x.members.filter(m=>m.online&&m.id!==uid()).length;return o?`<span class="dot" aria-hidden="true"></span>${o} online`:"Open"})()}</small></button>`}).join("")}</div>`:`<p class="hint left">Create a group for your friends or family, then invite them. Plans you send there appear for everyone.</p>`}`;
+  ${any?`<div class="stack">${list.map(x=>{ const v=x.plans.filter(q=>planOpen(q)&&!q.me_out&&q.mine<q.options).length;
+    return `<button class="person gperson" data-act="openGroup" data-id="${esc(x.id)}">${groupAv(x,"mid",false)}<span class="gpname"><b>${esc(x.name)}</b><small class="sub">${x.last?esc((x.last.mine?"You":(x.last.name||"Someone").split(" ")[0])+": "+x.last.body):`${x.members.length} ${x.members.length===1?"member":"members"}`}</small></span><span class="gside"><time>${esc(lastTime(x.last?.at))}</time>${x.unread?`<b class="gunread" aria-label="${x.unread} unread">${x.unread}</b>`:v?`<i class="gvote">Vote</i>`:x.muted?`<i>Muted</i>`:""}</span></button>`; }).join("")}</div>`
+  :`<p class="hint left">Create a group for your friends or family, then invite them. Plans you send there appear for everyone.</p>`}`;
 }
 /* Light or dark look. The choice is kept on this device; "auto" follows the phone or computer setting. */
 const themePref=()=>{ try{ return localStorage.getItem("concit.theme")||"light"; }catch{ return "light"; } };
@@ -1451,7 +1548,7 @@ function render(){
   setupDeck();
   if(authed&&S.pickOpen&&!S.acct&&(S.pickOpen==="hot"?S.tab==="hotspots"&&S.fltOpen:S.tab==="decide")) mountPick();
   document.body.classList.toggle("inchat",!!(authed&&S.chatOpen&&S.tab==="groups"&&!S.acct));
-  if(authed&&S.chatOpen&&S.tab==="groups"){ sizeChat(); watchChatLayout(); requestAnimationFrame(()=>sizeChat()); } else CHAT_RO?.disconnect();
+  if(authed&&S.chatOpen&&S.tab==="groups"){ paintReply(); sizeChat(); watchChatLayout(); requestAnimationFrame(()=>sizeChat()); } else CHAT_RO?.disconnect();
   const badge=document.getElementById("badge"), c=toVote().length; if(badge){ badge.textContent=c; badge.hidden=!c; }
   const me=document.getElementById("me"); if(me){ const mine=S.session&&AV[uid()]; me.innerHTML=mine?`<img src="${mine.img}" alt="">`:esc((S.session?.user?.user_metadata?.name||"?").trim().charAt(0).toUpperCase()); me.classList.toggle("hasav",!!mine); me.toggleAttribute("aria-current",!!S.acct); }
   document.querySelectorAll("nav button").forEach(b=>b.dataset.tab===S.tab&&!S.acct?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current"));
@@ -1589,7 +1686,7 @@ const COACH=[
   ["decide","#view .tiles","Decide","Make a plan","Choose a type, then the day, area and price. Send it to a group and everyone votes like you just did."],
   ["hotspots","#view .seg","Hotspots","Browse every place","Switch between a list and a map. Filters narrow it by area, price or cuisine."],
   ["events","#view .evtiles","Events","Find something on","Pick a category, or open the calendar to see what's on a particular day."],
-  ["groups","#view #groupForm","Groups","Bring your friends","Make a group and share its code. Plans you send there reach everyone, and you can chat too."],
+  ["groups","#view #groupsTop","Groups","Bring your friends","Make a group and share its code. Plans you send there reach everyone, and you can chat too."],
   [null,"#me","Your account","That's the tour","Change your name, photo and theme here. You can replay this tour from here any time."]];
 function startCoach(){ document.getElementById("tour")?.remove(); S.practice=false; S.plan=null; document.body.classList.remove("inpractice"); TOUR={...TOUR,stage:"tabs",step:0}; coachGo(); }
 function coachGo(){
@@ -1630,7 +1727,7 @@ function resetTab(t){
   if(t==="decide"){ if(S.plan||S.code){ S.plan=null; S.code=null; setUrl(null); } S.dfltOpen=false; }
   else if(t==="hotspots"){ S.hot="all"; S.hotView="list"; S.sel=null; S.zone=null; S.fltOpen=false; S.hotCuisine=""; S.open=new Set(); }
   else if(t==="events"){ S.ev=null; S.evCalOpen=false; S.evDate=null; S.evType=""; }
-  else if(t==="groups"){ if(S.chatOpen) typing(false); S.chatOpen=false; CHAT.gid=null; S.gid=null; S.joinMode=false; S.leaving=false; }
+  else if(t==="groups"){ if(S.chatOpen) typing(false); S.chatOpen=false; CHAT.gid=null; S.gid=null; S.joinMode=false; S.groupNew=false; S.leaving=false; }
 }
 const H={
   home(){ if(!S.session) return; S.acct=false; S.deleting=false; S.pickOpen=false; resetTab("home"); S.tab="home"; try{location.hash="home"}catch{} render(); homeTop(); },
@@ -1694,9 +1791,17 @@ const H={
   authView(el){ S.email=document.getElementById("email")?.value||S.email; S.authView=el.dataset.v; S.authNote=""; render(); },
   logout(){ logout(); },
   openPlan(el){ openPlan(el.dataset.code); },
-  openGroup(el){ S.chatOpen=false; CHAT.gid=null; S.gid=el.dataset.id; S.leaving=false; render(); scrollTo(0,0); },
+  openGroup(el){ S.leaving=false; S.groupNew=false; if(!openChatLink(el.dataset.id)){ S.chatOpen=false; CHAT.gid=null; S.gid=el.dataset.id; S.tab="groups"; render(); scrollTo(0,0); } },
+  groupInfo(){ typing(false); S.chatOpen=false; S.leaving=false; render(); scrollTo(0,0); },
+  groupNew(){ S.groupNew=!S.groupNew; S.joinMode=false; render(); if(S.groupNew) document.getElementById("groupName")?.focus(); },
+  msgTap(el){ if(getSelection&&String(getSelection()).length) return; const id=Number(el.dataset.id); CHAT.open=CHAT.open===id?null:id; paintChat(false); if(CHAT.open) requestAnimationFrame(()=>document.querySelector(".msg.open .mbar")?.scrollIntoView({block:"nearest"})); },
+  react(el){ reactTo(Number(el.dataset.id),el.dataset.v); },
+  reply(el){ CHAT.reply=Number(el.dataset.id); CHAT.open=null; paintChat(false); paintReply(); document.getElementById("chatText")?.focus(); },
+  replyCancel(){ CHAT.reply=null; paintReply(); },
+  viewPhoto(el){ viewMsgPhoto(Number(el.dataset.id)); },
+  async setMute(el){ const g=S.groups.find(x=>x.id===S.gid); if(!g) return; const m=el.dataset.v==="off"; if(!!g.muted===m) return; g.muted=m; render();
+    try{ await rpc("set_group_muted",{p_group:g.id,p_muted:m}); toast(m?"Chat muted for this group.":"Chat notifications are back on."); }catch{ g.muted=!m; render(); toast("That didn't save. Try again."); } },
   openChat(el){ openChat(el.dataset.id); },
-  seen(el){ if(getSelection&&String(getSelection()).length) return; const id=Number(el.dataset.id); CHAT.seenOpen=CHAT.seenOpen===id?null:id; paintChat(false); },
   closeChat(){ closeChat(); },
   removeAvatar(){ removeAvatar(); },
   sights(el){ S.sights=true; S.sightKind="all"; S.acct=false; render(); const id=el.dataset.id, t=id&&document.getElementById("sight-"+id); if(t) requestAnimationFrame(()=>scrollTo(0,Math.max(0,t.getBoundingClientRect().top+scrollY-(document.querySelector(".hero")?.offsetHeight?12:12)))); else scrollTo(0,0); },
@@ -1727,7 +1832,7 @@ const H={
   pushOn(){ pushEnable(); },
   pushLater(){ try{ localStorage.setItem("concit.pushlater","1"); }catch{} render(); },
   setPush(el){ if((el.dataset.v==="on")===PUSH.on) return; el.dataset.v==="on"?pushEnable():pushDisable(); },
-  reset(){ const g=S.plan?.group_id; clearPlan(); if(g){ S.gid=g; S.tab="groups"; render(); } },
+  reset(){ const g=S.plan?.group_id; clearPlan(); if(g&&!openChatLink(g)){ S.gid=g; S.tab="groups"; render(); } },
   again(){ const p=S.plan, options=shortlist(p,p.seen||p.options); if(!options.length){ toast("That's everything for these choices."); return; }
     S.ver++; changePlan({...p,options,seen:[...(p.seen||[]),...options],votes:{},finished:false},true); },
   copy(){ const it=results(S.plan)[0].item, where=it.cat?it.venue:it.addr, when=parse(S.plan.day).toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"});
@@ -1743,7 +1848,7 @@ const H={
   save(el){ const id=el.dataset.id; S.saved.has(id)?S.saved.delete(id):S.saved.add(id); persist(); render();
   }
 };
-document.addEventListener("click",e=>{const el=e.target.closest("[data-act]");if(el){ hideToast(); H[el.dataset.act]?.(el); }});
+document.addEventListener("click",e=>{const el=e.target.closest("[data-act]");if(el){ if(el.dataset.act==="msgTap"&&e.target.closest("a")) return; hideToast(); H[el.dataset.act]?.(el); }});
 document.addEventListener("submit",hideToast,true);
 /* Update what's picked without rebuilding the list, so the page stays where it is. */
 function updatePicks(){ const f=S.form, picks=(f.picks||[]).filter(byId), list=document.querySelector(".picklist"), c=document.getElementById("pickChips"), b=document.getElementById("startBtn");
@@ -1774,10 +1879,12 @@ function timeDone(v){
 }
 document.addEventListener("input",e=>{ if(e.target.id!=="meetTime") return; const el=e.target, atEnd=el.selectionStart===el.value.length, del=e.inputType&&e.inputType.startsWith("delete"); if(atEnd&&!del) el.value=timeTyping(el.value); el.classList.remove("bad"); });
 document.addEventListener("keydown",e=>{ if(e.key==="Enter"&&e.target.id==="meetTime") e.target.blur(); });
-document.addEventListener("change",e=>{ if(e.target.id==="meetTime"){ const t=timeDone(e.target.value); if(t===null){ e.target.classList.add("bad"); S.form.time=""; toast("Type the time like 19:30."); } else { S.form.time=t; e.target.value=t; } return; } if(e.target.id==="avFile"){ uploadAvatar(e.target.files&&e.target.files[0]); e.target.value=""; } else if(e.target.classList?.contains("gAvFile")){ uploadGroupAvatar(e.target.dataset.id,e.target.files&&e.target.files[0]); e.target.value=""; return; } if(e.target.id==="hotBudget") render(); const c=e.target.dataset.change; if(c==="area"){S.form.area=e.target.value}  if(c==="sendTo"){S.form.group=e.target.value;S.form.linkOnly=!e.target.value;persist();render()}});
+document.addEventListener("change",e=>{ if(e.target.id==="chatPhoto"){ sendChatPhoto(e.target.files&&e.target.files[0]); e.target.value=""; return; } if(e.target.id==="meetTime"){ const t=timeDone(e.target.value); if(t===null){ e.target.classList.add("bad"); S.form.time=""; toast("Type the time like 19:30."); } else { S.form.time=t; e.target.value=t; } return; } if(e.target.id==="avFile"){ uploadAvatar(e.target.files&&e.target.files[0]); e.target.value=""; } else if(e.target.classList?.contains("gAvFile")){ uploadGroupAvatar(e.target.dataset.id,e.target.files&&e.target.files[0]); e.target.value=""; return; } if(e.target.id==="hotBudget") render(); const c=e.target.dataset.change; if(c==="area"){S.form.area=e.target.value}  if(c==="sendTo"){S.form.group=e.target.value;S.form.linkOnly=!e.target.value;persist();render()}});
 document.addEventListener("submit",async e=>{ e.preventDefault();
   if(e.target.id==="authForm") authSubmit();
-  if(e.target.id==="groupForm"){ const i=document.getElementById("groupName"), n=i.value.trim(); if(!n) return; i.value=""; i.blur(); try{ S.gid=await rpc("create_group",{p_name:n}); await loadGroups(); render(); }catch{ toast("Couldn't create the group. Try again."); } }
+  if(e.target.id==="renameForm"){ const i=document.getElementById("groupRename"), n=i.value.trim().replace(/\s+/g," "), gid=e.target.dataset.id, g=S.groups.find(x=>x.id===gid); i.blur(); if(!n||!g||n===g.name){ render(); return; }
+    try{ await rpc("rename_group",{p_group:gid,p_name:n}); g.name=n; toast("Group renamed."); render(); loadGroups(); }catch{ toast("Couldn't rename the group. Try again."); } return; }
+  if(e.target.id==="groupForm"){ const i=document.getElementById("groupName"), n=i.value.trim(); if(!n) return; i.value=""; i.blur(); try{ S.gid=await rpc("create_group",{p_name:n}); S.groupNew=false; S.chatOpen=false; await loadGroups(); render(); }catch{ toast("Couldn't create the group. Try again."); } }
   if(e.target.id==="nameForm"){ const i=document.getElementById("myName"), n=i.value.trim(); if(!n){ toast("Add your name"); return; } i.blur();
     try{ await rpc("set_name",{p_name:n}); }catch{ toast("Couldn't save your name. Try again."); return; }
     try{ S.session.user=await authCall("user",{data:{name:n}},"PUT",S.session.access_token); }catch{ S.session.user={...S.session.user,user_metadata:{...S.session.user?.user_metadata,name:n}}; }
@@ -1849,7 +1956,7 @@ function sessionFromHash(){
 })();
 setInterval(refresh,2500);
 setInterval(loadGroups,8000);
-setInterval(()=>{ if(S.chatOpen&&S.tab==="groups") loadChat(); },2500);
+setInterval(()=>{ if(S.chatOpen&&S.tab==="groups") loadChat(); },1000);
 document.addEventListener("keydown",e=>{ if(e.target.id==="chatText"&&e.key==="Enter"&&!e.shiftKey&&!e.isComposing&&!matchMedia("(pointer:coarse)").matches){ e.preventDefault(); sendChat(); } });
 document.addEventListener("input",e=>{ if(e.target.id==="chatText"){ const t=e.target; typing(!!t.value.trim()); t.style.height=""; t.style.height=Math.min(t.scrollHeight,140)+"px"; sizeChat(); } });
 document.addEventListener("visibilitychange",()=>{refresh();loadGroups()});
