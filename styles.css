@@ -941,3 +941,13 @@ body.overscroll nav::before{display:none}
 @media (max-width:360px){.srow .seg[aria-label="When"]{display:flex;gap:0}.srow .seg[aria-label="When"] button,.srow .seg[aria-label="When"] button:nth-child(2){flex:1 1 auto;padding-inline:4px;font-size:12.5px}}
 /* Every page is tall enough to open with the logo row tucked above the screen. */
 .app{min-height:calc(100vh - 56px)}
+/* Home, tightened so the first row of "Open now" cards clears the tab bar on a standard iPhone. */
+.app:has(.hstart){padding-top:20px}
+.hstart{padding:14px 14px 13px}
+.hstart .tiles{margin-bottom:10px}
+.hstart .tiles.four .tile{padding:11px 2px 9px;gap:6px}
+.hstart .btn{padding:13px}
+#view section{margin-bottom:23px}
+.hempty{padding:13px 16px}
+.hband{height:64px}
+.hbody{padding:9px 12px 11px}
