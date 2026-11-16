@@ -12,7 +12,8 @@ In Vercel, choose Add New > Project, import this GitHub repository and press Dep
 - `index.html`, `styles.css`, `app.js`: the app
 - `data.js`: Milan events and the sights list, plus a backup copy of the hotspots
 - Hotspots live in the Supabase `places` table, so you can edit them there
-- `config.js`: the Supabase connection
+- `config.js`: the Supabase connection and the public notification key
+- `sw.js`, `api/push.js`, `package.json`: phone notifications. `api/push.js` needs `VAPID_PRIVATE_KEY` and `PUSH_SECRET` set in Vercel, and `supabase/push.sql` run in the database
 - `manifest.webmanifest`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`: lets people add Concit to their phone's home screen
 - `supabase/schema.sql` and `supabase/accounts.sql`: the database, run in that order. The other `.sql` files in `supabase/` add later features (group photos and so on)
 - `supabase/seed/`: the place import from November 2026 and the list of websites added on 16 Nov 2026

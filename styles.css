@@ -839,3 +839,6 @@ details.ev[open]{background:color-mix(in srgb,var(--tint) 45%,transparent)}
 .hotbar .count{white-space:nowrap;flex:none}
 @media (max-width:400px){.hotbar select.csel.on~.count{display:none}}
 .hotbar select.csel.on{flex:0 1 auto;max-width:215px}
+.pushask{display:flex;align-items:center;gap:10px;margin-top:10px;padding:10px 8px 10px 16px;border:1px solid var(--line);border-radius:16px;background:var(--card);font-size:15px;font-weight:600;color:var(--fg)}
+.pushask span{flex:1;min-width:0}.pushask .link{flex:none;padding:6px 4px}.pushask .pillx{margin-left:0;flex:none}
+.themeseg.busy{opacity:.6;pointer-events:none}

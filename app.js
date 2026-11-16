@@ -125,6 +125,8 @@ async function refreshSession(){
 }
 function logout(expired){
   const t=S.session?.access_token;
+  if(t&&!expired&&PUSH.endpoint) rpc("push_unsubscribe",{p_endpoint:PUSH.endpoint},false).catch(()=>{});
+  PUSH.on=false; PUSH.endpoint=null;
   if(t&&!expired) authCall("logout",{}, "POST",t).catch(()=>{});
   S.session=null; S.plan=null; S.code=null; S.groups=[]; S.gid=null; S.acct=false; S.deleting=false; S.authView="login"; S.authNote=expired?"Please log in again.":""; S.tab="home"; S.chatOpen=false;
   if(typeof CHAT!=="undefined"){ CHAT.gid=null; CHAT.msgs=[]; }
@@ -172,6 +174,56 @@ async function shareOut(text,done){
   if(navigator.share){ try{ await navigator.share({text}); return; }catch(e){ if(e.name==="AbortError") return; } }
   (navigator.clipboard?navigator.clipboard.writeText(text):Promise.reject()).then(()=>toast(done),()=>toast(text));
 }
+/* ---------- Phone notifications ----------
+   A phone that turns these on is registered with its push service (Apple, Google...) and the address is saved
+   against the signed-in person. api/push.js sends the notifications; sw.js shows them. On an iPhone this only
+   works once Concit has been added to the Home Screen. */
+const PUSH_OK="serviceWorker" in navigator&&"PushManager" in window&&"Notification" in window&&!!SB.vapidKey;
+const IS_IOS=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+const PUSH={on:false,busy:false,endpoint:null};
+const pushPerm=()=>PUSH_OK?Notification.permission:"unsupported";
+const b64u=t=>Uint8Array.from(atob(t.replace(/-/g,"+").replace(/_/g,"/")+"=".repeat((4-t.length%4)%4)),c=>c.charCodeAt(0));
+async function pushSave(sub){ const j=sub.toJSON(); await rpc("push_subscribe",{p_endpoint:j.endpoint,p_p256dh:j.keys.p256dh,p_auth:j.keys.auth}); PUSH.on=true; PUSH.endpoint=j.endpoint; }
+/* At start-up and after login: if this phone already has notifications on, link it to whoever is signed in now. */
+async function pushSync(){
+  if(!PUSH_OK||!S.session) return;
+  const was=PUSH.on;
+  try{
+    const reg=Notification.permission==="granted"&&await navigator.serviceWorker.getRegistration("/");
+    const sub=reg&&await reg.pushManager.getSubscription();
+    if(sub) await pushSave(sub); else { PUSH.on=false; PUSH.endpoint=null; }
+  }catch{}
+  if(was!==PUSH.on) render();
+}
+async function pushEnable(){
+  if(!PUSH_OK||PUSH.busy) return;
+  PUSH.busy=true;
+  try{
+    const perm=await Notification.requestPermission();
+    if(perm!=="granted"){ toast(perm==="denied"?"Notifications are blocked. Allow them for Concit in your phone's settings.":"Notifications weren't turned on."); return; }
+    const reg=await navigator.serviceWorker.register("/sw.js"); await navigator.serviceWorker.ready;
+    const sub=await reg.pushManager.getSubscription()||await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u(SB.vapidKey)});
+    await pushSave(sub); toast("Notifications are on for this device.");
+  }catch{ toast("Couldn't turn notifications on. Try again."); }
+  finally{ PUSH.busy=false; render(); }
+}
+async function pushDisable(){
+  if(!PUSH_OK||PUSH.busy) return;
+  PUSH.busy=true;
+  try{
+    const reg=await navigator.serviceWorker.getRegistration("/"), sub=reg&&await reg.pushManager.getSubscription();
+    if(sub){ await rpc("push_unsubscribe",{p_endpoint:sub.endpoint}).catch(()=>{}); await sub.unsubscribe(); }
+    PUSH.on=false; PUSH.endpoint=null; toast("Notifications are off for this device.");
+  }catch{ toast("Couldn't turn notifications off. Try again."); }
+  finally{ PUSH.busy=false; render(); }
+}
+/* Ask the server to notify the others in a plan. It checks for itself that the notification is due and sends it once. */
+function pushSend(code,kind){
+  if(!code||!S.session||!SB.vapidKey) return;
+  fetch("/api/push",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${S.session.access_token}`},body:JSON.stringify({code,kind})}).catch(()=>{});
+}
+const pushAsk=()=>{ let later=false; try{ later=!!localStorage.getItem("concit.pushlater"); }catch{} return PUSH_OK&&!PUSH.on&&!later&&Notification.permission==="default"&&S.groups.length>0; };
+if("serviceWorker" in navigator) navigator.serviceWorker.addEventListener("message",e=>{ const u=e.data&&e.data.openUrl; if(!u||!S.session) return; try{ const c=new URL(u).searchParams.get("plan"); if(c){ S.acct=false; S.chatOpen=false; openPlan(c); } }catch{} });
 async function refresh(){
   if(!S.code||refresh.busy||document.hidden) return;
   refresh.busy=true;
@@ -204,6 +256,7 @@ async function openPlan(code){
 async function newPlan(p,group){
   try{
     const code=await rpc("create_plan",{p_data:planBody(p),p_group:group||null});
+    if(group) pushSend(code,"new");
     await openPlan(code); loadGroups();
   }catch{ toast("Couldn't create the plan. Check your connection and try again."); }
 }
@@ -221,7 +274,7 @@ async function setAttending(go){
   const p=S.plan; if(!p||!S.code) return;
   const me=uid(), out=(p.out||[]).filter(n=>n!==me);
   S.ver++; S.plan={...p,out:go?out:[...out,me],votes:go?p.votes:Object.fromEntries(Object.entries(p.votes||{}).filter(([n])=>n!==me))}; render(); scrollTo(0,0);
-  try{ await rpc("set_attending",{p_code:S.code,p_going:go}); toast(go?"You're back in. Time to vote.":"Got it, you're not going."); loadGroups(); }
+  try{ await rpc("set_attending",{p_code:S.code,p_going:go}); if(!go) pushSend(S.code,"done"); toast(go?"You're back in. Time to vote.":"Got it, you're not going."); loadGroups(); }
   catch{ S.plan=p; render(); toast("That didn't save. Try again."); }
 }
 function clearPlan(){ S.plan=null; S.code=null; setUrl(null); render(); }
@@ -300,7 +353,8 @@ async function vote(id,v){
   S.plan=merge(S.plan,{votes:{[uid()]:{[id]:v}}});
   render(); if(!nextCard(S.plan,uid())) scrollTo(0,0);
   S.inflight++;
-  try{ await rpc("cast_vote",{p_code:S.code,p_place:id,p_value:v}); }catch{ toast("That vote didn't save. Try again."); }
+  const code=S.code;
+  try{ await rpc("cast_vote",{p_code:code,p_place:id,p_value:v}); if(S.plan&&allDone(S.plan)) pushSend(code,"done"); }catch{ toast("That vote didn't save. Try again."); }
   S.inflight--; S.ver++; loadGroups();
 }
 async function joinByCode(code){
@@ -987,7 +1041,8 @@ function viewHome(){
   </section>
   <section aria-labelledby="hpH"><div class="hsec"><h2 id="hpH">Your plans</h2>${plans.length?`<button class="link" data-act="tab" data-tab="groups">Groups</button>`:""}</div>
   ${plans.length?`<div class="sheet glist">${plans.map(p=>{const [t,c]=pstat(p);return `<button class="grow" data-act="openPlan" data-code="${esc(p.code)}"><span class="hdate"><i>${parse(p.day).toLocaleDateString("en-GB",{weekday:"short"})}</i><b>${parse(p.day).getDate()}</b></span><span class="gmain"><b>${esc((WHAT_TEXT[p.what]||"Plan")+(p.time?` at ${p.time}`:""))}</b><small>${esc(p.gname)}${p.st===1?" · waiting for others":""}</small></span><span class="gstat ${c}">${esc(t)}</span></button>`}).join("")}</div>`
-  :`<div class="hempty"><b>No plans yet</b><span>${S.groups.length?"Start one above and your group votes on where to go.":"Start one above, or make a group so friends can vote too."}</span></div>`}</section>
+  :`<div class="hempty"><b>No plans yet</b><span>${S.groups.length?"Start one above and your group votes on where to go.":"Start one above, or make a group so friends can vote too."}</span></div>`}
+  ${pushAsk()?`<div class="pushask"><span>Get an alert when a plan needs your vote</span><button class="link" data-act="pushOn">Turn on</button><button class="pillx" data-act="pushLater" aria-label="Not now">×</button></div>`:""}</section>
   ${now.length?`<section aria-labelledby="hnH"><div class="hsec"><h2 id="hnH">Open now, top rated</h2><button class="link" data-act="tab" data-tab="hotspots">Hotspots</button></div>
   <div class="hplaces">${now.map(({p,u})=>{const c=mapCat(p);return `<button class="hplace" data-act="homePlace" data-id="${esc(p.id)}" style="--c:${c[2]}"><span class="hband"><i>${esc(p.cuisine&&p.cuisine[0]&&CUISINE_TEXT[p.cuisine[0]]||KIND_SHORT[p.kind]||"")}</i><small>Open till ${u}</small></span><span class="hbody"><b>${esc(p.name)}</b><small>${esc(zname(p.zone))} · ${esc(costText(p).replace(/ (a|an) .*$/,""))}</small>${starsHtml(p,"small")}</span></button>`}).join("")}</div></section>`:""}
   ${evs.length?`<section aria-labelledby="heH"><div class="hsec"><h2 id="heH">Coming up in Milan</h2><button class="link" data-act="tab" data-tab="events">Events</button></div>
@@ -1060,6 +1115,10 @@ function viewAccount(){
     ${AV[uid()]&&!S.avBusy?`<button class="link quiet" data-act="removeAvatar">Remove</button>`:""}</div></div>
     <p class="fine">Shown next to your messages and in your groups. Only people in your groups can see it.</p></div>
   <form id="nameForm" class="group" novalidate><span class="label">Your name</span><div class="inline"><input type="text" id="myName" value="${esc(name)}" maxlength="30" autocomplete="name"><button class="btn small" type="submit">Save</button></div></form>
+  <div class="group"><span class="label">Notifications</span>${
+    pushPerm()==="unsupported"?`<p class="fine">${IS_IOS?"On an iPhone, notifications work once Concit is on your Home Screen. Open concit.app in Safari, tap Share, then Add to Home Screen, and turn them on here from the app.":"This browser can't show notifications."}</p>`
+    :pushPerm()==="denied"?`<p class="fine">Notifications are blocked for Concit. Allow them in your ${IS_IOS?"iPhone's Settings, under Notifications":"browser's site settings"}, then come back here.</p>`
+    :`<div class="themeseg${PUSH.busy?" busy":""}">${seg("setPush",PUSH.on?"on":"off",[["on","On"],["off","Off"]],"Notifications")}</div><p class="fine">Get an alert when a group plan needs your vote and when the votes are in. Set separately on each device.</p>`}</div>
   <div class="group"><span class="label">Appearance</span><div class="themeseg">${seg("setTheme",themePref(),[["light","Light"],["dark","Dark"],["auto","Match device"]],"Appearance")}</div><p class="fine">Saved on this device.</p></div>
   <div class="group"><span class="label">Help</span><button class="person tourrow" data-act="replayTour"><span class="tourico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg></span><span>Show me around again<small class="sub">Replay the welcome, practice vote and tour of the app</small></span></button></div>
   <div class="group"><span class="label">Your data</span><a class="person" href="privacy.html"><span>Privacy notice<small class="sub">What Concit keeps and why</small></span><small>Read</small></a></div>
@@ -1660,7 +1719,10 @@ const H={
   async leave(el){ if(!S.leaving){ S.leaving=true; render(); return; } S.leaving=false; try{ await rpc("leave_group",{p_group:el.dataset.id}); S.gid=null; await loadGroups(); render(); }catch{ toast("Couldn't leave the group. Try again."); } },
   vote(el){ dealVote(el.dataset.id,Number(el.dataset.v)); },
   undoVote(){ undoVote(); },
-  finish(){ changePlan({...S.plan,finished:true}); },
+  finish(){ const code=S.code; changePlan({...S.plan,finished:true}).then(()=>pushSend(code,"done")); },
+  pushOn(){ pushEnable(); },
+  pushLater(){ try{ localStorage.setItem("concit.pushlater","1"); }catch{} render(); },
+  setPush(el){ if((el.dataset.v==="on")===PUSH.on) return; el.dataset.v==="on"?pushEnable():pushDisable(); },
   reset(){ const g=S.plan?.group_id; clearPlan(); if(g){ S.gid=g; S.tab="groups"; render(); } },
   again(){ const p=S.plan, options=shortlist(p,p.seen||p.options); if(!options.length){ toast("That's everything for these choices."); return; }
     S.ver++; changePlan({...p,options,seen:[...(p.seen||[]),...options],votes:{},finished:false},true); },
@@ -1753,6 +1815,7 @@ function linkFromUrl(){
 }
 async function afterLogin(){
   render();
+  pushSync();
   await Promise.all([loadPlaces(),loadEvents(),loadGroups(),loadMyAvatar()]);
   const p=S.pending; S.pending=null; persist();
   if(p?.join){ setUrl(null); await joinByCode(p.join); }
