@@ -991,7 +991,7 @@ function viewHome(){
   ${now.length?`<section aria-labelledby="hnH"><div class="hsec"><h2 id="hnH">Open now, top rated</h2><button class="link" data-act="tab" data-tab="hotspots">Hotspots</button></div>
   <div class="hplaces">${now.map(({p,u})=>{const c=mapCat(p);return `<button class="hplace" data-act="homePlace" data-id="${esc(p.id)}" style="--c:${c[2]}"><span class="hband"><i>${esc(p.cuisine&&p.cuisine[0]&&CUISINE_TEXT[p.cuisine[0]]||KIND_SHORT[p.kind]||"")}</i><small>Open till ${u}</small></span><span class="hbody"><b>${esc(p.name)}</b><small>${esc(zname(p.zone))} · ${esc(costText(p).replace(/ (a|an) .*$/,""))}</small>${starsHtml(p,"small")}</span></button>`}).join("")}</div></section>`:""}
   ${evs.length?`<section aria-labelledby="heH"><div class="hsec"><h2 id="heH">Coming up in Milan</h2><button class="link" data-act="tab" data-tab="events">Events</button></div>
-  <div class="sheet glist">${evs.map(e=>{const d=parse(e.start);return `<button class="grow" data-act="homeEvent" data-id="${esc(e.id)}"><span class="hdate" style="--c:${EV_COL[e.cat]||"var(--link)"}"><i>${d.toLocaleDateString("en-GB",{month:"short"})}</i><b>${d.getDate()}</b></span><span class="gmain"><b>${esc(e.name)}</b><small>${esc([e.venue,e.time].filter(Boolean).join(" · "))}</small></span></button>`}).join("")}</div></section>`:""}
+  <div class="sheet glist">${evs.map(e=>{const d=parse(e.start);return `<button class="grow" data-act="homeEvent" data-id="${esc(e.id)}"><span class="hdate" style="--c:${EV_COL[e.cat]||"var(--link)"}"><i>${d.toLocaleDateString("en-GB",{month:"short"})}</i><b>${d.getDate()}</b></span><span class="gmain"><b>${esc(e.name)}</b><small>${esc([EV_TYPES[evType(e)][0],e.venue,e.time].filter(Boolean).join(" · "))}</small></span></button>`}).join("")}</div></section>`:""}
   ${homeSights()}
   <section aria-labelledby="hgH"><div class="hsec"><h2 id="hgH">Your groups</h2></div>
   ${S.groups.length?`<div class="hgroups">${S.groups.slice(0,6).map(g=>`<button class="hgroup" data-act="openGroup" data-id="${esc(g.id)}">${g.unread?`<i class="gbadge">${g.unread}</i>`:""}${groupAv(g,"hav",false)}<b>${esc(g.name)}</b><small>${g.members.length} ${g.members.length===1?"person":"people"}</small></button>`).join("")}</div>`
@@ -1266,11 +1266,49 @@ function viewHot(){
   ${body||`<p class="empty">Nothing matches these filters.</p>${fltCount()?`<button class="link center" data-act="fltReset">Clear filters</button>`:""}`}
   <p class="foot">Prices are typical estimates. Checked ${CHECKED}, so confirm before you go. Star ratings are Google review scores as of ${STARS_CHECKED}.${S.hotView==="map"?" Map data © OpenStreetMap contributors.":""}</p>`;
 }
+/* What kind of event it is: label and icon. Events without a type fall back to their category. */
+const EI={mic:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',disc:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/>',
+ note:'<path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>',bolt:'<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',party:'<path d="M4 20 9 7l8 8zM14 4v2M19 5l-1.500 1.500M20 10h-2"/>',
+ ball:'<circle cx="12" cy="12" r="9"/><path d="m12 8 3.500 2.500-1.300 4h-4.400l-1.300-4z"/>',basket:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3v18M5.600 5.600c3 3 3 9.800 0 12.800M18.400 5.600c-3 3-3 9.800 0 12.800"/>',
+ volley:'<circle cx="12" cy="12" r="9"/><path d="M12 3c2 3 2 6 0 9M12 12c-3 1-6 1-8.500-1M12 12c2 2.500 5 4 8 4"/>',run:'<circle cx="14" cy="4.500" r="1.800"/><path d="m7 21 3-6 3 2v4M10 15l1-5 4 1 2 3M11 10 8 9l-2 3"/>',
+ frame:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="m3 16 5-5 4 4 3-3 6 6"/>',camera:'<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.500"/>',spark:'<path d="M12 3v6M12 15v6M3 12h6M15 12h6"/>',
+ pen:'<path d="m4 20 1-4L16 5l3 3L8 19z"/>',column:'<path d="M4 9h16L12 4zM6 9v9M10 9v9M14 9v9M18 9v9M3 20h18"/>',cube:'<path d="m12 3 8 4.500v9L12 21l-8-4.500v-9zM12 12l8-4.500M12 12v9M12 12 4 7.500"/>',
+ masks:'<path d="M4 5h16v6a8 8 0 0 1-16 0z"/><path d="M8.500 9h.010M15.500 9h.010M9 13c1.500 1.500 4.500 1.500 6 0"/>',star:'<path d="m12 3 2.600 5.600 6 .700-4.500 4.100 1.200 6L12 16.500 6.700 19.400l1.200-6L3.400 9.300l6-.700z"/>',
+ market:'<path d="M4 9 5 4h14l1 5M4 9v11h16V9M4 9h16M9 20v-6h6v6"/>',tree:'<path d="m12 3 5 7h-3l4 6H6l4-6H7zM12 16v5"/>',fork:'<path d="M7 3v8a2 2 0 0 0 4 0V3M9 11v10M17 3c-2 2-2 7 0 9v9"/>',
+ fair:'<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M8 6v12M3 12h5"/>',city:'<path d="M4 21V9l5-3v15M9 21V4l6 3v14M15 21V11l5 2v8M2 21h20"/>',flag:'<path d="M5 21V4M5 4h13l-3 4 3 4H5"/>'};
+const EV_TYPES={pop:["Pop","mic"],rock:["Rock","bolt"],rap:["Rap & hip hop","mic"],indie:["Indie","mic"],electronic:["Club & electronic","disc"],jazz:["Jazz & soul","note"],classical:["Classical","note"],metal:["Metal & punk","bolt"],world:["Folk & world","note"],tribute:["Tribute show","note"],party:["Party night","party"],othermusic:["Live music","mic"],
+ football:["Football","ball"],basketball:["Basketball","basket"],volleyball:["Volleyball","volley"],running:["Running","run"],othersport:["Sport","ball"],
+ painting:["Painting","frame"],photography:["Photography","camera"],contemporary:["Contemporary art","spark"],design:["Design & fashion","pen"],history:["History & culture","column"],immersive:["Immersive show","cube"],
+ opera:["Opera","note"],dance:["Ballet & dance","run"],musical:["Musical","star"],play:["Theatre","masks"],comedy:["Comedy","masks"],family:["Family show","star"],magic:["Magic & circus","star"],
+ market:["Market","market"],christmas:["Christmas","tree"],food:["Food & drink","fork"],fair:["Fair & expo","fair"],cityevent:["City event","city"],festival:["Festival","flag"]};
+const EV_FALLBACK={music:"othermusic",sport:"othersport",art:"contemporary",theatre:"play",festival:"festival"};
+const evType=e=>EV_TYPES[e.type]?e.type:EV_FALLBACK[e.cat]||"festival";
+const evTag=e=>{ const [l,ic]=EV_TYPES[evType(e)]; return `<span class="etag" style="--c:${EV_COL[e.cat]||"var(--link)"}">${evIcon(EI[ic])}${l}</span>`; };
+/* Event photos: looked up on Wikipedia the first time an event is opened, then kept. */
+let EV_IMG={}; try{ EV_IMG=JSON.parse(localStorage.getItem("concit.evimg"))||{}; }catch{}
+const evPhoto=e=>{ const x=e.wiki&&EV_IMG[e.wiki]; return x&&x.src?`<a class="ephoto" href="${esc(x.page||"#")}" target="_blank" rel="noopener" style="background-image:url(&quot;${x.src.replace(/"/g,"%22")}&quot;)" aria-label="Photo from Wikipedia: open the page for credits"><i>Photo: Wikipedia</i></a>`:e.wiki&&!x?`<div class="ephoto wait" data-ewiki="${esc(e.wiki)}"></div>`:""; };
+async function loadEvImg(wiki){
+  if(!wiki||EV_IMG[wiki]) return; EV_IMG[wiki]={};
+  try{ const [lang,title]=[wiki.slice(0,2),wiki.slice(3)];
+    const r=await fetch(`https://${lang==="it"?"it":"en"}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`);
+    if(r.ok){ const j=await r.json(), src=(j.thumbnail&&j.thumbnail.source)||"";
+      if(src&&j.type!=="disambiguation") EV_IMG[wiki]={src:src.replace(/\/\d+px-/,"/500px-"),small:src,page:(j.content_urls&&j.content_urls.desktop&&j.content_urls.desktop.page)||""}; } }catch{}
+  try{ localStorage.setItem("concit.evimg",JSON.stringify(EV_IMG)); }catch{}
+  const x=EV_IMG[wiki];
+  document.querySelectorAll(".ephoto.wait").forEach(el=>{ if(el.dataset.ewiki!==wiki) return;
+    if(!x.src) return el.remove();
+    const a=document.createElement("a"); a.className="ephoto"; a.href=x.page||"#"; a.target="_blank"; a.rel="noopener"; a.innerHTML="<i>Photo: Wikipedia</i>";
+    const im=new Image(); im.referrerPolicy="no-referrer"; im.onload=()=>{ a.style.backgroundImage=`url("${im.src}")`; el.replaceWith(a); };
+    im.onerror=()=>{ if(im.src!==x.small){ x.src=x.small; im.src=x.small; } else el.remove(); }; im.src=x.src; });
+}
+document.addEventListener("toggle",ev=>{ const d=ev.target; if(d.open) d.querySelectorAll?.(".ephoto.wait").forEach(el=>loadEvImg(el.dataset.ewiki)); },true);
 function evRow(e){
-  const on=S.saved.has(e.id), info=[e.venue,e.sold?"Sold out":e.priceText].filter(Boolean).join(" · ");
+  const on=S.saved.has(e.id), info=[e.venue,e.sold?"Sold out":""].filter(Boolean).join(" · ");
   const run=e.start!==e.end, until=run&&e.start<=today, d=parse(until?e.end:e.start);
-  return `<details><summary><span class="dbadge">${until?"<i>until</i>":""}<b>${d.getDate()}</b><i>${d.toLocaleDateString("en-GB",{month:"short"})}</i></span><div><b>${esc(e.name)}</b><small>${esc([run&&!until?eventWhen(e):"",info].filter(Boolean).join(" · "))}</small></div></summary>
-  <div class="more">${e.time?`<p class="dim">Starts ${esc(e.time)}</p>`:""}<div class="actions"><button data-act="save" data-id="${e.id}">${on?"Saved ✓":"Save"}</button><a href="${esc(srcUrl(e.src))}" target="_blank" rel="noopener">Source</a></div></div></details>`;
+  const facts=[run?eventWhen(e):`${wday(e.start)} ${short(e.start)}`,e.time?"Starts "+e.time:"",e.sold?"Sold out":e.priceText].filter(Boolean);
+  return `<details class="ev"><summary><span class="dbadge" style="--c:${EV_COL[e.cat]||"var(--link)"}">${until?"<i>until</i>":""}<b>${d.getDate()}</b><i>${d.toLocaleDateString("en-GB",{month:"short"})}</i></span><div><b>${esc(e.name)}</b><span class="eline">${evTag(e)}<small>${esc(info)}</small></span></div></summary>
+  <div class="more">${evPhoto(e)}${e.desc?`<p class="edesc">${esc(dot(e.desc))}</p>`:""}<div class="efacts">${facts.map(f=>`<span${f==="Sold out"?' class="sold"':""}>${esc(f)}</span>`).join("")}</div>
+  <div class="actions"><button data-act="save" data-id="${e.id}">${on?"Saved ✓":"Save"}</button><a href="${mapsUrl(e.venue)}" target="_blank" rel="noopener">Directions</a><a href="${esc(srcUrl(e.src))}" target="_blank" rel="noopener">Tickets & info</a></div></div></details>`;
 }
 /* Events calendar: days with events get a dot; tapping a day shows what's on. */
 const CAL_ICON='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7zm-2 8h14v10H5V10z"/></svg>';
@@ -1315,7 +1353,11 @@ function viewEvents(){
     <p class="foot">Checked ${S.evChecked||CHECKED}. Confirm dates before you go.</p>
     <p class="foot credits">Photos from Wikimedia Commons: ${EV_CATS.map(c=>(CITY_PHOTOS[CITY]||{})[c[0]]).filter(Boolean).map(([f,of])=>`<a href="${commonsPage(f)}" target="_blank" rel="noopener">${esc(of)}</a>`).join(", ")}. Tap a name for the photographer and licence.</p>`;
   }
-  const all=live.filter(cat[3]), d=S.evDate;
+  const inCat=live.filter(cat[3]), d=S.evDate;
+  const counts={}; inCat.forEach(e=>{ const t=evType(e); counts[t]=(counts[t]||0)+1; });
+  const tkeys=Object.keys(EV_TYPES).filter(t=>counts[t]), showTypes=tkeys.length>1&&tkeys.length<=14;
+  if(!showTypes||!counts[S.evType]) S.evType="";
+  const all=S.evType?inCat.filter(e=>evType(e)===S.evType):inCat;
   const list=d?all.filter(e=>e.start<=d&&e.end>=d):all;
   const dated=list.filter(e=>!isRun(e)).sort((a,b)=>a.start.localeCompare(b.start));
   const runs=list.filter(isRun).sort((a,b)=>a.end.localeCompare(b.end));
@@ -1323,6 +1365,7 @@ function viewEvents(){
   const body=groups.map(([t,f])=>{const g=dated.filter(f);return g.length?`<p class="glabel">${t}</p><div class="sheet dlist">${g.map(evRow).join("")}</div>`:""}).join("")+(runs.length?`<p class="glabel">${d?"Also on that day":"Running for a while"}</p><div class="sheet dlist">${runs.map(evRow).join("")}</div>`:"");
   return `<div data-hero><button class="back" data-act="ev" data-v="">‹ Events</button><span>${esc(cat[2])}</span><h1>${cat[1]}</h1></div>
   <div class="hotbar"><button class="pill${d?" on":""}" data-act="evCal" aria-expanded="${!!S.evCalOpen}">${CAL_ICON}<span>${d?esc(parse(d).toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"})):"All dates"}</span></button>${d?`<button class="pillx" data-act="evPick" data-v="" aria-label="Show all dates">×</button>`:""}<span class="grow1"></span><span class="count">${list.length} ${list.length===1?"event":"events"}</span></div>
+  ${showTypes?`<div class="chips etypes" role="group" aria-label="Type"><button class="chip" data-act="evType" data-v="" aria-pressed="${!S.evType}">All</button>${tkeys.map(t=>`<button class="chip" data-act="evType" data-v="${t}" aria-pressed="${S.evType===t}">${evIcon(EI[EV_TYPES[t][1]])}${EV_TYPES[t][0]}<i>${counts[t]}</i></button>`).join("")}</div>`:""}
   ${S.evCalOpen?evCalendar(all):""}
   <div class="list">${body||`<p class="empty">${S.ev==="saved"?"Open an event and tap Save to keep it here.":d?"Nothing on that day. Try another date.":"Nothing here right now."}</p>`}</div>
   <p class="foot">Checked ${S.evChecked||CHECKED}. Confirm dates before you go.</p>`;
@@ -1524,7 +1567,7 @@ function resetTab(t){
   S.pickOpen=false; S.calOpen=false; S.sights=false;
   if(t==="decide"){ if(S.plan||S.code){ S.plan=null; S.code=null; setUrl(null); } S.dfltOpen=false; }
   else if(t==="hotspots"){ S.hot="all"; S.hotView="list"; S.sel=null; S.zone=null; S.fltOpen=false; S.hotCuisine=""; S.open=new Set(); }
-  else if(t==="events"){ S.ev=null; S.evCalOpen=false; S.evDate=null; }
+  else if(t==="events"){ S.ev=null; S.evCalOpen=false; S.evDate=null; S.evType=""; }
   else if(t==="groups"){ if(S.chatOpen) typing(false); S.chatOpen=false; CHAT.gid=null; S.gid=null; S.joinMode=false; S.leaving=false; }
 }
 const H={
@@ -1630,7 +1673,8 @@ const H={
   zoneMap(el){ S.zone=el.dataset.z; render(); },
   pin(el){ selectPlace(el.dataset.id); },
   showGroup(el){ S.open.add(el.dataset.v); render(); },
-  ev(el){ S.ev=el.dataset.v||null; S.evCalOpen=false; S.evDate=null; render(); scrollTo(0,0); },
+  ev(el){ S.ev=el.dataset.v||null; S.evCalOpen=false; S.evDate=null; S.evType=""; render(); scrollTo(0,0); },
+  evType(el){ S.evType=el.dataset.v; render(); },
   save(el){ const id=el.dataset.id; S.saved.has(id)?S.saved.delete(id):S.saved.add(id); persist(); render();
   }
 };

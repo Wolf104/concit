@@ -810,3 +810,25 @@ select{text-overflow:ellipsis;white-space:nowrap;overflow:hidden}
 /* Short phones: drop the logo row while voting so the card has room */
 @media (max-height:700px){body.voting .brandbtn{display:none}body.voting .hero{padding-top:max(10px,calc(env(safe-area-inset-top,0px) + 4px))}body.voting #heroText .back{padding-right:44px}}
 .back{text-align:left}
+/* Events: type tags, descriptions, photos, type filter */
+.dlist summary .eline{display:flex;align-items:center;gap:7px;margin-top:3px;min-width:0}
+.dlist summary .eline small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.etag{flex:none;display:inline-flex;align-items:center;gap:4px;padding:2px 8px 2px 6px;border-radius:99px;font-size:12px;font-weight:700;line-height:1.5;color:var(--c);background:color-mix(in srgb,var(--c) 13%,transparent)}
+.etag svg{width:13px;height:13px;flex:none;stroke-width:2.2}
+html[data-theme=dark] .etag{color:color-mix(in srgb,var(--c) 55%,#fff);background:color-mix(in srgb,var(--c) 24%,transparent)}
+.dlist .dbadge b,.dlist .dbadge i{color:inherit}
+details.ev[open]{background:color-mix(in srgb,var(--tint) 45%,transparent)}
+.dlist details.ev .more{gap:10px}
+.ephoto{display:block;position:relative;aspect-ratio:16/9;border-radius:14px;background:var(--page) center 25%/cover no-repeat;overflow:hidden}
+.ephoto.wait{background:linear-gradient(100deg,var(--page) 30%,var(--tint) 50%,var(--page) 70%);background-size:200% 100%;animation:eload 1.2s linear infinite}
+@keyframes eload{to{background-position:-200% 0}}
+.ephoto i{position:absolute;right:8px;bottom:8px;font-style:normal;font-size:11px;font-weight:600;color:#fff;background:rgba(8,22,38,.55);border-radius:99px;padding:2px 8px}
+.edesc{margin:0;font-size:15.5px;line-height:1.45}
+.efacts{display:flex;flex-wrap:wrap;gap:6px}
+.efacts span{font-size:13px;font-weight:600;padding:5px 10px;border-radius:10px;background:var(--card);border:1px solid var(--line)}
+.efacts .sold{color:#c0392b;border-color:color-mix(in srgb,#c0392b 40%,transparent)}
+.chips.etypes{margin:0 0 14px}
+.chips.etypes .chip{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.chips.etypes .chip svg{width:15px;height:15px;flex:none}
+.chips.etypes .chip i{font-style:normal;font-size:12px;opacity:.65;font-weight:600}
+@media (prefers-reduced-motion:reduce){.ephoto.wait{animation:none}}
