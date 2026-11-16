@@ -103,6 +103,9 @@ const saveSession=()=>{try{S.session?localStorage.setItem(SKEY,JSON.stringify(S.
 
 /* ---------- Accounts ---------- */
 const AUTH_ERRORS=[["invalid login","That email or password isn't right."],["already registered","That email already has an account. Log in instead."],["not confirmed","Confirm your email first, using the link we sent you."],["rate limit","Too many emails sent just now. Try again in a while."],["password","Choose a stronger password of at least 8 characters."],["email","Check that email address."]];
+/* Someone who opens a plan link without being logged in can vote as a guest: just a name, no email or password. */
+const isGuest=()=>!!S.session?.user?.is_anonymous;
+const authMode=()=>S.authView==="login"&&S.pending?.plan&&!S.noGuest?"guest":S.authView;
 function authMessage(m){ const t=String(m||"").toLowerCase(), f=AUTH_ERRORS.find(([k])=>t.includes(k)); return f?f[1]:"That didn't work. Check your connection and try again."; }
 async function authCall(path,body,method="POST",token){
   const r=await fetch(`${SB.url}/auth/v1/${path}`,{method,headers:{apikey:SB.anonKey,"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},body:body?JSON.stringify(body):undefined});
@@ -128,7 +131,7 @@ function logout(expired){
   if(t&&!expired&&PUSH.endpoint) rpc("push_unsubscribe",{p_endpoint:PUSH.endpoint},false).catch(()=>{});
   PUSH.on=false; PUSH.endpoint=null;
   if(t&&!expired) authCall("logout",{}, "POST",t).catch(()=>{});
-  S.session=null; S.plan=null; S.code=null; S.groups=[]; S.gid=null; S.acct=false; S.deleting=false; S.authView="login"; S.authNote=expired?"Please log in again.":""; S.tab="home"; S.chatOpen=false;
+  S.session=null; S.plan=null; S.code=null; S.groups=[]; S.gid=null; S.acct=false; S.deleting=false; S.authView="login"; S.noGuest=false; S.authNote=expired?"Please log in again.":""; S.tab="home"; S.chatOpen=false;
   if(typeof CHAT!=="undefined"){ CHAT.gid=null; CHAT.msgs=[]; }
   if(!expired){ for(const k in AV) delete AV[k]; if(typeof AV_LARGE!=="undefined") for(const k in AV_LARGE) delete AV_LARGE[k]; try{localStorage.removeItem("concit.av")}catch{} }
   saveSession(); history.replaceState(null,"",location.pathname); render();
@@ -136,14 +139,18 @@ function logout(expired){
 const redirectTo=()=>encodeURIComponent(location.origin+location.pathname);
 async function authSubmit(){
   if(S.authBusy) return;
-  const v=id=>(document.getElementById(id)?.value||"").trim(), view=S.authView, email=v("email"), pass=document.getElementById("password")?.value||"", name=v("name");
+  const v=id=>(document.getElementById(id)?.value||"").trim(), view=authMode(), email=v("email"), pass=document.getElementById("password")?.value||"", name=v("name");
   S.email=email; S.authNote="";
-  if(view==="signup"&&!name){ toast("Add your name"); return; }
-  if(view!=="newpass"&&!email){ toast("Add your email"); return; }
-  if(view!=="reset"&&pass.length<8){ toast("Passwords need at least 8 characters"); return; }
+  if((view==="signup"||view==="guest")&&!name){ toast("Add your name"); return; }
+  if(view!=="newpass"&&view!=="guest"&&!email){ toast("Add your email"); return; }
+  if(view!=="reset"&&view!=="guest"&&pass.length<8){ toast("Passwords need at least 8 characters"); return; }
   const btn=document.querySelector("#authForm button[type=submit]"), label=btn.textContent;
   S.authBusy=true; btn.disabled=true; btn.textContent="One moment"; document.activeElement?.blur();
   try{
+    if(view==="guest"){
+      try{ setSession(await authCall("signup",{data:{name:name.slice(0,30)}})); }
+      catch(e){ if(/anonymous|disabled|not enabled/i.test(e.message)){ S.noGuest=true; S.authBusy=false; S.authNote="Guest voting isn't available right now. Log in or create an account to vote."; render(); return; } throw e; }
+    }
     if(view==="login") setSession(await authCall("token?grant_type=password",{email,password:pass}));
     if(view==="signup"){
       const j=await authCall(`signup?redirect_to=${redirectTo()}`,{email,password:pass,data:{name}});
@@ -739,8 +746,16 @@ function viewLeft(p){
 
 /* ---------- Login ---------- */
 function viewAuth(){
-  const v=S.authView, b=S.authBusy, invited=S.pending?.join, f=(id,type,label,auto,val="")=>`<label class="field"><span class="label">${label}</span><input type="${type}" id="${id}" autocomplete="${auto}" value="${esc(val)}" ${b?"disabled":""}></label>`;
-  const titles={login:invited?"Log in to join the group":"Welcome back",signup:invited?"Create an account to join":"Create your account",reset:"Reset your password",newpass:"Choose a new password"};
+  const v=authMode(), b=S.authBusy, invited=S.pending?.join, f=(id,type,label,auto,val="")=>`<label class="field"><span class="label">${label}</span><input type="${type}" id="${id}" autocomplete="${auto}" value="${esc(val)}" ${b?"disabled":""}></label>`;
+  if(v==="guest") return `<div data-hero><span>You've been invited</span><h1>Vote on where to go</h1></div>
+  ${S.authNote?`<p class="note">${esc(S.authNote)}</p>`:""}
+  <form id="authForm" novalidate>
+    <label class="field"><span class="label">Your name</span><input type="text" id="name" autocomplete="name" maxlength="30" placeholder="So your friends know who voted" ${b?"disabled":""}></label>
+    <button class="btn" type="submit" ${b?"disabled":""}>${b?"One moment":"Vote now"}</button>
+  </form>
+  <div class="links"><p class="fine">No account needed. Your friends see your name and how you vote. <a href="privacy.html">Privacy notice</a></p>
+  <p>Already use Concit? <button class="link" data-act="noGuest">Log in</button></p></div>`;
+  const titles={login:invited?"Log in to join the group":S.pending?.plan?"Log in to vote":"Welcome back",signup:invited?"Create an account to join":"Create your account",reset:"Reset your password",newpass:"Choose a new password"};
   const main={login:"Log in",signup:"Create account",reset:"Send reset link",newpass:"Save password"}[v];
   return `<div data-hero><h1>${titles[v]}</h1></div>
   ${S.authNote?`<p class="note">${esc(S.authNote)}</p>`:""}
@@ -751,6 +766,7 @@ function viewAuth(){
     <button class="btn" type="submit" ${b?"disabled":""}>${b?"One moment":main}</button>
   </form>
   <div class="links">
+  ${v==="login"&&S.pending?.plan&&S.noGuest&&!S.authNote?`<p><button class="link" data-act="asGuest">Vote without an account</button></p>`:""}
   ${v==="login"?`<p>New to Concit? <button class="link" data-act="authView" data-v="signup">Create an account</button></p><p><button class="link quiet" data-act="authView" data-v="reset">Forgot your password?</button></p>`:""}
   ${v==="signup"?`<p>Already have an account? <button class="link" data-act="authView" data-v="login">Log in</button></p><p class="fine">See how Concit handles your data in the <a href="privacy.html">privacy notice</a>.</p>`:""}
   ${v==="reset"?`<p><button class="link" data-act="authView" data-v="login">Back to log in</button></p>`:""}
@@ -1221,7 +1237,9 @@ applyTheme(); THEME_MQ&&THEME_MQ.addEventListener&&THEME_MQ.addEventListener("ch
 function viewAccount(){
   const u=S.session?.user||{}, name=u.user_metadata?.name||"";
   return `<div data-hero><button class="back" data-act="closeAccount">‹ Back</button><h1>Your account</h1></div>
-  <p class="fine" style="margin:0 0 16px">Logged in as ${esc(u.email||"")}</p>
+  ${isGuest()?`<div class="guestbox"><b>You're voting as a guest</b><p class="fine">Your votes and plans are tied to this device. Add an email and password to keep them and log in anywhere.</p>
+    <form id="keepForm" novalidate><label class="field"><span class="label">Email</span><input type="email" id="keepEmail" autocomplete="email"></label><label class="field"><span class="label">Password</span><input type="password" id="keepPass" autocomplete="new-password"></label><button class="btn small" type="submit">${S.keepBusy?"One moment":"Create my account"}</button></form></div>`
+  :`<p class="fine" style="margin:0 0 16px">Logged in as ${esc(u.email||"")}</p>`}
   <div class="group avpick"><span class="label">Profile picture</span><div class="avrow">${avatarHtml(uid(),name,"big")}<div class="avbtns">
     <label class="btn small plain${S.avBusy?" busy":""}">${S.avBusy?"Saving…":AV[uid()]?"Change photo":"Add a photo"}<input type="file" id="avFile" accept="image/*" hidden ${S.avBusy?"disabled":""}></label>
     ${AV[uid()]&&!S.avBusy?`<button class="link quiet" data-act="removeAvatar">Remove</button>`:""}</div></div>
@@ -1234,7 +1252,7 @@ function viewAccount(){
   <div class="group"><span class="label">Appearance</span><div class="themeseg">${seg("setTheme",themePref(),[["light","Light"],["dark","Dark"],["auto","Match device"]],"Appearance")}</div><p class="fine">Saved on this device.</p></div>
   <div class="group"><span class="label">Help</span><button class="person tourrow" data-act="replayTour"><span class="tourico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg></span><span>Show me around again<small class="sub">Replay the welcome, practice vote and tour of the app</small></span></button></div>
   <div class="group"><span class="label">Your data</span><a class="person" href="privacy.html"><span>Privacy notice<small class="sub">What Concit keeps and why</small></span><small>Read</small></a></div>
-  <button class="btn plain" data-act="logout">Log out</button>
+  <button class="btn plain" data-act="logout">${isGuest()?"Leave guest mode":"Log out"}</button>${isGuest()?`<p class="fine center">Leaving guest mode on this device means you can't get back to these votes.</p>`:""}
   <button class="link quiet center danger" data-act="deleteAccount">${S.deleting?"Tap again to delete for good":"Delete my account"}</button>
   ${S.deleting?`<p class="fine center">This removes your account, your votes, your messages and your place in every group. It can't be undone.</p>`:""}`;
 }
@@ -1802,6 +1820,8 @@ const H={
   clearTime(){ S.timeOpen=false;  S.form.time=""; render(); },
   share(){ shareOut(`Help choose where we go: ${shareUrl()}`,"Link copied"); },
   authView(el){ S.email=document.getElementById("email")?.value||S.email; S.authView=el.dataset.v; S.authNote=""; render(); },
+  noGuest(){ S.noGuest=true; S.authView="login"; S.authNote=""; render(); },
+  asGuest(){ S.noGuest=false; S.authView="login"; S.authNote=""; render(); },
   logout(){ logout(); },
   openPlan(el){ openPlan(el.dataset.code); },
   openGroup(el){ S.leaving=false; S.groupNew=false; if(!openChatLink(el.dataset.id)){ S.chatOpen=false; CHAT.gid=null; S.gid=el.dataset.id; S.tab="groups"; render(); scrollTo(0,0); } },
@@ -1895,6 +1915,15 @@ document.addEventListener("keydown",e=>{ if(e.key==="Enter"&&e.target.id==="meet
 document.addEventListener("change",e=>{ if(e.target.id==="chatPhoto"){ sendChatPhoto(e.target.files&&e.target.files[0]); e.target.value=""; return; } if(e.target.id==="meetTime"){ const t=timeDone(e.target.value); if(t===null){ e.target.classList.add("bad"); S.form.time=""; toast("Type the time like 19:30."); } else { S.form.time=t; e.target.value=t; } return; } if(e.target.id==="avFile"){ uploadAvatar(e.target.files&&e.target.files[0]); e.target.value=""; } else if(e.target.classList?.contains("gAvFile")){ uploadGroupAvatar(e.target.dataset.id,e.target.files&&e.target.files[0]); e.target.value=""; return; } if(e.target.id==="hotBudget") render(); const c=e.target.dataset.change; if(c==="area"){S.form.area=e.target.value}  if(c==="sendTo"){S.form.group=e.target.value;S.form.linkOnly=!e.target.value;persist();render()}});
 document.addEventListener("submit",async e=>{ e.preventDefault();
   if(e.target.id==="authForm") authSubmit();
+  if(e.target.id==="keepForm"){ if(S.keepBusy) return; const email=(document.getElementById("keepEmail").value||"").trim(), pass=document.getElementById("keepPass").value||"";
+    if(!email){ toast("Add your email"); return; } if(pass.length<8){ toast("Passwords need at least 8 characters"); return; }
+    S.keepBusy=true; document.activeElement?.blur();
+    try{
+      const u=await authCall("user",{email},"PUT",S.session.access_token);
+      if((u.email||"").toLowerCase()!==email.toLowerCase()){ toast("Check your inbox to confirm that email, then set a password with Forgot your password."); }
+      else { const u2=await authCall("user",{password:pass},"PUT",S.session.access_token); S.session.user=u2&&u2.id?u2:u; await refreshSession().catch(()=>{}); saveSession(); toast("Account created. You can log in anywhere now."); }
+    }catch(err){ toast(authMessage(err.message)); }
+    S.keepBusy=false; render(); return; }
   if(e.target.id==="renameForm"){ const i=document.getElementById("groupRename"), n=i.value.trim().replace(/\s+/g," "), gid=e.target.dataset.id, g=S.groups.find(x=>x.id===gid); i.blur(); if(!n||!g||n===g.name){ render(); return; }
     try{ await rpc("rename_group",{p_group:gid,p_name:n}); g.name=n; toast("Group renamed."); render(); loadGroups(); }catch{ toast("Couldn't rename the group. Try again."); } return; }
   if(e.target.id==="groupForm"){ const i=document.getElementById("groupName"), n=i.value.trim(); if(!n) return; i.value=""; i.blur(); try{ S.gid=await rpc("create_group",{p_name:n}); S.groupNew=false; S.chatOpen=false; await loadGroups(); render(); }catch{ toast("Couldn't create the group. Try again."); } }
@@ -1918,7 +1947,7 @@ async function loadEvents(){
     const rows=await r.json();
     if(!Array.isArray(rows)||!rows.length) return;
     EVENTS.length=0;
-    rows.forEach(e=>EVENTS.push({id:e.id,name:e.name,cat:e.cat,start:e.start_date,end:e.end_date,venue:e.venue,zone:e.zone||null,time:e.time||"",priceNum:e.price_num,priceText:e.price_text||"",src:e.src,sold:!!e.sold}));
+    rows.forEach(e=>EVENTS.push({id:e.id,name:e.name,cat:e.cat,start:e.start_date,end:e.end_date,venue:e.venue,zone:e.zone||null,time:e.time||"",priceNum:e.price_num===null?null:Number(e.price_num),priceText:e.price_text||"",src:e.src,sold:!!e.sold,type:e.type||"",...(e.descr?{desc:e.descr}:{}),...(e.wiki?{wiki:e.wiki}:{})}));
     const c=rows.map(e=>e.checked).filter(Boolean).sort().pop(); if(c) S.evChecked=new Date(c).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});
     render();
   }catch{}

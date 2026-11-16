@@ -913,3 +913,6 @@ body.inchat .hero{padding-top:max(14px,calc(env(safe-area-inset-top,0px) + 6px))
 .fine.booknote{margin:8px auto 16px}
 .duo{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .duo .btn{padding-inline:8px;font-size:16px}
+/* Guests */
+.guestbox{border:1px solid var(--line);border-radius:16px;background:var(--tint);padding:14px 14px 16px;margin:0 0 20px}
+.guestbox>b{font-size:16px}.guestbox .fine{margin:4px 0 12px}.guestbox .field{margin-bottom:10px}

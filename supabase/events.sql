@@ -12,8 +12,14 @@ create table if not exists events (
   price_text text not null default '',
   sold boolean not null default false,
   src text not null default '',
-  checked date not null default current_date
+  checked date not null default current_date,
+  type text not null default '',   -- finer type within the category, e.g. rap, football, photography
+  descr text not null default '',  -- one-line description
+  wiki text not null default ''    -- Wikipedia page used for the photo, e.g. en:Giorgio_Armani
 );
+alter table events add column if not exists type text not null default '';
+alter table events add column if not exists descr text not null default '';
+alter table events add column if not exists wiki text not null default '';
 create index if not exists events_end_idx on events(end_date);
 alter table events enable row level security;
 drop policy if exists "Anyone can read events" on events;

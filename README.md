@@ -10,7 +10,7 @@ In Vercel, choose Add New > Project, import this GitHub repository and press Dep
 ## Files
 
 - `index.html`, `styles.css`, `app.js`: the app
-- `data.js`: Milan events and the sights list, plus a backup copy of the hotspots
+- `data.js`: the sights list, plus backup copies of the hotspots and events (the live ones are in the Supabase `places` and `events` tables)
 - Hotspots live in the Supabase `places` table, so you can edit them there
 - `config.js`: the Supabase connection and the public notification key
 - `sw.js`, `api/push.js`, `package.json`: phone notifications. `api/push.js` needs `VAPID_PRIVATE_KEY` and `PUSH_SECRET` set in Vercel, and `supabase/push.sql` run in the database
@@ -21,7 +21,7 @@ In Vercel, choose Add New > Project, import this GitHub repository and press Dep
 ## What's in the app
 
 - **Home**: start a plan, your plans, places open now, upcoming events, sights to see, your groups
-- **Decide**: make a plan and vote on it with a group
+- **Decide**: make a plan and vote on it with a group. People opening a plan link can vote as a guest with just a name (needs "Allow anonymous sign-ins" switched on in Supabase Auth)
 - **Hotspots**: every place, as a list or a map
 - **Events**: what's on in Milan
 - **Groups**: your groups and their chats, with plan cards, replies, reactions and photos. Tap a group's name in its chat for members, invites, renaming and muting
