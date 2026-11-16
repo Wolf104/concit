@@ -792,3 +792,7 @@ html[data-theme=dark] .cbub,html[data-theme=dark] .carrow{background:#1b2a3b;col
 .tmapwrap .maplibregl-ctrl-attrib{font-size:10px}.tmapwrap .maplibregl-ctrl-bottom-right{top:0;bottom:auto}
 .vdeck .vcard .vhead{flex:none}
 .tmapwrap .tmapgl{position:absolute!important}
+/* Opened from the home screen: the blue runs up behind the clock and battery */
+.hero{padding-top:max(14px,calc(env(safe-area-inset-top,0px) + 6px))}
+body.voting .hero{padding-top:max(12px,calc(env(safe-area-inset-top,0px) + 4px))}
+#coach .cbub{max-height:calc(100vh - env(safe-area-inset-top,0px) - 20px)}
