@@ -681,6 +681,19 @@ function viewCard(p){
   <div class="vvote${lastVoted(p)?" hasundo":""}"><button class="vno" data-act="vote" data-id="${esc(id)}" data-v="0">${vi("no","vic")}<span>Nope</span></button>${lastVoted(p)?`<button class="vback" data-act="undoVote" aria-label="Go back and change your last vote" title="Go back">${UNDO_ICON}</button>`:""}<button class="vyes" data-act="vote" data-id="${esc(id)}" data-v="1">${vi("yes","vic")}<span>I'm in</span></button></div>
   ${p.practice?"":p.people.length>1||p.group_id?`<button class="link quiet center" data-act="attend" data-v="0">I can't make it</button>`:""}`;
 }
+/* The main button on a result: book or get tickets on the winner's own website (or the event's ticket page). */
+function bookLink(it,p){
+  const n=going(p).length, forWho=`${n} ${n===1?"person":"people"}`, when=dayText(p.day)+(p.time?` at ${p.time}`:"");
+  if(it.cat){ const u=srcUrl(it.src); if(u==="#") return "";
+    const label=it.sold?"Check for tickets":it.priceNum===0?"See event details":"Get tickets";
+    return `<a class="btn" href="${esc(u)}" target="_blank" rel="noopener">${label}</a><p class="fine center booknote">${it.sold?"Listed as sold out. The ticket page shows any returns.":it.priceNum===0?"Free entry. Opens the event's page.":`You need ${n===1?"1 ticket":n+" tickets"}. Opens the ticket page.`}</p>`; }
+  if(!/^https?:\/\//.test(it.web||"")) return `<p class="fine center booknote">No website on file for ${esc(it.name)}. Open Directions to find its phone number.</p>`;
+  const social=/instagram\.com/.test(it.web)?"Instagram":/facebook\.com/.test(it.web)?"Facebook":"";
+  const tickets=it.kind==="culture"||it.kind==="club";
+  const label=it.kind==="cafe"?(social?`Open its ${social}`:"Visit the website"):tickets?(social?`Tickets on ${social}`:"Get tickets"):(social?`Book on ${social}`:"Book a table");
+  const note=it.kind==="cafe"?"Opens the place's own page.":tickets?(it.kind==="club"?`For ${forWho}, ${when}. Opens the club's own page for tickets, lists and tables.`:`For ${forWho}, ${when}. Opens the venue's own page.`):`For ${forWho}, ${when}. Opens the place's own ${social?"page":"website"} to book.`;
+  return `<a class="btn" href="${esc(it.web)}" target="_blank" rel="noopener">${label}</a><p class="fine center booknote">${esc(note)}</p>`;
+}
 function viewResult(p){
   const r=results(p), w=r[0], total=Object.keys(p.votes||{}).filter(n=>!isOut(p,n)).length||going(p).length, back=p.group_id?(p.group_name||"Back"):"New plan";
   if(!w||w.yes===0) return `<div data-hero><button class="back" data-act="reset">‹ ${esc(back)}</button><span>Nobody said yes to any of these</span><h1>No match this round</h1></div>
@@ -698,7 +711,7 @@ function viewResult(p){
     <p class="pollwin">${TROPHY_ICON}<span>Winner: <b>${esc(it.name)}</b></span></p>
   </section>
   <div class="win"><p class="ok">${w.yes} of ${total} said yes</p>${p.time?`<p><b>Meet at ${esc(p.time)}</b> · ${esc(dayText(p.day))}</p>`:""}<p>${esc(where)}</p><p class="dim">${esc(sub)}</p></div>
-  ${p.practice?`<p class="note">That's how every plan works. Your friends vote on their phones, and the place with the most yeses wins.</p><div class="stack"><button class="btn" data-act="tourCoach">Show me around the app</button><button class="btn plain" data-act="tourAgain">Vote again</button></div>`:`<div class="stack"><button class="btn" data-act="copy">Copy the details</button><a class="btn plain" href="${mapsUrl(it.name+" "+where)}" target="_blank" rel="noopener">Directions</a></div>`}`;
+  ${p.practice?`<p class="note">That's how every plan works. Your friends vote on their phones, and the place with the most yeses wins.</p><div class="stack"><button class="btn" data-act="tourCoach">Show me around the app</button><button class="btn plain" data-act="tourAgain">Vote again</button></div>`:`${bookLink(it,p)}<div class="duo"><button class="btn plain" data-act="copy">Copy the details</button><a class="btn plain" href="${mapsUrl(it.name+" "+where)}" target="_blank" rel="noopener">Directions</a></div>`}`;
 }
 const GROUP_ICON='<svg class="pollicon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 19.5c0-3.4 2.7-5.8 6-5.8s6 2.4 6 5.8"/><circle cx="16.6" cy="9" r="2.6"/><path d="M16 13.8c2.8.2 5 2.3 5 5.2"/></svg>';
 const TROPHY_ICON='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 6H5a2 2 0 0 0 2 4h1M16 6h3a2 2 0 0 1-2 4h-1M12 13v4M8.5 20h7M10 17h4"/></svg>';

@@ -909,3 +909,7 @@ body.inchat #heroText .back{margin-bottom:9px;padding:4px 48px 4px 0}
 body.inchat .hero{padding-top:max(14px,calc(env(safe-area-inset-top,0px) + 6px))}
 /* Photos keep a fixed box while loading and after, so the chat doesn't jump as they arrive. */
 .mphoto,.mphoto.wait{width:240px;height:240px;max-height:none}
+/* Result screen: book / tickets button with a line saying who it's for */
+.fine.booknote{margin:8px auto 16px}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.duo .btn{padding-inline:8px;font-size:16px}
