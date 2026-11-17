@@ -19,7 +19,7 @@ const boards=f=>f.st.boards||[];
   const data={places:[...M(),...M.madrid()],events:M.madridEvents()};
   let {b,fake}=await open(data);
   await flow("boards row shows a starter card before anything is saved",async()=>{ const t=await text(); expect(/Your boards/.test(t)&&/Start your first board/.test(t),"starter card on Home"); expect(!(await wide()),"no sideways scroll");
-    await pg.locator(".hboard0").click(); await pg.waitForTimeout(500); expect(await pg.locator("#bname").count()===1,"tapping it opens a new board ready to name"); await pg.waitForTimeout(800);
+    await pg.locator(".hboard0").click(); await pg.waitForTimeout(500); expect(/New board/.test(await text())&&/Nothing here yet/.test(await text()),"tapping it opens a new empty board"); expect(await pg.evaluate(()=>!document.querySelector(".bset").open&&document.activeElement.tagName!=="INPUT"),"no text box opened or focused"); await pg.waitForTimeout(800);
     fake.st.boards=[]; await pg.evaluate(()=>Object.keys(localStorage).filter(k=>k.startsWith("concit.boards.")).forEach(k=>localStorage.removeItem(k))); await pg.goto("http://localhost:8765/"); await pg.waitForTimeout(2600); expect(/Start your first board/.test(await text()),"starter card back after reset"); });
   await flow("save a place from Hotspots",async()=>{ await tab("hotspots"); const d=pg.locator("#view details").first(); await d.locator("summary").click(); await pg.waitForTimeout(200);
     const s=d.locator("[data-act=heart]"); expect(await s.count()===1,"Save button on the place"); expect(/Save/.test(await s.innerText()),"says Save"); await s.click(); await pg.waitForTimeout(900);

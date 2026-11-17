@@ -2162,8 +2162,7 @@ Object.assign(H,{
     const b={id:newBoardId(),name,items:[]}; S.boards.unshift(b); if(S.boardPick) boardAdd(b,S.boardPick); else pushBoard(b); if(inp) inp.value=""; paintBoardSheet(); },
   boardPickDone(){ S.boardPick=null; paintBoardSheet(); render(); },
   boardCreate(){ if(S.boards.length>=BOARDS_MAX){ toast(`You can keep up to ${BOARDS_MAX} boards.`); return; }
-    const b={id:newBoardId(),name:"New board",items:[]}; S.boards.unshift(b); pushBoard(b); S.board=b.id; S.boardView="grid"; render(); pageTop();
-    const d=document.querySelector(".bset"); if(d){ d.open=true; const i=document.getElementById("bname"); i?.focus(); i?.select(); } },
+    const b={id:newBoardId(),name:"New board",items:[]}; S.boards.unshift(b); pushBoard(b); S.board=b.id; S.boardView="grid"; render(); pageTop(); },
   boardOpen(el){ S.board=el.dataset.b; S.boardShared=null; S.boardView="grid"; S.boardDel=false; render(); pageTop(); },
   boardBack(){ S.board=null; S.boardShared=null; S.boardDel=false; if(location.search.includes("board=")) history.replaceState(null,"",location.pathname); render(); if(S.session) homeTop(); else scrollTo(0,0); },
   boardView(el){ S.boardView=el.dataset.v; render(); },
