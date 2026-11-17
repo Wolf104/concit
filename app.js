@@ -181,6 +181,7 @@ function logout(expired){
   if(t&&!expired&&PUSH.endpoint) rpc("push_unsubscribe",{p_endpoint:PUSH.endpoint},false).catch(()=>{});
   PUSH.on=false; PUSH.endpoint=null;
   if(t&&!expired) authCall("logout",{}, "POST",t).catch(()=>{});
+  S.boards=[]; S.board=null; S.boardPick=null; S.boardLast=null;
   S.session=null; S.plan=null; S.code=null; S.groups=[]; S.gid=null; S.acct=false; S.deleting=false; S.authView="login"; S.noGuest=false; S.admin=false; S.stats=false; S.statsData=null; OPENED_AT=0; S.guestNote=""; S.pendingJoin=null; S.guestLeaving=false; S.authNote=expired?"Please log in again.":""; S.tab="home"; S.chatOpen=false;
   if(typeof CHAT!=="undefined"){ CHAT.gid=null; CHAT.msgs=[]; }
   if(!expired){ for(const k in AV) delete AV[k]; if(typeof AV_LARGE!=="undefined") for(const k in AV_LARGE) delete AV_LARGE[k]; try{localStorage.removeItem("concit.av")}catch{} }
@@ -815,7 +816,7 @@ function viewResult(p){
     <p class="pollwin">${TROPHY_ICON}<span>Winner: <b>${esc(it.name)}</b></span></p>
   </section>
   <div class="win"><p class="ok">${w.yes} of ${total} said yes</p>${p.time?`<p><b>Meet at ${esc(p.time)}</b> · ${esc(dayText(p.day))}</p>`:""}<p>${esc(where)}</p><p class="dim">${esc(sub)}</p></div>
-  ${p.practice?`<p class="note">That's how every plan works. Your friends vote on their phones, and the place with the most yeses wins.</p><div class="stack"><button class="btn" data-act="tourCoach">Show me around the app</button><button class="btn plain" data-act="tourAgain">Vote again</button></div>`:`${bookLink(it,p)}<div class="duo"><button class="btn plain" data-act="copy">Copy the details</button><a class="btn plain" href="${mapsUrl(it.name+" "+where)}" target="_blank" rel="noopener" data-track="directions_tap" data-ref="${esc(it.id)}" data-name="${esc(it.name)}">Directions</a></div>`}`;
+  ${p.practice?`<p class="note">That's how every plan works. Your friends vote on their phones, and the place with the most yeses wins.</p><div class="stack"><button class="btn" data-act="tourCoach">Show me around the app</button><button class="btn plain" data-act="tourAgain">Vote again</button></div>`:`${bookLink(it,p)}<div class="duo"><button class="btn plain" data-act="copy">Copy the details</button><a class="btn plain" href="${mapsUrl(it.name+" "+where)}" target="_blank" rel="noopener" data-track="directions_tap" data-ref="${esc(it.id)}" data-name="${esc(it.name)}">Directions</a></div>${S.session&&!isGuest()?`<button class="btn plain savewin${isSaved(it.id)?" on":""}" data-act="heart" data-id="${esc(it.id)}">${HEART}${isSaved(it.id)?"Saved to a board":"Save to a board"}</button>`:""}`}`;
 }
 const GROUP_ICON='<svg class="pollicon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 19.5c0-3.4 2.7-5.8 6-5.8s6 2.4 6 5.8"/><circle cx="16.6" cy="9" r="2.6"/><path d="M16 13.8c2.8.2 5 2.3 5 5.2"/></svg>';
 const TROPHY_ICON='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 6H5a2 2 0 0 0 2 4h1M16 6h3a2 2 0 0 1-2 4h-1M12 13v4M8.5 20h7M10 17h4"/></svg>';
@@ -1257,6 +1258,8 @@ function homePlans(){
   return out.filter(p=>st(p)!==3).sort((a,b)=>st(a)-st(b)||a.day.localeCompare(b.day)).slice(0,3).map(p=>({...p,st:st(p)}));
 }
 function viewHome(){
+  if(S.boardShared) return viewBoard(S.boardShared,true);
+  if(S.board&&boardOf(S.board)) return viewBoard(boardOf(S.board),false);
   if(S.sights) return viewSights();
   const name=(S.session?.user?.user_metadata?.name||"").trim().split(" ")[0];
   const hr=new Date().getHours(), part=hr<12?"morning":hr<18?"afternoon":"evening";
@@ -1283,6 +1286,7 @@ function viewHome(){
   ${evs.length?`<section aria-labelledby="heH"><div class="hsec"><h2 id="heH">Coming up in ${cityName()}</h2><button class="link" data-act="tab" data-tab="events">Events</button></div>
   <div class="sheet glist">${evs.map(e=>{const d=parse(e.start);return `<button class="grow" data-act="homeEvent" data-id="${esc(e.id)}"><span class="hdate" style="--c:${EV_COL[e.cat]||"var(--link)"}"><i>${d.toLocaleDateString("en-GB",{month:"short"})}</i><b>${d.getDate()}</b></span><span class="gmain"><b>${esc(e.name)}</b><small>${esc([EV_TYPES[evType(e)][0],e.venue,e.time].filter(Boolean).join(" · "))}</small></span></button>`}).join("")}</div></section>`:""}
   ${homeSights()}
+  ${homeBoards()}
   <section aria-labelledby="hgH"><div class="hsec"><h2 id="hgH">Your groups</h2></div>
   ${S.groups.length?`<div class="hgroups">${S.groups.slice(0,6).map(g=>`<button class="hgroup" data-act="openGroup" data-id="${esc(g.id)}">${g.unread?`<i class="gbadge">${g.unread}</i>`:""}${groupAv(g,"hav",false)}<b>${esc(g.name)}</b><small>${g.members.length} ${g.members.length===1?"person":"people"}</small></button>`).join("")}</div>`
   :`<button class="hnew" data-act="tab" data-tab="groups"><span aria-hidden="true">+</span><span><b>Make your first group</b><small>Share a code so friends can join</small></span></button>`}</section>`;
@@ -1293,8 +1297,10 @@ let SIGHT_LOADING=false;
 const sightImg=x=>x.file?commonsImg(x.file,800):(SIGHT_IMG[x.id]&&SIGHT_IMG[x.id].src)||"";
 const sightPage=x=>x.file?commonsPage(x.file):(SIGHT_IMG[x.id]&&SIGHT_IMG[x.id].page)||"";
 const sightBg=x=>{ const u=sightImg(x); return u?` style="--c:${SIGHT_KINDS[x.kind][1]};background-image:url('${u.replace(/'/g,"%27")}')"`:` style="--c:${SIGHT_KINDS[x.kind][1]}"`; };
+const SIGHT_TRIED=new Set();
 async function loadSightImgs(){
-  if(SIGHT_LOADING) return; const need=SIGHTS.filter(x=>!x.file&&!SIGHT_IMG[x.id]); if(!need.length) return; SIGHT_LOADING=true;
+  /* Each photo is asked for once per visit: retrying a failed one on every redraw made the page redraw without end when Wikipedia couldn't be reached. */
+  if(SIGHT_LOADING) return; const need=SIGHTS.filter(x=>!x.file&&!SIGHT_IMG[x.id]&&!SIGHT_TRIED.has(x.id)); if(!need.length) return; SIGHT_LOADING=true; need.forEach(x=>SIGHT_TRIED.add(x.id));
   await Promise.all(need.map(async x=>{ try{
     const r=await fetch("https://en.wikipedia.org/api/rest_v1/page/summary/"+encodeURIComponent(x.wiki)); if(!r.ok) return;
     const j=await r.json(), small=(j.thumbnail&&j.thumbnail.source)||""; if(!small) return;
@@ -1324,7 +1330,7 @@ function viewSights(){
     <div class="sphoto" data-simg="${x.id}"${sightBg(x)}><i>${esc(SIGHT_KINDS[x.kind][0])}</i><em>${esc(x.pay)}</em></div>
     <div class="sbody"><h2>${esc(x.name)}</h2><small>${esc(x.zone)} · ${esc(x.metro)} · allow ${esc(x.time)}</small>
       <p>${esc(x.blurb)}</p><p class="stip"><b>Tip</b>${esc(x.tip)}</p>
-      <div class="vlinks"><a href="${mapsUrl(x.name)}" target="_blank" rel="noopener">${evIcon('<path d="M3 11l18-8-8 18-2-8z"/>')}Directions</a><a href="https://en.wikipedia.org/wiki/${encodeURIComponent(x.wiki)}" target="_blank" rel="noopener">Read more</a></div></div></article>`; }).join("")}</div>
+      <div class="vlinks"><a href="${mapsUrl(x.name)}" target="_blank" rel="noopener">${evIcon('<path d="M3 11l18-8-8 18-2-8z"/>')}Directions</a><a href="https://en.wikipedia.org/wiki/${encodeURIComponent(x.wiki)}" target="_blank" rel="noopener">Read more</a>${saveBtn(x.id)}</div></div></article>`; }).join("")}</div>
   <p class="foot">Opening times and ticket prices change, so check before you go. Photos are from Wikipedia and Wikimedia Commons; tap Read more for the photographer and licence.</p>`;
 }
 const lastTime=t=>{ if(!t) return ""; const d=new Date(t), n=new Date(), y=new Date(n); y.setDate(n.getDate()-1);
@@ -1514,7 +1520,7 @@ function viewFilters(part){
 function placeRow(p){
   return `<details><summary><div><b>${esc(p.name)}</b><small>${esc(zname(p.zone))} · ${esc(costText(p))}</small>${starsHtml(p)}</div></summary>
   <div class="more"><p>${esc([p.why,p.detail].map(dot).filter(Boolean).join(" "))}</p><p class="dim">${esc(p.addr)}${p.metro[0]?" · "+esc(metroText(p.metro)):""}</p>
-  <div class="actions"><a href="${mapsUrl(p.name+" "+p.addr,p)}" target="_blank" rel="noopener">Directions</a>${/^https?:\/\//.test(p.web||"")?`<a href="${esc(p.web)}" target="_blank" rel="noopener">${/instagram\.com/.test(p.web)?"Instagram":/facebook\.com/.test(p.web)?"Facebook":"Website"}</a>`:""}<button class="link addplan" data-act="pickToggle" data-id="${esc(p.id)}">${(S.form.picks||[]).includes(p.id)?"In your plan ✓":"Add to a plan"}</button></div></div></details>`;
+  <div class="actions"><a href="${mapsUrl(p.name+" "+p.addr,p)}" target="_blank" rel="noopener">Directions</a>${/^https?:\/\//.test(p.web||"")?`<a href="${esc(p.web)}" target="_blank" rel="noopener">${/instagram\.com/.test(p.web)?"Instagram":/facebook\.com/.test(p.web)?"Facebook":"Website"}</a>`:""}${saveBtn(p.id)}<button class="link addplan" data-act="pickToggle" data-id="${esc(p.id)}">${(S.form.picks||[]).includes(p.id)?"In your plan ✓":"Add to a plan"}</button></div></div></details>`;
 }
 /* An illustrated rooftop view: Milan's ring-and-spoke street plan, filled with courtyard blocks. */
 let CITY_BG="";
@@ -1616,12 +1622,12 @@ async function loadEvImg(wiki){
 }
 document.addEventListener("toggle",ev=>{ const d=ev.target; if(d.open) d.querySelectorAll?.(".ephoto.wait").forEach(el=>loadEvImg(el.dataset.ewiki)); },true);
 function evRow(e){
-  const on=S.saved.has(e.id), info=[e.venue,e.sold?"Sold out":""].filter(Boolean).join(" · ");
+  const info=[e.venue,e.sold?"Sold out":""].filter(Boolean).join(" · ");
   const run=e.start!==e.end, until=run&&e.start<=today, d=parse(until?e.end:e.start);
   const facts=[run?eventWhen(e):`${wday(e.start)} ${short(e.start)}`,e.time?"Starts "+e.time:"",e.sold?"Sold out":e.priceText].filter(Boolean);
   return `<details class="ev"><summary><span class="dbadge" style="--c:${EV_COL[e.cat]||"var(--link)"}">${until?"<i>until</i>":""}<b>${d.getDate()}</b><i>${d.toLocaleDateString("en-GB",{month:"short"})}</i></span><div><b>${esc(e.name)}</b><span class="eline">${evTag(e)}<small>${esc(info)}</small></span></div></summary>
   <div class="more">${evPhoto(e)}${e.desc?`<p class="edesc">${esc(dot(e.desc))}</p>`:""}<div class="efacts">${facts.map(f=>`<span${f==="Sold out"?' class="sold"':""}>${esc(f)}</span>`).join("")}</div>
-  <div class="actions"><button data-act="save" data-id="${e.id}">${on?"Saved ✓":"Save"}</button><a href="${mapsUrl(e.venue,e)}" target="_blank" rel="noopener">Directions</a><a href="${esc(srcUrl(e.src))}" target="_blank" rel="noopener">Tickets & info</a></div></div></details>`;
+  <div class="actions">${saveBtn(e.id)}<a href="${mapsUrl(e.venue,e)}" target="_blank" rel="noopener">Directions</a><a href="${esc(srcUrl(e.src))}" target="_blank" rel="noopener">Tickets & info</a></div></div></details>`;
 }
 /* Events calendar: days with events get a dot; tapping a day shows what's on. */
 const CAL_ICON='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7zm-2 8h14v10H5V10z"/></svg>';
@@ -1655,7 +1661,7 @@ const commonsPage=f=>"https://commons.wikimedia.org/wiki/File:"+encodeURICompone
 let EV_TILE_IMGS=[];
 function warmTiles(){ EV_TILE_IMGS=Object.values(CITY_PHOTOS[CITY]||{}).map(([f])=>{ const im=new Image(); im.referrerPolicy="no-referrer"; im.src=commonsImg(f); return im; }); }
 warmTiles();
-const EV_MORE=[["free","Free","Nothing to pay",e=>e.priceNum===0],["saved","Saved","Events you kept",e=>S.saved.has(e.id)],["all","Everything","All upcoming events",()=>true]];
+const EV_MORE=[["free","Free","Nothing to pay",e=>e.priceNum===0],["saved","Saved","Events on your boards",e=>isSaved(e.id)],["all","Everything","All upcoming events",()=>true]];
 const evIcon=p=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 function viewEvents(){
   const live=EVENTS.filter(e=>e.end>=today);
@@ -1683,7 +1689,7 @@ function viewEvents(){
   return `<div data-hero><button class="back" data-act="ev" data-v="">‹ Events</button><span>${esc(cat[2])}</span><h1>${cat[1]}</h1></div>
   <div class="hotbar"><button class="pill${d?" on":""}" data-act="evCal" aria-expanded="${!!S.evCalOpen}">${CAL_ICON}<span>${d?esc(parse(d).toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"})):"All dates"}</span></button>${d?`<button class="pillx" data-act="evPick" data-v="" aria-label="Show all dates">×</button>`:""}${showTypes?`<select class="csel${S.evType?" on":""}" data-cs="evType" aria-label="Type of event"><option value="">All types</option>${tkeys.map(t=>`<option value="${t}" ${S.evType===t?"selected":""}>${EV_TYPES[t][0]} (${counts[t]})</option>`).join("")}</select>`:""}<span class="grow1"></span><span class="count">${list.length} ${list.length===1?"event":"events"}</span></div>
   ${S.evCalOpen?evCalendar(all):""}
-  <div class="list">${body||`<p class="empty">${S.ev==="saved"?"Open an event and tap Save to keep it here.":d?"Nothing on that day. Try another date.":"Nothing here right now."}</p>`}</div>
+  <div class="list">${body||`<p class="empty">${S.ev==="saved"?"Open an event and tap Save to keep it on a board.":d?"Nothing on that day. Try another date.":"Nothing here right now."}</p>`}</div>
   <p class="foot">Checked ${S.evChecked||CHECKED}. Confirm dates before you go.</p>`;
 }
 function render(){
@@ -1698,8 +1704,8 @@ function render(){
   if(guest){ S.tab="decide"; S.stats=false; S.chatOpen=false; S.sights=false; }
   document.body.classList.toggle("guest",!!guest);
   document.body.classList.toggle("noauth",!authed);
-  if(!authed) requestAnimationFrame(mountCaptcha); else trackTab();
-  document.getElementById("view").innerHTML=!authed?viewAuth():S.acct?(S.stats&&S.admin?viewStats():viewAccount()):S.tab==="home"?viewHome():S.tab==="decide"?viewDecide():S.tab==="hotspots"?viewHot():S.tab==="groups"?viewGroups():viewEvents();
+  if(!authed){ if(!S.boardShared) requestAnimationFrame(mountCaptcha); } else trackTab();
+  document.getElementById("view").innerHTML=!authed?(S.boardShared?viewBoard(S.boardShared,true):viewAuth()):S.acct?(S.stats&&S.admin?viewStats():viewAccount()):S.tab==="home"?viewHome():S.tab==="decide"?viewDecide():S.tab==="hotspots"?viewHot():S.tab==="groups"?viewGroups():viewEvents();
   const h=document.querySelector("#view [data-hero]"), ht=document.getElementById("heroText");
   ht.innerHTML=h?h.innerHTML:""; h?.remove();
   if(S.practice) decoratePractice();
@@ -1708,6 +1714,7 @@ function render(){
   document.querySelectorAll("details").forEach(d=>{ if(open.includes(d.querySelector("b").textContent)) d.open=true; });
   if(authed&&S.tab==="hotspots"&&S.hotView==="map"&&!S.mapFail) mountMap();
   setupDeck();
+  paintBoardSheet(); mountBoardMap();
   if(authed&&S.pickOpen&&!S.acct&&(S.pickOpen==="hot"?S.tab==="hotspots"&&S.fltOpen:S.tab==="decide")) mountPick();
   document.body.classList.toggle("inchat",!!(authed&&S.chatOpen&&S.tab==="groups"&&!S.acct));
   if(authed&&S.chatOpen&&S.tab==="groups"){ paintReply(); sizeChat(); watchChatLayout(); requestAnimationFrame(()=>sizeChat()); } else CHAT_RO?.disconnect();
@@ -1898,7 +1905,7 @@ function placeCoach(){
 }
 /* Tapping a tab always opens that tab's main page, closing whatever was open inside it. */
 function resetTab(t){
-  S.pickOpen=false; S.calOpen=false; S.sights=false;
+  S.pickOpen=false; S.calOpen=false; S.sights=false; S.board=null; S.boardShared=null; S.boardPick=null;
   if(t==="decide"){ if(S.plan||S.code){ S.plan=null; S.code=null; setUrl(null); } S.dfltOpen=false; }
   else if(t==="hotspots"){ S.hot="all"; S.hotView="list"; S.sel=null; S.zone=null; S.fltOpen=false; S.hotCuisine=""; S.open=new Set(); }
   else if(t==="events"){ S.ev=null; S.evCalOpen=false; S.evDate=null; S.evType=""; }
@@ -2031,6 +2038,157 @@ const H={
   save(el){ const id=el.dataset.id; S.saved.has(id)?S.saved.delete(id):S.saved.add(id); persist(); render();
   }
 };
+/* ---------- Boards ----------
+   A board is a named collection of places, events and sights, kept on the account so it follows you between devices.
+   The heart on any card saves to a board; a board has a link anyone can open to look (not edit); "Vote on these"
+   turns a board into a plan. If the database functions are missing the boards still work, on this device only. */
+Object.assign(S,{boards:[],board:null,boardView:"grid",boardPick:null,boardShared:null,boardLink:null,boardLast:null});
+const HEART='<svg class="hi" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.4-7.5-10A4.4 4.4 0 0 1 12 7.6a4.4 4.4 0 0 1 7.5 2.9c0 5.6-7.5 10-7.5 10z"/></svg>';
+const bkey=()=>"concit.boards."+(uid()||"");
+const boardsKeep=()=>{ try{ localStorage.setItem(bkey(),JSON.stringify({boards:S.boards,last:S.boardLast})); }catch{} };
+const newBoardId=()=>[...crypto.getRandomValues(new Uint8Array(8))].map(b=>b.toString(16).padStart(2,"0")).join("");
+const boardOf=id=>S.boards.find(b=>b.id===id)||null;
+const boardsWith=id=>S.boards.filter(b=>b.items.some(x=>x.id===id));
+const isSaved=id=>S.boards.some(b=>b.items.some(x=>x.id===id));
+const BOARD_MAX=200, BOARDS_MAX=30;
+const PUSHING={};
+function pushBoard(b){ boardsKeep(); clearTimeout(PUSHING[b.id]);
+  PUSHING[b.id]=setTimeout(()=>{ delete PUSHING[b.id]; if(S.session&&!isGuest()&&boardOf(b.id)) rpc("save_board",{p_id:b.id,p_name:b.name,p_items:b.items}).catch(()=>{}); },500); }
+const flushBoard=b=>{ if(!PUSHING[b.id]) return Promise.resolve(); clearTimeout(PUSHING[b.id]); delete PUSHING[b.id]; return rpc("save_board",{p_id:b.id,p_name:b.name,p_items:b.items}).catch(()=>{}); };
+function defaultBoard(){ let b=boardOf(S.boardLast)||S.boards[0]; if(!b){ b={id:newBoardId(),name:"Saved",items:[]}; S.boards.push(b); } return b; }
+async function loadBoards(){
+  if(!S.session||isGuest()){ S.boards=[]; return; }
+  try{ const l=JSON.parse(localStorage.getItem(bkey())||"null"); if(l&&Array.isArray(l.boards)){ S.boards=l.boards; S.boardLast=l.last||null; } }catch{}
+  let server=false;
+  try{ const r=await rpc("my_boards"); if(Array.isArray(r)){ server=true; S.boards=r.map(b=>({id:b.id,name:b.name,items:Array.isArray(b.items)?b.items:[]})); } }catch{}
+  /* Events saved on this phone before boards existed move into the first board. */
+  if(S.saved.size){ const ids=[...S.saved].filter(id=>!isSaved(id)); if(ids.length){ const b=defaultBoard(); b.items.push(...ids.map(id=>({id}))); pushBoard(b); } S.saved.clear(); persist(); }
+  boardsKeep(); if(server||S.boards.length) render();
+}
+/* Anything a board can hold, described the same way: a place, an event or a sight from any city. */
+const KIND_LABEL={cafe:"Café",eat:"Restaurant",cheap:"Cheap eats",drink:"Bar",wine:"Wine bar",beer:"Pub",club:"Club",culture:"Culture"};
+const KIND_COL={cafe:"#b7791f",eat:"#d9482b",cheap:"#e07a1f",drink:"#7c3aed",wine:"#9d174d",beer:"#b45309",club:"#4338ca",culture:"#0f766e"};
+function boardThing(id){
+  const x=byId(id);
+  if(x&&x.kind) return {id,type:"place",x,name:x.name,tag:KIND_LABEL[x.kind]||"Place",col:KIND_COL[x.kind]||"#145fae",sub:`${zname(x.zone)} · ${costText(x)}`,text:[x.why,x.detail].map(dot).filter(Boolean).join(" "),
+    ll:x.lat!=null&&x.lng!=null?[x.lat,x.lng]:null,img:"",links:[["Directions",mapsUrl(x.name+" "+x.addr,x)],.../^https?:\/\//.test(x.web||"")?[[/instagram\.com/.test(x.web)?"Instagram":/facebook\.com/.test(x.web)?"Facebook":"Website",x.web]]:[]]};
+  if(x) { const im=x.wiki&&EV_IMG[x.wiki]; if(x.wiki&&!im) loadEvImg(x.wiki).then(()=>{ if(S.board||S.boardShared) render(); });
+    const z=x.zone&&ZONES[x.zone];
+    return {id,type:"event",x,name:x.name,tag:(EV_TYPES[evType(x)]||["Event"])[0],col:EV_COL[x.cat]||"#145fae",sub:[eventWhen(x),x.venue].filter(Boolean).join(" · "),text:dot(x.desc||""),
+      ll:z?[z[1],z[2]]:null,img:(im&&im.src)||"",past:x.end<today,links:[["Directions",mapsUrl(x.venue,x)],["Tickets & info",srcUrl(x.src)]]}; }
+  for(const [ck,c] of Object.entries(CITIES)){ const s=c.sights.find(v=>v.id===id);
+    if(s) return {id,type:"sight",x:s,name:s.name,tag:"Sight",col:SIGHT_KINDS[s.kind][1],sub:`${s.zone} · ${c.name}`,text:s.blurb,ll:null,img:sightImg(s),
+      links:[["Directions",`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.name+", "+c.q)}`],["Read more","https://en.wikipedia.org/wiki/"+encodeURIComponent(s.wiki)]]}; }
+  return null;
+}
+/* The Save control: a heart with a word, for the action rows on cards. */
+const saveBtn=(id,cls="")=>S.session&&!isGuest()?`<button class="savebtn ${cls}${isSaved(id)?" on":""}" data-act="heart" data-id="${esc(id)}" aria-pressed="${isSaved(id)}">${HEART}${isSaved(id)?"Saved":"Save"}</button>`:"";
+function homeBoards(){
+  if(!S.boards.length) return "";
+  return `<section aria-labelledby="hbH"><div class="hsec"><h2 id="hbH">Your boards</h2><button class="link" data-act="boardCreate">New board</button></div>
+  <div class="hplaces hboards">${S.boards.map(b=>{ const t=b.items.map(i=>boardThing(i.id)).filter(Boolean), cover=t.find(x=>x.img), n=b.items.length;
+    return `<button class="hsight hboard" data-act="boardOpen" data-b="${b.id}" style="--c:${(t[0]&&t[0].col)||"#145fae"}${cover?`;background-image:url('${cover.img.replace(/'/g,"%27")}')`:""}"><i>${n} saved</i><span><b>${esc(b.name)}</b><small>${esc(t.slice(0,2).map(x=>x.name).join(", ")||"Nothing yet")}</small></span></button>`; }).join("")}</div></section>`;
+}
+function boardTile(i,ro){
+  const t=boardThing(i.id);
+  if(!t) return ro?"":`<details class="btile gone"><summary><div class="bimg" style="--c:#64748b"><i>Gone</i></div><b>No longer listed</b><small>This place or event was removed</small></summary><div class="more"><div class="actions"><button data-act="boardRemove" data-id="${esc(i.id)}">Remove</button></div></div></details>`;
+  return `<details class="btile${t.past?" past":""}"><summary><div class="bimg" style="--c:${t.col}${t.img?`;background-image:url('${t.img.replace(/'/g,"%27")}')`:""}"><i>${esc(t.tag)}</i>${t.img?"":`<span aria-hidden="true">${esc(t.name.trim().charAt(0).toUpperCase())}</span>`}</div><b>${esc(t.name)}</b><small>${esc(t.past?"Already happened":t.sub)}</small>${i.note?`<em>${esc(i.note)}</em>`:""}</summary>
+  <div class="more">${t.text?`<p>${esc(t.text)}</p>`:""}${t.type==="place"?`<p class="dim">${esc(t.x.addr)}${t.x.metro&&t.x.metro[0]?" · "+esc(metroText(t.x.metro)):""}</p>`:""}
+  ${ro?"":`<input class="bnote" type="text" data-bnote="${esc(i.id)}" maxlength="140" placeholder="Add a note, like when to go" value="${esc(i.note||"")}" aria-label="Note for ${esc(t.name)}" enterkeyhint="done">`}
+  <div class="actions">${t.links.map(([l,u])=>`<a href="${esc(u)}" target="_blank" rel="noopener">${l}</a>`).join("")}${ro?saveBtn(i.id):`<button data-act="boardRemove" data-id="${esc(i.id)}">Remove</button>`}</div></div></details>`;
+}
+function viewBoard(b,ro){
+  const items=b.items||[], things=items.map(i=>boardThing(i.id)).filter(Boolean), vote=things.filter(t=>t.type!=="sight"&&!t.past).length, onMap=things.filter(t=>t.ll).length;
+  const logged=!!S.session&&S.authView!=="newpass";
+  return `<div data-hero><button class="back" data-act="boardBack">${logged?"‹ Home":"‹ Concit"}</button><span>${items.length} saved${ro&&b.owner?` · ${esc(b.owner)}'s board`:""}</span><h1>${esc(b.name)}</h1></div>
+  ${ro?"":`<div class="bbar"><button class="btn small" data-act="boardShare" data-track="board_share">Share</button><button class="btn small plain" data-act="boardVote" ${vote?"":"disabled"}>Vote on these</button></div>`}
+  ${things.length?`<div class="seg bseg" role="group" aria-label="View"><button data-act="boardView" data-v="grid" aria-pressed="${S.boardView!=="map"}">Board</button><button data-act="boardView" data-v="map" aria-pressed="${S.boardView==="map"}" ${onMap?"":"disabled"}>Map</button></div>`:""}
+  ${!items.length?`<p class="empty">Nothing here yet. Tap Save on any place, event or sight and it lands on this board.</p>${ro?"":`<div class="stack"><button class="btn plain" data-act="tab" data-tab="hotspots">Browse hotspots</button><button class="btn plain" data-act="tab" data-tab="events">Browse events</button></div>`}`
+    :S.boardView==="map"&&onMap?`<div id="bmap" class="bmap"></div>${onMap<things.length?`<p class="hint">${things.length-onMap} saved ${things.length-onMap===1?"item has":"items have"} no map position (sights, and events without a venue area).</p>`:""}`
+    :`<div class="bgrid">${items.map(i=>boardTile(i,ro)).join("")}</div>`}
+  ${ro?`<div class="stack bcta">${logged?`<button class="btn" data-act="boardCopy">Save a copy to my boards</button>`:`<p class="note">Concit helps you and your friends pick where to go out. Make an account to keep boards of your own.</p><button class="btn" data-act="boardJoin">Create a free account</button>`}</div>`
+    :`<details class="bset"><summary><b>Board settings</b></summary><div class="more"><label class="field"><span>Name</span><input id="bname" type="text" maxlength="40" value="${esc(b.name)}" enterkeyhint="done"></label><div class="stack"><button class="btn small" data-act="boardRename">Save name</button><button class="btn small plain danger" data-act="boardDelete">${S.boardDel?"Tap again to delete this board":"Delete this board"}</button></div></div></details>`}
+  <p class="foot">${ro?"Shared from Concit.":"Anyone with this board's link can see it, but only you can change it."}</p>`;
+}
+/* The "which board" sheet, shown after tapping a heart on something already saved, or from "Choose board". */
+function paintBoardSheet(){
+  let host=document.getElementById("bsheet"); const id=S.boardPick;
+  if(!id||!S.session){ host?.remove(); document.body.classList.remove("sheetopen"); return; }
+  if(!host){ host=document.createElement("div"); host.id="bsheet"; host.className="bsheet"; document.body.appendChild(host); }
+  const t=boardThing(id), keep=host.querySelector("#bnewName")?.value||"";
+  host.innerHTML=`<button class="bback" data-act="boardPickDone" aria-label="Close"></button><div class="bsheet-in" role="dialog" aria-modal="true" aria-labelledby="bsH">
+    <h2 id="bsH">Save to a board</h2><p class="dim">${esc(t?t.name:"")}</p>
+    <div class="blist">${S.boards.map(b=>{ const on=b.items.some(x=>x.id===id); return `<button class="bopt" data-act="boardToggle" data-b="${b.id}" aria-pressed="${on}"><span><b>${esc(b.name)}</b><small>${b.items.length} saved</small></span><i aria-hidden="true">${on?"✓":"+"}</i></button>`; }).join("")}</div>
+    <div class="bnew"><input id="bnewName" type="text" maxlength="40" placeholder="New board, like Madrid weekend" aria-label="New board name" enterkeyhint="done" value="${esc(keep)}"><button class="btn small" data-act="boardNew">Create</button></div>
+    <button class="btn" data-act="boardPickDone">Done</button></div>`;
+  document.body.classList.add("sheetopen");
+}
+let BMAP=null;
+async function mountBoardMap(){
+  const el=document.getElementById("bmap"); if(!el){ try{ BMAP?.remove(); }catch{} BMAP=null; return; }
+  const b=S.boardShared||boardOf(S.board); if(!b) return;
+  const pts=b.items.map(i=>boardThing(i.id)).filter(t=>t&&t.ll);
+  try{ await loadMapLib(); if(!el.isConnected) return;
+    try{ BMAP?.remove(); }catch{}
+    BMAP=new maplibregl.Map({container:el,style:MAP_STYLE,center:[pts[0].ll[1],pts[0].ll[0]],zoom:13,dragRotate:false,touchPitch:false,attributionControl:{compact:true}});
+    BMAP.addControl(new maplibregl.NavigationControl({showCompass:false}),"top-right"); BMAP.touchZoomRotate.disableRotation();
+    const bounds=new maplibregl.LngLatBounds();
+    pts.forEach(t=>{ bounds.extend([t.ll[1],t.ll[0]]);
+      new maplibregl.Marker({color:t.col}).setLngLat([t.ll[1],t.ll[0]]).setPopup(new maplibregl.Popup({offset:26,closeButton:false}).setHTML(`<b>${esc(t.name)}</b><br>${esc(t.tag)}`)).addTo(BMAP); });
+    if(pts.length>1) BMAP.fitBounds(bounds,{padding:48,maxZoom:15,duration:0});
+  }catch{ el.outerHTML='<p class="empty">The map couldn\'t load. Check your connection and try again.</p>'; }
+}
+async function openBoardLink(id){
+  if(!/^[a-f0-9]{16}$/.test(id||"")) return;
+  if(boardOf(id)){ S.board=id; S.boardShared=null; S.tab="home"; S.acct=false; S.sights=false; render(); pageTop(); return; }
+  try{ const b=await rpc("get_board",{p_id:id}); if(!b) throw 0;
+    if(b.mine&&S.session){ await loadBoards(); if(boardOf(id)){ S.board=id; S.tab="home"; render(); pageTop(); return; } }
+    S.boardShared={id:b.id,name:b.name,items:Array.isArray(b.items)?b.items:[],owner:b.owner||""}; S.board=null; S.tab="home"; S.acct=false; S.sights=false; track("board_open",id);
+  }catch{ toast("That board isn't available. The link may be wrong, or it was deleted."); history.replaceState(null,"",location.pathname); }
+  render(); pageTop();
+}
+function boardAdd(b,id){ if(b.items.some(x=>x.id===id)) return true; if(b.items.length>=BOARD_MAX){ toast(`A board holds up to ${BOARD_MAX} things.`); return false; } b.items.unshift({id}); S.boardLast=b.id; pushBoard(b); return true; }
+Object.assign(H,{
+  heart(el){ const id=el.dataset.id; if(!S.session||isGuest()) return;
+    if(isSaved(id)){ S.boardPick=id; paintBoardSheet(); return; }
+    const b=defaultBoard(); if(!boardAdd(b,id)) return; track("board_save",id,{board:b.id});
+    render(); toast(S.boards.length>1?`Saved to ${b.name}. Tap Saved to choose another board.`:`Saved to your board. Find it on Home.`); },
+  boardToggle(el){ const b=boardOf(el.dataset.b), id=S.boardPick; if(!b||!id) return;
+    if(b.items.some(x=>x.id===id)){ b.items=b.items.filter(x=>x.id!==id); pushBoard(b); } else if(boardAdd(b,id)) track("board_save",id,{board:b.id});
+    paintBoardSheet(); },
+  boardNew(){ const inp=document.getElementById("bnewName"), name=(inp?.value||"").trim().slice(0,40); if(!name){ inp?.focus(); return; }
+    if(S.boards.length>=BOARDS_MAX){ toast(`You can keep up to ${BOARDS_MAX} boards.`); return; }
+    const b={id:newBoardId(),name,items:[]}; S.boards.unshift(b); if(S.boardPick) boardAdd(b,S.boardPick); else pushBoard(b); if(inp) inp.value=""; paintBoardSheet(); },
+  boardPickDone(){ S.boardPick=null; paintBoardSheet(); render(); },
+  boardCreate(){ if(S.boards.length>=BOARDS_MAX){ toast(`You can keep up to ${BOARDS_MAX} boards.`); return; }
+    const b={id:newBoardId(),name:"New board",items:[]}; S.boards.unshift(b); pushBoard(b); S.board=b.id; S.boardView="grid"; render(); pageTop();
+    const d=document.querySelector(".bset"); if(d){ d.open=true; const i=document.getElementById("bname"); i?.focus(); i?.select(); } },
+  boardOpen(el){ S.board=el.dataset.b; S.boardShared=null; S.boardView="grid"; S.boardDel=false; render(); pageTop(); },
+  boardBack(){ S.board=null; S.boardShared=null; S.boardDel=false; if(location.search.includes("board=")) history.replaceState(null,"",location.pathname); render(); if(S.session) homeTop(); else scrollTo(0,0); },
+  boardView(el){ S.boardView=el.dataset.v; render(); },
+  boardRemove(el){ const b=boardOf(S.board); if(!b) return; b.items=b.items.filter(x=>x.id!==el.dataset.id); pushBoard(b); render(); },
+  boardRename(){ const b=boardOf(S.board), v=(document.getElementById("bname")?.value||"").trim().slice(0,40); if(!b||!v) return; b.name=v; pushBoard(b); document.activeElement?.blur(); render(); toast("Name saved"); },
+  boardDelete(){ const b=boardOf(S.board); if(!b) return; if(!S.boardDel){ S.boardDel=true; render(); const d=document.querySelector(".bset"); if(d) d.open=true; return; }
+    clearTimeout(PUSHING[b.id]); delete PUSHING[b.id]; S.boards=S.boards.filter(x=>x.id!==b.id); if(S.boardLast===b.id) S.boardLast=null; boardsKeep(); rpc("delete_board",{p_id:b.id}).catch(()=>{});
+    S.board=null; S.boardDel=false; render(); homeTop(); toast("Board deleted"); },
+  async boardShare(){ const b=boardOf(S.board); if(!b) return; await flushBoard(b);
+    shareOut(`${b.name} on Concit: ${location.origin}${location.pathname}?board=${b.id}`,"Board link copied. Anyone with it can see this board."); },
+  boardVote(){ const b=boardOf(S.board); if(!b) return;
+    const ids=b.items.map(i=>boardThing(i.id)).filter(t=>t&&t.type!=="sight"&&!t.past).map(t=>t.id); if(!ids.length) return;
+    const ev=ids.every(id=>byId(id)&&!byId(id).kind);
+    resetTab("decide"); S.plan=null; S.code=null; setUrl(null); S.form.mode="pick"; if(ev) S.form.what="event"; else if(S.form.what==="event") S.form.what="eat";
+    S.form.picks=ids.slice(0,PICK_MAX); S.pickSearched=true; S.board=null; S.tab="decide"; try{location.hash="decide"}catch{} render(); pageTop();
+    toast(ids.length>PICK_MAX?`Added the first ${PICK_MAX}. A vote takes up to ${PICK_MAX} options.`:"Check the list, then start the vote."); },
+  boardCopy(){ const s=S.boardShared; if(!s||!S.session||isGuest()) return; if(S.boards.length>=BOARDS_MAX){ toast(`You can keep up to ${BOARDS_MAX} boards.`); return; }
+    const b={id:newBoardId(),name:s.name,items:s.items.slice(0,BOARD_MAX).map(i=>({id:i.id,...(i.note?{note:i.note}:{})}))}; S.boards.unshift(b); pushBoard(b);
+    S.boardShared=null; S.board=b.id; history.replaceState(null,"",location.pathname); render(); pageTop(); toast("Copied to your boards"); },
+  boardJoin(){ S.boardShared=null; S.authView="signup"; history.replaceState(null,"",location.pathname); render(); scrollTo(0,0); }
+});
+document.addEventListener("change",e=>{ const el=e.target; if(!el.dataset||el.dataset.bnote===undefined) return;
+  const b=boardOf(S.board), it=b&&b.items.find(x=>x.id===el.dataset.bnote); if(!it) return;
+  const v=el.value.trim().slice(0,140); if(v) it.note=v; else delete it.note; pushBoard(b); });
+document.addEventListener("keydown",e=>{ if(e.key!=="Enter") return; const id=e.target.id;
+  if(id==="bnewName"){ e.preventDefault(); H.boardNew(); } else if(id==="bname"){ e.preventDefault(); H.boardRename(); } else if(e.target.dataset&&e.target.dataset.bnote!==undefined) e.target.blur(); });
 document.addEventListener("click",e=>{const el=e.target.closest("[data-act]");if(el){ if(el.dataset.act==="msgTap"&&e.target.closest("a")) return; hideToast(); H[el.dataset.act]?.(el); }});
 document.addEventListener("submit",hideToast,true);
 /* Update what's picked without rebuilding the list, so the page stays where it is. */
@@ -2140,12 +2298,13 @@ function linkFromUrl(){
   const q=new URLSearchParams(location.search), plan=q.get("plan"), join=q.get("join"), chat=q.get("chat");
   if(plan||join){ S.pending={plan,join}; persist(); }
   if(chat){ S.pendingChat=chat; history.replaceState(null,"",location.pathname); }
+  if(q.get("board")) S.boardLink=q.get("board");
 }
 async function afterLogin(){
   render();
   pushSync(); trackOpen();
   rpc("is_admin").then(v=>{ S.admin=!!v; if(S.acct) render(); }).catch(()=>{});
-  await Promise.all([loadPlaces(),loadEvents(),loadGroups(),loadMyAvatar()]);
+  await Promise.all([loadPlaces(),loadEvents(),loadGroups(),loadMyAvatar(),loadBoards()]);
   const p=S.pending; S.pending=null; persist();
   if(p?.join&&isGuest()){ setUrl(null); S.pendingJoin=p.join; S.guestNote="Create an account to join that group."; }
   else if(p?.join){ setUrl(null); await joinByCode(p.join); }
@@ -2154,6 +2313,8 @@ async function afterLogin(){
   render();
   const pc=S.pendingChat; S.pendingChat=null;
   if(pc&&!p?.plan&&!p?.join&&openChatLink(pc)) return;
+  const bl=S.boardLink; S.boardLink=null;
+  if(bl&&!p?.plan&&!isGuest()){ await openBoardLink(bl); return; }
   if(!p?.plan&&tourDue()) startTour(); else homeTop();
 }
 /* Links from confirmation and password-reset emails arrive in the address hash. */
@@ -2171,7 +2332,8 @@ function sessionFromHash(){
     try{ S.session.user=await authCall("user",null,"GET",S.session.access_token); saveSession(); }catch{ S.session=null; saveSession(); }
   }
   if(S.fromEmail==="recovery"&&S.session){ S.authView="newpass"; render(); return; }
-  if(S.session){ try{ await afterLogin(); }catch{ render(); } } else render();
+  if(S.session){ try{ await afterLogin(); }catch{ render(); } }
+  else{ render(); if(S.boardLink){ const bl=S.boardLink; S.boardLink=null; loadPlaces(); loadEvents(); openBoardLink(bl); } }
 })();
 setInterval(refresh,2500);
 setInterval(loadGroups,8000);

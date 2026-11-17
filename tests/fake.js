@@ -14,6 +14,11 @@ module.exports=function makeFake(opts={}){
   const planOut=(c)=>{ const p=st.plans[c]; if(!p) return null; const g=st.groups.find(x=>x.id===p.group); return {...p.data,people:p.people,out:p.out,left:p.left,v:2,votes:p.votes,names:Object.fromEntries(p.people.concat(p.left).map(x=>[x,x===me?name:P[x]||"Someone"])),group_id:p.group||null,group_name:g?g.name:null,mine:p.by===me}; };
   const doneCount=p=>p.people.filter(x=>!p.out.includes(x)&&Object.keys(p.votes[x]||{}).length>=p.data.options.length).length;
   const rpc={
+    my_boards:()=>{ if(opts.noBoards) throw 404; return (st.boards=st.boards||[]).filter(b=>b.owner===me).map(({owner,...b})=>b); },
+    save_board:a=>{ if(opts.noBoards) throw 404; st.boards=st.boards||[]; const b=st.boards.find(x=>x.id===a.p_id); if(b&&b.owner!==me) throw 400;
+      if(b){ b.name=a.p_name; b.items=a.p_items; } else st.boards.unshift({id:a.p_id,owner:me,name:a.p_name,items:a.p_items}); return null; },
+    delete_board:a=>{ st.boards=(st.boards||[]).filter(b=>!(b.id===a.p_id&&b.owner===me)); return null; },
+    get_board:a=>{ const b=(st.boards||[]).find(x=>x.id===a.p_id); return b?{id:b.id,name:b.name,items:b.items,owner:b.owner===me?"Tester":"Giulia",mine:b.owner===me}:null; },
     my_groups:()=>st.groups.filter(g=>g.members.includes(me)).map(g=>{ const ms=st.msgs.filter(m=>m.group===g.id), last=ms[ms.length-1];
       return {id:g.id,name:g.name,invite_code:g.code,muted:g.muted,av:null,members:g.members.map(x=>({id:x,name:x===me?name:P[x],online:x!==me&&x==="u2",av:null})),unread:ms.filter(m=>m.id>g.last_read&&m.by!==me).length,
         last:last?{name:last.by===me?name:P[last.by],body:last.body.slice(0,80),mine:last.by===me,at:last.at,kind:last.kind||null}:null,

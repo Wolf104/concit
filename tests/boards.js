@@ -1,0 +1,65 @@
+/* Boards: saving places, events and sights, the board page, sharing by link, and turning a board into a vote. */
+const {chromium}=require("playwright-core"); const makeFake=require("./fake.js"); const M=require("./places.js");
+const out=[]; let pg, errs=[];
+const expect=(c,m)=>{ if(!c) throw new Error("EXPECTED: "+m); };
+const text=()=>pg.evaluate(()=>document.getElementById("heroText").innerText+"\n"+document.getElementById("view").innerText);
+async function open(opts,{url="",session=true,keep}={}){
+  const b=keep?keep.b:await chromium.launch({executablePath:process.env.CHROME||"/usr/bin/google-chrome",args:["--no-sandbox"]});
+  const ctx=await b.newContext({viewport:{width:390,height:844}}); await ctx.grantPermissions(["clipboard-read","clipboard-write"]).catch(()=>{});
+  pg=await ctx.newPage(); const fake=keep?keep.fake:makeFake(opts);
+  pg.on("pageerror",e=>errs.push(e.message)); pg.on("console",m=>{ if(m.type()==="error"&&!/net::|Failed to load resource|maplibre|tiles\./i.test(m.text())) errs.push("console: "+m.text().slice(0,200)); });
+  if(session) await ctx.addInitScript(s=>{ if(!localStorage.getItem("concit.session")) localStorage.setItem("concit.session",s); localStorage.setItem("concit.pushlater","1"); },JSON.stringify(fake.sess()));
+  await pg.route("**/*",fake.handle); await pg.goto("http://localhost:8765/"+url); await pg.waitForTimeout(2600); return {b,fake};
+}
+async function flow(name,fn){ const n=errs.length; try{ await fn(); const e=errs.slice(n); out.push([name,e.length?"JS ERRORS: "+e.join(" ; "):"ok"]); }catch(e){ out.push([name,"FAILED: "+e.message.split("\n")[0].slice(0,400)+(errs.slice(n).length?" | js: "+errs.slice(n).join(" ; "):"")]); try{ await pg.screenshot({path:"fail-"+name.replace(/\W+/g,"-")+".png"}); }catch{} } }
+const tab=async t=>{ await pg.locator(`nav [data-tab=${t}]`).click(); await pg.waitForTimeout(700); };
+const wide=()=>pg.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1);
+const boards=f=>f.st.boards||[];
+(async()=>{
+  const data={places:[...M(),...M.madrid()],events:M.madridEvents()};
+  let {b,fake}=await open(data);
+  await flow("no boards row before anything is saved",async()=>{ expect(!/Your boards/.test(await text()),"row hidden"); });
+  await flow("save a place from Hotspots",async()=>{ await tab("hotspots"); const d=pg.locator("#view details").first(); await d.locator("summary").click(); await pg.waitForTimeout(200);
+    const s=d.locator("[data-act=heart]"); expect(await s.count()===1,"Save button on the place"); expect(/Save/.test(await s.innerText()),"says Save"); await s.click(); await pg.waitForTimeout(900);
+    expect(/Saved/.test(await pg.locator("#view details[open] [data-act=heart]").first().innerText()),"now says Saved"); expect(boards(fake).length===1&&boards(fake)[0].items.length===1,"board saved on the server: "+JSON.stringify(boards(fake))); });
+  await flow("tap Saved again: choose or create a board",async()=>{ await pg.locator("#view details[open] [data-act=heart]").first().click(); await pg.waitForTimeout(300);
+    expect(await pg.locator("#bsheet .bopt").count()===1,"sheet lists one board"); await pg.fill("#bnewName","Madrid weekend"); await pg.keyboard.press("Enter"); await pg.waitForTimeout(700);
+    expect(await pg.locator("#bsheet .bopt").count()===2,"two boards listed"); expect(await pg.locator("#bsheet .bopt[aria-pressed=true]").count()===2,"saved to both");
+    await pg.locator("#bsheet .btn[data-act=boardPickDone]").click(); await pg.waitForTimeout(300); expect(await pg.locator("#bsheet").count()===0,"sheet closed"); expect(boards(fake).length===2,"two boards on the server"); });
+  await flow("save a sight and see boards on Home",async()=>{ await tab("home"); let t=await text(); expect(/Your boards/.test(t)&&/Madrid weekend/.test(t),"boards row on Home");
+    await pg.locator("[data-act=sights]").first().click(); await pg.waitForTimeout(600); await pg.locator(".scard [data-act=heart]").first().click(); await pg.waitForTimeout(700);
+    expect(boards(fake).find(x=>x.name==="Madrid weekend").items.length===2,"sight went to the last-used board"); });
+  await flow("save an event",async()=>{ await pg.selectOption(".citypick select","madrid").catch(()=>{}); await tab("home"); await pg.selectOption(".citypick select","madrid"); await pg.waitForTimeout(800);
+    await tab("events"); await pg.locator("[data-act=ev][data-v=all]").first().click(); await pg.waitForTimeout(500); const d=pg.locator("#view details.ev").first(); await d.locator("summary").click(); await pg.waitForTimeout(200);
+    await d.locator("[data-act=heart]").click(); await pg.waitForTimeout(700); expect(boards(fake).find(x=>x.name==="Madrid weekend").items.length===3,"event saved"); });
+  await flow("open the board, add a note",async()=>{ await tab("home"); await pg.locator("[data-act=boardOpen]").first().click(); await pg.waitForTimeout(600);
+    const t=await text(); expect(/Madrid weekend/.test(t)&&/3 saved/.test(t),"board page: "+t.slice(0,80)); expect(await pg.locator(".btile").count()===3,"three tiles"); expect(!(await wide()),"no sideways scroll");
+    await pg.locator(".btile summary").first().click(); await pg.waitForTimeout(200); await pg.fill(".btile[open] .bnote","go for sunset"); await pg.keyboard.press("Enter"); await pg.waitForTimeout(900);
+    expect(boards(fake).find(x=>x.name==="Madrid weekend").items.some(i=>i.note==="go for sunset"),"note saved on the server"); });
+  await flow("map view opens without breaking",async()=>{ await pg.locator("[data-act=boardView][data-v=map]").click(); await pg.waitForTimeout(1500); expect(await pg.locator("#bmap, .empty").count()>=1,"map or message shown"); await pg.locator("[data-act=boardView][data-v=grid]").click(); await pg.waitForTimeout(300); expect(await pg.locator(".btile").count()===3,"back to tiles"); });
+  await flow("share gives a link",async()=>{ await pg.locator("[data-act=boardShare]").click(); await pg.waitForTimeout(700); const t=await pg.locator("#toast").innerText(); expect(/link copied|board=/.test(t),"toast: "+t); });
+  await flow("rename the board",async()=>{ await pg.locator(".bset summary").click(); await pg.fill("#bname","Trip to Madrid"); await pg.locator("[data-act=boardRename]").click(); await pg.waitForTimeout(900);
+    expect(/Trip to Madrid/.test(await text()),"new name shown"); expect(boards(fake).some(x=>x.name==="Trip to Madrid"),"renamed on the server"); });
+  await flow("vote on these starts a plan",async()=>{ await pg.locator("[data-act=boardVote]").click(); await pg.waitForTimeout(800); expect(await pg.locator(".picked .chip").count()===2,"two options carried over (the sight is left out): "+await pg.locator(".picked .chip").count());
+    await pg.locator("#startBtn").click(); await pg.waitForTimeout(1200); expect(fake.st.calls.includes("create_plan"),"plan created"); });
+  await flow("boards survive a reload",async()=>{ await pg.goto("http://localhost:8765/"); await pg.waitForTimeout(2600); const t=await text(); expect(/Your boards/.test(t)&&/Trip to Madrid/.test(t),"still there"); });
+  await flow("delete a board takes two taps",async()=>{ await pg.locator("[data-act=boardOpen]").first().click(); await pg.waitForTimeout(500); await pg.locator(".bset summary").click(); await pg.locator("[data-act=boardDelete]").click(); await pg.waitForTimeout(300);
+    expect(boards(fake).length===2,"not deleted on the first tap"); await pg.locator("[data-act=boardDelete]").click(); await pg.waitForTimeout(800); expect(boards(fake).length===1,"deleted on the second"); });
+  await flow("someone else's board by link: look, then copy",async()=>{ fake.st.boards.push({id:"aaaaaaaaaaaaaaaa",owner:"u9",name:"Giulia's picks",items:[{id:"p:mad-t1",note:"best tortilla"},{id:"e:mad-t2"}]});
+    await pg.goto("http://localhost:8765/?board=aaaaaaaaaaaaaaaa"); await pg.waitForTimeout(3000); const t=await text(); expect(/Giulia's picks/.test(t)&&/best tortilla/.test(t),"shared board shown: "+t.slice(0,100));
+    expect(await pg.locator("[data-act=boardRemove],[data-act=boardShare],.bnote").count()===0,"read only"); await pg.locator("[data-act=boardCopy]").click(); await pg.waitForTimeout(900);
+    expect(boards(fake).filter(x=>x.name==="Giulia's picks").length===2,"copied to my boards"); });
+  await b.close();
+  ({b,fake}=await open(data,{session:false})); fake.st.boards=[{id:"bbbbbbbbbbbbbbbb",owner:"u9",name:"Night out ideas",items:[{id:"p:mad-t3"},{id:"p:t0"}]}];
+  await flow("logged out: a board link opens without an account",async()=>{ await pg.goto("http://localhost:8765/?board=bbbbbbbbbbbbbbbb"); await pg.waitForTimeout(3200); const t=await text();
+    expect(/Night out ideas/.test(t),"board shown: "+t.slice(0,100)); expect(await pg.locator(".btile").count()>=1,"tiles shown"); expect(await pg.locator("nav").isHidden(),"no tab bar"); expect(await pg.locator("[data-act=heart]").count()===0,"no save buttons");
+    await pg.locator("[data-act=boardJoin]").click(); await pg.waitForTimeout(600); expect(await pg.locator("input[type=password]").count()>=1,"sign-up form shown"); });
+  await flow("logged out: a wrong link says so",async()=>{ await pg.goto("http://localhost:8765/?board=cccccccccccccccc"); await pg.waitForTimeout(3000); expect(/isn't available/.test(await pg.locator("#toast").innerText()),"message shown"); expect(await pg.locator("input[type=password]").count()>=1,"login shown"); });
+  await b.close();
+  ({b,fake}=await open({...data,noBoards:true}));
+  await flow("before the database change: boards still work on this phone",async()=>{ await tab("hotspots"); const d=pg.locator("#view details").first(); await d.locator("summary").click(); await d.locator("[data-act=heart]").click(); await pg.waitForTimeout(900);
+    await pg.goto("http://localhost:8765/"); await pg.waitForTimeout(2600); expect(/Your boards/.test(await text()),"kept after reload"); });
+  await b.close();
+  for(const [n,r] of out) console.log((r==="ok"?"  ok   ":"  FAIL ")+n+(r==="ok"?"":"  -> "+r));
+  console.log(out.filter(x=>x[1]==="ok").length+" of "+out.length+" board checks passed");
+})();
