@@ -968,6 +968,10 @@ body.overscroll nav::before{display:none}
 .vlinks .savebtn{padding:8px 14px;border-radius:99px;border:1px solid var(--line);font:inherit;font-size:14px;font-weight:700;color:var(--link);background:var(--card);cursor:pointer}
 .vlinks .savebtn.on{color:#e0408a}
 .hboards .hboard{height:132px}
+.hboard0{display:flex;align-items:center;gap:14px;width:100%;padding:16px;border:1.5px dashed var(--line);border-radius:18px;background:var(--card);color:var(--fg);font:inherit;text-align:left;cursor:pointer;transition:transform .12s}
+.hboard0:active{transform:scale(.98)}
+.hboard0 .hi{flex:none;width:26px;height:26px;color:#e0408a}
+.hboard0 span{display:flex;flex-direction:column;gap:3px}.hboard0 b{font-size:16px;font-weight:800}.hboard0 small{font-size:13px;line-height:1.35;color:var(--muted)}
 .bbar{display:flex;gap:10px;margin-bottom:14px}.bbar .btn{flex:1;margin:0}
 .btn.small{padding:11px 14px;font-size:15px;min-height:0}
 .btn.danger{color:#d9363e}

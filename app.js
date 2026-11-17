@@ -2084,7 +2084,8 @@ function boardThing(id){
 /* The Save control: a heart with a word, for the action rows on cards. */
 const saveBtn=(id,cls="")=>S.session&&!isGuest()?`<button class="savebtn ${cls}${isSaved(id)?" on":""}" data-act="heart" data-id="${esc(id)}" aria-pressed="${isSaved(id)}">${HEART}${isSaved(id)?"Saved":"Save"}</button>`:"";
 function homeBoards(){
-  if(!S.boards.length) return "";
+  if(!S.boards.length) return `<section aria-labelledby="hbH"><div class="hsec"><h2 id="hbH">Your boards</h2></div>
+  <button class="hboard0" data-act="boardCreate">${HEART}<span><b>Start your first board</b><small>Tap Save on any place, event or sight to collect ideas for a trip or a night out, then share them with friends.</small></span></button></section>`;
   return `<section aria-labelledby="hbH"><div class="hsec"><h2 id="hbH">Your boards</h2><button class="link" data-act="boardCreate">New board</button></div>
   <div class="hplaces hboards">${S.boards.map(b=>{ const t=b.items.map(i=>boardThing(i.id)).filter(Boolean), cover=t.find(x=>x.img), n=b.items.length;
     return `<button class="hsight hboard" data-act="boardOpen" data-b="${b.id}" style="--c:${(t[0]&&t[0].col)||"#145fae"}${cover?`;background-image:url('${cover.img.replace(/'/g,"%27")}')`:""}"><i>${n} saved</i><span><b>${esc(b.name)}</b><small>${esc(t.slice(0,2).map(x=>x.name).join(", ")||"Nothing yet")}</small></span></button>`; }).join("")}</div></section>`;
