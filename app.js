@@ -1245,12 +1245,13 @@ function viewGroup(g){
 const HOME_OCC=[["eat","Dinner",WHATS[0][2]],["drinks","Drinks",WHATS[1][2]],["coffee","Coffee",WHATS[2][2]],["clubs","Night out",WHATS[3][2]]];
 const KIND_SHORT={cafe:"Coffee",eat:"Restaurant",cheap:"Cheap eats",drink:"Cocktails",wine:"Wine bar",beer:"Pub",club:"Club",culture:"Culture"};
 const hm=t=>{const v=+t.slice(0,2)*60+ +t.slice(2,4);return v};
-function openUntil(p){ // closing time today if open right now, else null
-  const h=hoursOn(p,today); if(!h||h==="C") return null;
-  const n=new Date(), now=n.getHours()*60+n.getMinutes();
-  for(const r of h.split(",")){ const [a,b]=r.split("-"); if(!b) continue; let s=hm(a), e=hm(b); if(e<=s) e+=1440;
-    if(now>=s&&now<e) return b.slice(0,2)+":"+b.slice(2); }
-  return null;
+function openUntil(p){ // closing time if open right now, else null. After midnight, last night's late hours still count.
+  const n=new Date(), now=n.getHours()*60+n.getMinutes(), t=iso(n);
+  const hit=(day,at)=>{ const h=hoursOn(p,day); if(!h||h==="C") return null;
+    for(const r of h.split(",")){ const [a,b]=r.split("-"); if(!b) continue; let s=hm(a), e=hm(b); if(e<=s) e+=1440;
+      if(at>=s&&at<e) return b.slice(0,2)+":"+b.slice(2); }
+    return null; };
+  return hit(t,now)||hit(addDays(t,-1),now+1440);
 }
 function homePlans(){
   const out=[]; S.groups.forEach(g=>g.plans.forEach(p=>out.push({...p,gname:g.name})));
