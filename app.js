@@ -2083,6 +2083,10 @@ async function loadBoards(){
 /* Anything a board can hold, described the same way: a place, an event or a sight from any city. */
 const KIND_LABEL={cafe:"Café",eat:"Restaurant",cheap:"Cheap eats",drink:"Bar",wine:"Wine bar",beer:"Pub",club:"Club",culture:"Culture"};
 const KIND_COL={cafe:"#b7791f",eat:"#d9482b",cheap:"#e07a1f",drink:"#7c3aed",wine:"#9d174d",beer:"#b45309",club:"#4338ca",culture:"#0f766e"};
+/* Tiles without a photo get a two-tone wash and an icon instead of a flat block. */
+const boardIcon=t=>{ const w=n=>(WHATS.find(x=>x[0]===n)||WHATS[0])[2];
+  return evIcon(t.type==="place"?w(KIND_ICON[t.x.kind]||"eat"):t.type==="event"?EI[(EV_TYPES[evType(t.x)]||[0,"flag"])[1]]||w("event"):w("culture")); };
+const boardBg=t=>`--c:${t.col}${t.img?`;background-image:url('${t.img.replace(/'/g,"%27")}')`:""}`;
 function boardThing(id){
   const x=byId(id);
   if(x&&x.kind) return {id,type:"place",x,name:x.name,tag:KIND_LABEL[x.kind]||"Place",col:KIND_COL[x.kind]||"#145fae",sub:`${zname(x.zone)} · ${costText(x)}`,text:[x.why,x.detail].map(dot).filter(Boolean).join(" "),
@@ -2102,13 +2106,13 @@ function homeBoards(){
   if(!S.boards.length) return `<section aria-labelledby="hbH"><div class="hsec"><h2 id="hbH">Your boards</h2></div>
   <button class="hboard0" data-act="boardCreate">${HEART}<span><b>Start your first board</b><small>Tap Save on any place, event or sight to collect ideas for a trip or a night out, then share them with friends.</small></span></button></section>`;
   return `<section aria-labelledby="hbH"><div class="hsec"><h2 id="hbH">Your boards</h2><button class="link" data-act="boardCreate">New board</button></div>
-  <div class="hplaces hboards">${S.boards.map(b=>{ const t=b.items.map(i=>boardThing(i.id)).filter(Boolean), cover=t.find(x=>x.img), n=b.items.length;
-    return `<button class="hsight hboard" data-act="boardOpen" data-b="${b.id}" style="--c:${(t[0]&&t[0].col)||"#145fae"}${cover?`;background-image:url('${cover.img.replace(/'/g,"%27")}')`:""}"><i>${n} saved</i><span><b>${esc(b.name)}</b><small>${esc(t.slice(0,2).map(x=>x.name).join(", ")||"Nothing yet")}</small></span></button>`; }).join("")}</div></section>`;
+  <div class="hplaces hboards">${S.boards.map(b=>{ const t=b.items.map(i=>boardThing(i.id)).filter(Boolean), n=b.items.length, cov=[...t.filter(x=>x.img),...t.filter(x=>!x.img)].slice(0,3);
+    return `<button class="hsight hboard" data-act="boardOpen" data-b="${b.id}" style="--c:${(t[0]&&t[0].col)||"#145fae"}"><div class="hcover n${cov.length}" aria-hidden="true">${cov.map(x=>`<u class="${x.img?"ph":""}" style="${boardBg(x)}">${x.img?"":boardIcon(x)}</u>`).join("")||`<u>${HEART}</u>`}</div><i>${n} saved</i><span><b>${esc(b.name)}</b><small>${esc(t.slice(0,2).map(x=>x.name).join(", ")||"Nothing saved yet")}</small></span></button>`; }).join("")}</div></section>`;
 }
 function boardTile(i,ro){
   const t=boardThing(i.id);
   if(!t) return ro?"":`<details class="btile gone"><summary><div class="bimg" style="--c:#64748b"><i>Gone</i></div><b>No longer listed</b><small>This place or event was removed</small></summary><div class="more"><div class="actions"><button data-act="boardRemove" data-id="${esc(i.id)}">Remove</button></div></div></details>`;
-  return `<details class="btile${t.past?" past":""}"><summary><div class="bimg" style="--c:${t.col}${t.img?`;background-image:url('${t.img.replace(/'/g,"%27")}')`:""}"><i>${esc(t.tag)}</i>${t.img?"":`<span aria-hidden="true">${esc(t.name.trim().charAt(0).toUpperCase())}</span>`}</div><b>${esc(t.name)}</b><small>${esc(t.past?"Already happened":t.sub)}</small>${i.note?`<em>${esc(i.note)}</em>`:""}</summary>
+  return `<details class="btile${t.past?" past":""}"><summary><div class="bimg${t.img?" ph":""}" style="${boardBg(t)}"><i>${esc(t.tag)}</i>${t.img?"":`<span aria-hidden="true">${boardIcon(t)}</span>`}</div><b>${esc(t.name)}</b><small>${esc(t.past?"Already happened":t.sub)}</small>${i.note?`<em>${esc(i.note)}</em>`:""}</summary>
   <div class="more">${t.text?`<p>${esc(t.text)}</p>`:""}${t.type==="place"?`<p class="dim">${esc(t.x.addr)}${t.x.metro&&t.x.metro[0]?" · "+esc(metroText(t.x.metro)):""}</p>`:""}
   ${ro?"":`<input class="bnote" type="text" data-bnote="${esc(i.id)}" maxlength="140" placeholder="Add a note, like when to go" value="${esc(i.note||"")}" aria-label="Note for ${esc(t.name)}" enterkeyhint="done">`}
   <div class="actions">${t.links.map(([l,u])=>`<a href="${esc(u)}" target="_blank" rel="noopener">${l}</a>`).join("")}${ro?saveBtn(i.id):`<button data-act="boardRemove" data-id="${esc(i.id)}">Remove</button>`}</div></div></details>`;
