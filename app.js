@@ -1564,7 +1564,20 @@ function hotMap(list){
     return `<button class="area" style="left:${x/4}%;top:${y/4.1}%" data-act="zoneMap" data-z="${z}" aria-pressed="${on}">${esc(zname(z))}<i>${c}</i></button>`};
   return `<div class="mapbox"><img src="${cityBg()}" alt=""><span class="north">N ↑</span>${zones.map(pill).join("")}</div>`;
 }
+/* Search on Hotspots: every place in the city by name, area, type, cuisine or street. Ignores the type chips and filters. */
+const plain=t=>String(t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+const HOT_FOUND_MAX=40;
+function hotFound(){
+  const words=plain(S.hotQ).split(/\s+/).filter(Boolean); if(!words.length) return "";
+  const hay=p=>plain(p.name+" "+zname(p.zone)+" "+(KIND[p.kind]||"")+" "+(p.cuisine||[]).map(c=>(CUISINES.find(k=>k[0]===c)||[c,c])[1]+" "+c).join(" ")+" "+(p.addr||""));
+  const q=words.join(" "), score=p=>{ const n=plain(p.name); return n.startsWith(q)?0:n.includes(q)?1:words.every(w=>n.includes(w))?2:3; };
+  const hits=PLACES.filter(p=>{ const h=hay(p); return words.every(w=>h.includes(w)); }).sort((a,b)=>score(a)-score(b)||byRank(a,b)||a.name.localeCompare(b.name));
+  if(!hits.length) return `<p class="empty">No places in ${esc(cityName())} match “${esc(S.hotQ.trim())}”. Try a shorter name, an area or a type of food.</p>`;
+  return `<p class="glabel">${hits.length} ${hits.length===1?"place":"places"}</p><div class="sheet dlist">${hits.slice(0,HOT_FOUND_MAX).map(placeRow).join("")}</div>${hits.length>HOT_FOUND_MAX?`<p class="hint">Showing the first ${HOT_FOUND_MAX}. Keep typing to narrow it down.</p>`:""}`;
+}
+const hotSearch=()=>`<div class="hotsearch"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.500-3.500"/></svg><input type="text" id="hotQ" data-search="hot" value="${esc(S.hotQ||"")}" placeholder="Search places in ${esc(cityName())}" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search" maxlength="60" aria-label="Search places"><button data-act="hotClear" aria-label="Clear search" ${S.hotQ?"":"hidden"}>×</button></div>`;
 function viewHot(){
+  if((S.hotQ||"").trim()) return `<div data-hero><h1>Hotspots</h1></div>${hotSearch()}<div id="hotNormal" hidden></div><div id="hotFound">${hotFound()}</div>`;
   const list=PLACES.filter(hotMatch).sort(byHot);
   let body;
   if(S.hotView==="map"){
@@ -1578,12 +1591,12 @@ function viewHot(){
     body=HOT_GROUPS.map(([t,f])=>{const g=list.filter(f), full=S.hot!=="all"||S.open.has(t), rows=full?g:g.slice(0,6);
       return g.length?`<p class="glabel">${t}</p><div class="sheet dlist">${rows.map(placeRow).join("")}${rows.length<g.length?`<button class="showall" data-act="showGroup" data-v="${t}">Show all ${g.length}</button>`:""}</div>`:""}).join("");
   }
-  return `<div data-hero><h1>Hotspots</h1></div>
+  return `<div data-hero><h1>Hotspots</h1></div>${hotSearch()}<div id="hotFound"></div><div id="hotNormal">
   <div class="chips hottypes">${HOT_TYPES.map(([k,l])=>`<button class="chip" data-act="hot" data-v="${k}" aria-pressed="${S.hot===k}">${l}</button>`).join("")}</div>
   <div class="hotbar${S.hot==="eat"?" tight":""}">${seg("hotView",S.hotView,[["list","List"],["map","Map"]],"View")}${S.hot==="eat"?cuisineSelect("hotCuisine",S.hotCuisine,"Cuisine"):""}<span class="grow1"></span>${viewFilters("pill")}</div>
   ${viewFilters()}
   ${body||`<p class="empty">Nothing matches these filters.</p>${fltCount()?`<button class="link center" data-act="fltReset">Clear filters</button>`:""}`}
-  <p class="foot">Prices are typical estimates. Checked ${CHECKED}, so confirm before you go. Star ratings are Google review scores as of ${STARS_CHECKED}.${S.hotView==="map"?" Map data © OpenStreetMap contributors.":""}</p>`;
+  <p class="foot">Prices are typical estimates. Checked ${CHECKED}, so confirm before you go. Star ratings are Google review scores as of ${STARS_CHECKED}.${S.hotView==="map"?" Map data © OpenStreetMap contributors.":""}</p></div>`;
 }
 /* What kind of event it is: label and icon. Events without a type fall back to their category. */
 const EI={mic:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',disc:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/>',
@@ -1907,7 +1920,7 @@ function placeCoach(){
 function resetTab(t){
   S.pickOpen=false; S.calOpen=false; S.sights=false; S.board=null; S.boardShared=null; S.boardPick=null;
   if(t==="decide"){ if(S.plan||S.code){ S.plan=null; S.code=null; setUrl(null); } S.dfltOpen=false; }
-  else if(t==="hotspots"){ S.hot="all"; S.hotView="list"; S.sel=null; S.zone=null; S.fltOpen=false; S.hotCuisine=""; S.open=new Set(); }
+  else if(t==="hotspots"){ S.hotQ=""; S.hot="all"; S.hotView="list"; S.sel=null; S.zone=null; S.fltOpen=false; S.hotCuisine=""; S.open=new Set(); }
   else if(t==="events"){ S.ev=null; S.evCalOpen=false; S.evDate=null; S.evType=""; }
   else if(t==="groups"){ if(S.chatOpen) typing(false); S.chatOpen=false; CHAT.gid=null; S.gid=null; S.joinMode=false; S.groupNew=false; S.leaving=false; }
 }
@@ -2028,6 +2041,7 @@ const H={
   copy(){ const it=results(S.plan)[0].item, where=it.cat?it.venue:it.addr, when=parse(S.plan.day).toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"});
     const t=`${it.name}, ${where}. ${when}${S.plan.time?` at ${S.plan.time}`:""}.`;
     (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast("Copied"),()=>toast(t)); },
+  hotClear(){ S.hotQ=""; render(); document.getElementById("hotQ")?.focus(); },
   hot(el){ if(HOT_UNIT[S.hot]!==HOT_UNIT[el.dataset.v]) flt().price=0; S.hot=el.dataset.v; FIT=null; render(); },
   hotView(el){ S.hotView=el.dataset.v; render(); },
   zoneMap(el){ S.zone=el.dataset.z; render(); },
@@ -2201,6 +2215,12 @@ function refreshPicks(){ const box=document.getElementById("pickBox"), b=documen
   const sl=box.querySelector(".pickareas")?.scrollLeft||0; box.innerHTML=pickBoxHtml(S.form); const ar=box.querySelector(".pickareas"); if(ar) ar.scrollLeft=sl; if(b){ b.textContent=pickStartLabel(S.form); b.hidden=!(S.form.picks||[]).filter(byId).length; } }
 document.addEventListener("keydown",e=>{ if(e.key==="Enter"&&e.target.id==="pickQ"){ e.preventDefault(); e.target.blur(); H.pickSearch(); } });
 document.addEventListener("input",e=>{ if(e.target.dataset.search==="pick"){ S.pickQ=e.target.value; refreshPicks(); } });
+/* Typing in the Hotspots search swaps only the results, so the keyboard stays up. Emptying the box brings the normal page back. */
+document.addEventListener("input",e=>{ const el=e.target; if(el.dataset.search!=="hot") return; S.hotQ=el.value;
+  if(!el.value.trim()){ if(document.getElementById("hotNormal")?.hidden){ const v=el.value; render(); const i=document.getElementById("hotQ"); if(i){ i.focus(); try{ i.setSelectionRange(v.length,v.length); }catch{} } } else { document.getElementById("hotFound").innerHTML=""; el.parentNode.querySelector("button").hidden=!el.value; } return; }
+  const n=document.getElementById("hotNormal"), f=document.getElementById("hotFound"); if(!n||!f){ render(); return; }
+  n.hidden=true; f.innerHTML=hotFound(); el.parentNode.querySelector("button").hidden=false; });
+document.addEventListener("keydown",e=>{ if(e.key==="Enter"&&e.target.id==="hotQ"){ e.preventDefault(); e.target.blur(); } });
 document.addEventListener("input",e=>{ const el=e.target; if(!el.dataset.ps) return; const t=priceLabel(el.dataset.unit||undefined,psValue(el)); el.parentNode.querySelector(".psval").textContent=t; el.setAttribute("aria-valuetext",t); });
 document.addEventListener("change",e=>{ const el=e.target; if(el.dataset.cs){ H[el.dataset.cs]({dataset:{v:el.value}}); return; } if(!el.dataset.ps) return; H[el.dataset.ps]({dataset:{v:String(psValue(el))}}); });
 document.addEventListener("input",e=>{const u=e.target.dataset.slider; if(!u) return; const i=Number(e.target.value);
@@ -2286,7 +2306,7 @@ const loadEvents=()=>loadKind("events",CITY), loadPlaces=()=>loadKind("places",C
 function setCity(c){
   if(!CITIES[c]||c===CITY) return;
   CITY=c; try{ localStorage.setItem("concit.city",c); }catch{}
-  const f=S.form; f.area=""; f.pin=null; f.radius=null; f.picks=[]; S.flt=null; S.zone=null; S.sel=null; S.hot="all"; S.hotCuisine=""; S.open=new Set();
+  const f=S.form; f.area=""; f.pin=null; f.radius=null; f.picks=[]; S.flt=null; S.zone=null; S.sel=null; S.hotQ=""; S.hot="all"; S.hotCuisine=""; S.open=new Set();
   S.pickOpen=false; S.fltOpen=false; S.sights=false; S.sightKind="all"; S.ev=null; S.evDate=null; S.evType=""; S.evCalOpen=false;
   try{ if(MAP){ MAP.remove(); } }catch{} MAP=null; MAP_HOST=null; FIT=""; SEL_MK=null;
   try{ if(PICK){ PICK.remove(); } }catch{} PICK=null; PICK_HOST=null;

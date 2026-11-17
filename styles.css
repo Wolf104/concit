@@ -1014,3 +1014,11 @@ body.overscroll nav::before{display:none}
 body.sheetopen{overflow:hidden}
 .savewin{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px}.savewin.on{color:#e0408a}.savewin.on .hi{fill:currentColor}
 html[data-theme=dark] .bmap{color-scheme:light}
+
+/* ---------- Hotspots search ---------- */
+.hotsearch{position:relative;margin:0 0 14px}
+.hotsearch svg{position:absolute;left:14px;top:50%;width:18px;height:18px;transform:translateY(-50%);fill:none;stroke:var(--muted);stroke-width:2.2;stroke-linecap:round;pointer-events:none}
+.hotsearch input{padding-left:42px;padding-right:44px;border-radius:99px}
+.hotsearch button{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:40px;height:40px;border:0;background:none;color:var(--muted);font-size:24px;line-height:1;cursor:pointer;border-radius:50%}
+.hotsearch button[hidden]{display:none}
+#hotFound:empty{display:none}
