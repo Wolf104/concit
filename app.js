@@ -1677,18 +1677,30 @@ function warmTiles(){ EV_TILE_IMGS=Object.values(CITY_PHOTOS[CITY]||{}).map(([f]
 warmTiles();
 const EV_MORE=[["free","Free","Nothing to pay",e=>e.priceNum===0],["saved","Saved","Events on your boards",e=>isSaved(e.id)],["all","Everything","All upcoming events",()=>true]];
 const evIcon=p=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+/* Search on Events: every upcoming event in the city by name, venue, area or type. Works like the Hotspots search. */
+function evFound(){
+  const words=plain(S.evQ).split(/\s+/).filter(Boolean); if(!words.length) return "";
+  const hay=e=>plain(e.name+" "+(e.venue||"")+" "+(e.zone?zname(e.zone):"")+" "+EV_TYPES[evType(e)][0]+" "+((EV_CATS.find(c=>c[3](e))||[])[1]||""));
+  const q=words.join(" "), score=e=>plain(e.name).startsWith(q)?0:1; /* names that start with the search come first, the rest in date order */
+  const when=e=>e.start<today?today:e.start;
+  const hits=EVENTS.filter(e=>{ if(e.end<today) return false; const h=hay(e); return words.every(w=>h.includes(w)); }).sort((a,b)=>score(a)-score(b)||when(a).localeCompare(when(b))||a.name.localeCompare(b.name));
+  if(!hits.length) return `<p class="empty">No events in ${esc(cityName())} match “${esc(S.evQ.trim())}”. Try an artist, a team, a venue or a type of event.</p>`;
+  return `<p class="glabel">${hits.length} ${hits.length===1?"event":"events"}</p><div class="sheet dlist">${hits.slice(0,HOT_FOUND_MAX).map(evRow).join("")}</div>${hits.length>HOT_FOUND_MAX?`<p class="hint">Showing the first ${HOT_FOUND_MAX}. Keep typing to narrow it down.</p>`:""}`;
+}
+const evSearch=()=>`<div class="hotsearch"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.500-3.500"/></svg><input type="text" id="evQ" data-search="ev" value="${esc(S.evQ||"")}" placeholder="Search events in ${esc(cityName())}" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search" maxlength="60" aria-label="Search events"><button data-act="evClear" aria-label="Clear search" ${S.evQ?"":"hidden"}>×</button></div>`;
 function viewEvents(){
   const live=EVENTS.filter(e=>e.end>=today);
   const cat=[...EV_CATS,...EV_MORE].find(c=>c[0]===S.ev);
   if(!cat){
+    if((S.evQ||"").trim()) return `<div data-hero><h1>Events</h1></div>${evSearch()}<div id="evNormal" hidden></div><div id="evFound">${evFound()}</div>`;
     const n=f=>live.filter(f).length;
-    return `<div data-hero><h1>Events</h1></div>
+    return `<div data-hero><h1>Events</h1></div>${evSearch()}<div id="evFound"></div><div id="evNormal">
     <p class="evintro">What are you in the mood for?</p>
     <div class="evtiles">${EV_CATS.map(([k,l,sub,f,ic])=>{const ph=(CITY_PHOTOS[CITY]||{})[k];
       return `<button class="evtile ev-${k}${ph?" hasph":""}" data-act="ev" data-v="${k}">${ph?`<img src="${commonsImg(ph[0])}" alt="" referrerpolicy="no-referrer" onerror="this.parentNode.classList.remove('hasph');this.remove()">`:""}<b>${l}</b><small>${esc(sub)}</small></button>`}).join("")}</div>
     <div class="evmore">${EV_MORE.map(([k,l,sub,f])=>`<button class="evmini" data-act="ev" data-v="${k}"><b>${l}</b><small>${k==="saved"?`${n(f)} saved`:`${n(f)} events`}</small></button>`).join("")}</div>
     <p class="foot">Checked ${S.evChecked||CHECKED}. Confirm dates before you go.</p>
-    <p class="foot credits">Photos from Wikimedia Commons: ${EV_CATS.map(c=>(CITY_PHOTOS[CITY]||{})[c[0]]).filter(Boolean).map(([f,of])=>`<a href="${commonsPage(f)}" target="_blank" rel="noopener">${esc(of)}</a>`).join(", ")}. Tap a name for the photographer and licence.</p>`;
+    <p class="foot credits">Photos from Wikimedia Commons: ${EV_CATS.map(c=>(CITY_PHOTOS[CITY]||{})[c[0]]).filter(Boolean).map(([f,of])=>`<a href="${commonsPage(f)}" target="_blank" rel="noopener">${esc(of)}</a>`).join(", ")}. Tap a name for the photographer and licence.</p></div>`;
   }
   const inCat=live.filter(cat[3]), d=S.evDate;
   const counts={}; inCat.forEach(e=>{ const t=evType(e); counts[t]=(counts[t]||0)+1; });
@@ -1922,7 +1934,7 @@ function resetTab(t){
   S.pickOpen=false; S.calOpen=false; S.sights=false; S.board=null; S.boardShared=null; S.boardPick=null;
   if(t==="decide"){ if(S.plan||S.code){ S.plan=null; S.code=null; setUrl(null); } S.dfltOpen=false; }
   else if(t==="hotspots"){ S.hotQ=""; S.hot="all"; S.hotView="list"; S.sel=null; S.zone=null; S.fltOpen=false; S.hotCuisine=""; S.open=new Set(); }
-  else if(t==="events"){ S.ev=null; S.evCalOpen=false; S.evDate=null; S.evType=""; }
+  else if(t==="events"){ S.evQ=""; S.ev=null; S.evCalOpen=false; S.evDate=null; S.evType=""; }
   else if(t==="groups"){ if(S.chatOpen) typing(false); S.chatOpen=false; CHAT.gid=null; S.gid=null; S.joinMode=false; S.groupNew=false; S.leaving=false; }
 }
 const H={
@@ -2048,7 +2060,8 @@ const H={
   zoneMap(el){ S.zone=el.dataset.z; render(); },
   pin(el){ selectPlace(el.dataset.id); },
   showGroup(el){ S.open.add(el.dataset.v); render(); },
-  ev(el){ S.ev=el.dataset.v||null; S.evCalOpen=false; S.evDate=null; S.evType=""; render(); pageTop(); },
+  evClear(){ S.evQ=""; render(); document.getElementById("evQ")?.focus(); },
+  ev(el){ S.evQ=""; S.ev=el.dataset.v||null; S.evCalOpen=false; S.evDate=null; S.evType=""; render(); pageTop(); },
   evType(el){ S.evType=el.dataset.v; render(); },
   save(el){ const id=el.dataset.id; S.saved.has(id)?S.saved.delete(id):S.saved.add(id); persist(); render();
   }
@@ -2221,11 +2234,13 @@ function refreshPicks(){ const box=document.getElementById("pickBox"), b=documen
 document.addEventListener("keydown",e=>{ if(e.key==="Enter"&&e.target.id==="pickQ"){ e.preventDefault(); e.target.blur(); H.pickSearch(); } });
 document.addEventListener("input",e=>{ if(e.target.dataset.search==="pick"){ S.pickQ=e.target.value; refreshPicks(); } });
 /* Typing in the Hotspots search swaps only the results, so the keyboard stays up. Emptying the box brings the normal page back. */
-document.addEventListener("input",e=>{ const el=e.target; if(el.dataset.search!=="hot") return; S.hotQ=el.value;
-  if(!el.value.trim()){ if(document.getElementById("hotNormal")?.hidden){ const v=el.value; render(); const i=document.getElementById("hotQ"); if(i){ i.focus(); try{ i.setSelectionRange(v.length,v.length); }catch{} } } else { document.getElementById("hotFound").innerHTML=""; el.parentNode.querySelector("button").hidden=!el.value; } return; }
-  const n=document.getElementById("hotNormal"), f=document.getElementById("hotFound"); if(!n||!f){ render(); return; }
-  n.hidden=true; f.innerHTML=hotFound(); el.parentNode.querySelector("button").hidden=false; });
-document.addEventListener("keydown",e=>{ if(e.key==="Enter"&&e.target.id==="hotQ"){ e.preventDefault(); e.target.blur(); } });
+const SEARCHES={hot:hotFound,ev:evFound};
+document.addEventListener("input",e=>{ const el=e.target, k=el.dataset.search, found=SEARCHES[k]; if(!found) return; S[k+"Q"]=el.value;
+  const n=document.getElementById(k+"Normal"), f=document.getElementById(k+"Found");
+  if(!el.value.trim()){ if(n?.hidden){ const v=el.value; render(); const i=document.getElementById(k+"Q"); if(i){ i.focus(); try{ i.setSelectionRange(v.length,v.length); }catch{} } } else { if(f) f.innerHTML=""; el.parentNode.querySelector("button").hidden=!el.value; } return; }
+  if(!n||!f){ render(); return; }
+  n.hidden=true; f.innerHTML=found(); el.parentNode.querySelector("button").hidden=false; });
+document.addEventListener("keydown",e=>{ if(e.key==="Enter"&&e.target.dataset?.search){ e.preventDefault(); e.target.blur(); } });
 document.addEventListener("input",e=>{ const el=e.target; if(!el.dataset.ps) return; const t=priceLabel(el.dataset.unit||undefined,psValue(el)); el.parentNode.querySelector(".psval").textContent=t; el.setAttribute("aria-valuetext",t); });
 document.addEventListener("change",e=>{ const el=e.target; if(el.dataset.cs){ H[el.dataset.cs]({dataset:{v:el.value}}); return; } if(!el.dataset.ps) return; H[el.dataset.ps]({dataset:{v:String(psValue(el))}}); });
 document.addEventListener("input",e=>{const u=e.target.dataset.slider; if(!u) return; const i=Number(e.target.value);
@@ -2312,7 +2327,7 @@ function setCity(c){
   if(!CITIES[c]||c===CITY) return;
   CITY=c; try{ localStorage.setItem("concit.city",c); }catch{}
   const f=S.form; f.area=""; f.pin=null; f.radius=null; f.picks=[]; S.flt=null; S.zone=null; S.sel=null; S.hotQ=""; S.hot="all"; S.hotCuisine=""; S.open=new Set();
-  S.pickOpen=false; S.fltOpen=false; S.sights=false; S.sightKind="all"; S.ev=null; S.evDate=null; S.evType=""; S.evCalOpen=false;
+  S.pickOpen=false; S.fltOpen=false; S.sights=false; S.sightKind="all"; S.evQ=""; S.ev=null; S.evDate=null; S.evType=""; S.evCalOpen=false;
   try{ if(MAP){ MAP.remove(); } }catch{} MAP=null; MAP_HOST=null; FIT=""; SEL_MK=null;
   try{ if(PICK){ PICK.remove(); } }catch{} PICK=null; PICK_HOST=null;
   S.evChecked=DATA.checked[c]||"";
