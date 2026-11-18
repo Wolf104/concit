@@ -975,7 +975,7 @@ body.overscroll nav::before{display:none}
 .btn.small{padding:11px 14px;font-size:15px;min-height:0}
 .btn.danger{color:#d9363e}
 .bseg{margin-bottom:14px}
-.bgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+.bgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch}
 .btile{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;min-width:0}
 .btile[open]{grid-column:1/-1}
 .btile summary{list-style:none;cursor:pointer;display:flex;flex-direction:column;align-items:stretch;gap:2px;padding:0 0 12px}
@@ -985,7 +985,10 @@ body.overscroll nav::before{display:none}
 .btile summary>small{padding:0 12px;color:var(--muted);font-size:13px;overflow-wrap:anywhere}
 .btile summary>em{margin:6px 12px 0;padding:6px 9px;border-radius:10px;background:var(--page);font-style:normal;font-size:13px;overflow-wrap:anywhere}
 .bimg{position:relative;align-self:stretch;width:100%;flex:none;height:108px;background:var(--c) center/cover no-repeat;display:flex;align-items:center;justify-content:center;color:#fff}
-.btile:nth-child(3n+1) .bimg{height:132px}
+/* Every tile is the same size: same picture height, a two-line name, one line underneath and one line for the note. Opening a tile shows it all. */
+.btile:not([open]) summary>b{align-self:stretch;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;min-height:2.4em}
+.btile:not([open]) summary>small,.btile:not([open]) summary>em{align-self:stretch;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.btile:not([open]) summary>em{align-self:flex-start;max-width:calc(100% - 24px)}
 .btile[open] .bimg{height:150px}
 .bimg i{position:absolute;top:9px;left:9px;font-style:normal;background:rgba(255,255,255,.93);color:#0f2a44;font-size:12px;font-weight:700;border-radius:99px;padding:2px 9px}
 .bimg span{display:flex}.bimg span svg{width:46px;height:46px;stroke-width:1.5;opacity:.92;filter:drop-shadow(0 2px 6px rgba(0,0,0,.25))}
